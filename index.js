@@ -43,10 +43,18 @@ function indexCasts() {
 
 		let usersIndexed = 0
 		const numberOfUsers = await registryContract.usernamesLength()
+			.catch(() => {
+				console.error('Error getting number of users from contract')
+				return 0
+			})
 
-		console.log(`Indexing ${numberOfUsers} users...`)
+		if (numberOfUsers === 0) {
+			return
+		} else {
+			console.log(`Indexing ${numberOfUsers} users...`)
+		}
 
-		for (let i = 0; numberOfUsers; i++) {
+		for (let i = 0; i < numberOfUsers; i++) {
 			const byte32Name = await registryContract
 				.usernameAtIndex(i)
 				.catch(() => {
@@ -77,7 +85,7 @@ function indexCasts() {
 						.insertMany(activity)
 						.then(() => usersIndexed++)
 						.catch((err) => {
-							console.log(`Error saving ${username}'s casts`, err)
+							console.log(`Error saving ${username}'s casts.`, err.message)
 						})
 				}
 			} catch (err) {
