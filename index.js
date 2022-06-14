@@ -111,7 +111,7 @@ function indexCasts() {
 	})
 }
 
-// Run job every two hours
-cron.schedule('0 */2 * * *', async () => {
+// Run job every hour
+cron.schedule('0 */1 * * *', async () => {
 	indexCasts()
 })
