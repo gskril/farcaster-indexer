@@ -42,7 +42,8 @@ function indexCasts() {
 		)
 
 		let usersIndexed = 0
-		const numberOfUsers = await registryContract.usernamesLength()
+		const numberOfUsers = await registryContract
+			.usernamesLength()
 			.catch(() => {
 				console.error('Error getting number of users from contract')
 				return 0
@@ -62,15 +63,21 @@ function indexCasts() {
 					return null
 				})
 
-			if (!byte32Name) break
+			if (!byte32Name) continue
 
-			const directoryUrl = await registryContract.getDirectoryUrl(
-				byte32Name
-			)
 			const username = utils.parseBytes32String(byte32Name)
 
 			// Skip test accounts
 			if (username.startsWith('__tt__')) continue
+
+			const directoryUrl = await registryContract
+				.getDirectoryUrl(byte32Name)
+				.catch(() => {
+					console.log(`Could not get directory url for ${username}`)
+					return null
+				})
+
+			if (!directoryUrl) continue
 
 			try {
 				const activityUrl = await got(directoryUrl)
@@ -85,7 +92,10 @@ function indexCasts() {
 						.insertMany(activity)
 						.then(() => usersIndexed++)
 						.catch((err) => {
-							console.log(`Error saving ${username}'s casts.`, err.message)
+							console.log(
+								`Error saving ${username}'s casts.`,
+								err.message
+							)
 						})
 				}
 			} catch (err) {
