@@ -191,7 +191,7 @@ cron.schedule('0 */1 * * *', () => {
 	indexProfiles()
 })
 
-// Run job 10 mins
-cron.schedule('10 */1 * * *', () => {
+// Run job 15 mins
+cron.schedule('*/15 * * * *', () => {
 	indexCasts()
 })
