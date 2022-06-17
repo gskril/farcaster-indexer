@@ -56,7 +56,7 @@ async function indexCasts() {
 	if (!profiles) return
 	console.log(`Indexing casts from ${profiles.length} profiles...`)
 
-	for (let i = 4; i < profiles.length; i++) {
+	for (let i = 0; i < profiles.length; i++) {
 		const profile = profiles[i]
 		const name = profile.body.displayName
 
