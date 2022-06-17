@@ -42,6 +42,7 @@ async function indexCasts() {
 	// Avoid indexing duplicate casts
 	await newCollection.createIndex({ merkleRoot: 1 }, { unique: true })
 
+	const allCasts = []
 	let profilesIndexed = 0
 	const profiles = await db
 		.collection('profiles')
@@ -49,32 +50,31 @@ async function indexCasts() {
 		.toArray()
 		.catch(() => {
 			console.error('Error getting number of profiles from MongoDB')
-			return 0
+			return null
 		})
 
-	if (profiles.length === 0) return
+	if (!profiles) return
 	console.log(`Indexing casts from ${profiles.length} profiles...`)
 
-	for (let i = 0; i < profiles.length; i++) {
-		try {
-			const activityUrl = profiles[i].body.addressActivityUrl
-			const activity = await got(activityUrl).json()
+	for (let i = 4; i < profiles.length; i++) {
+		const profile = profiles[i]
+		const name = profile.body.displayName
 
-			if (activity.length > 0) {
-				await newCollection
-					.insertMany(activity)
-					.then(() => profilesIndexed++)
-					.catch((err) => {
-						console.log(
-							`Error saving ${username}'s casts.`,
-							err.message
-						)
-					})
-			}
-		} catch (err) {
-			// console.log(`Unable to get ${username}'s activity`)
-		}
+		const activity = await got(profile.body.addressActivityUrl)
+			.json()
+			.catch(() => {
+				console.log(`Could not get activity for ${name}`)
+				return null
+			})
+
+		if (!activity) continue
+		allCasts.push(...activity)
+		profilesIndexed++
 	}
+
+	await newCollection.insertMany(allCasts).catch((err) => {
+		console.log(`Error saving casts to MongoDB.`, err.message)
+	})
 
 	// Replace existing collection with new casts
 	try {
@@ -87,7 +87,7 @@ async function indexCasts() {
 	const endTime = Date.now()
 	const secondsTaken = (endTime - startTime) / 1000
 	console.log(
-		`Indexed casts from ${profilesIndexed} profiles in ${secondsTaken} seconds`
+		`Saved ${allCasts.length} casts from ${profilesIndexed} profiles in ${secondsTaken} seconds`
 	)
 }
 
@@ -177,12 +177,12 @@ async function indexProfiles() {
 	)
 }
 
-// Run job every hour
-cron.schedule('0 */1 * * *', () => {
+// Run job every 2 hours
+cron.schedule('0 */2 * * *', () => {
 	indexProfiles()
 })
 
-// Run job 15 mins
-cron.schedule('*/15 * * * *', () => {
+// Run job 30 mins
+cron.schedule('*/30 * * * *', () => {
 	indexCasts()
 })
