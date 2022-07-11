@@ -146,7 +146,7 @@ async function indexProfiles() {
 			.json()
 			.then((res) => {
 				res.index = i
-				res.connectedAddress = ''
+				res.username = username
 				return res
 			})
 			.catch(() => {
