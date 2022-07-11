@@ -131,6 +131,7 @@ async function indexProfiles() {
 		// Skip test accounts
 		if (username.startsWith('__tt__')) continue
 
+		// Get directory URL from contract
 		const directoryUrl = await registryContract
 			.getDirectoryUrl(byte32Name)
 			.catch(() => {
@@ -140,26 +141,39 @@ async function indexProfiles() {
 
 		if (!directoryUrl || directoryUrl.includes('localhost')) continue
 
-		try {
-			const directory = await got(directoryUrl)
-				.json()
-				.then((res) => {
-					res.index = i
-					return res
-				})
+		// Get directory JSON from URL
+		const directory = await got(directoryUrl)
+			.json()
+			.then((res) => {
+				res.index = i
+				res.connectedAddress = ''
+				return res
+			})
+			.catch(() => {
+				console.log(`Error getting directory for @${username}`)
+				return null
+			})
 
-			await newCollection
-				.insertOne(directory)
-				.then(() => profilesIndexed++)
-				.catch((err) => {
-					console.log(
-						`Error saving ${username}'s directory.`,
-						err.message
-					)
-				})
-		} catch (err) {
-			// console.log(`Unable to get ${username}'s directory`)
-		}
+		if (!directory) continue
+
+		// Add connected address to directory object
+		directory.connectedAddress = await got(directory.body.proofUrl)
+			.json()
+			.then((res) => res.signerAddress)
+			.catch(() => null)
+
+		// Save directories to MongoDB
+		await newCollection
+			.insertOne(directory)
+			.then(() => profilesIndexed++)
+			.catch((err) => {
+				console.log(
+					`Error saving directory for @${username} ${
+						err.message.includes('dup key') &&
+						'(duplicate cast found)'
+					}`
+				)
+			})
 	}
 
 	// Replace existing collection with new one
