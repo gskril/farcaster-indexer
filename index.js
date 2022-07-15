@@ -129,7 +129,7 @@ async function indexProfiles() {
 		const username = utils.parseBytes32String(byte32Name)
 
 		// Skip test accounts
-		if (username.startsWith('__tt__')) continue
+		if (username.startsWith('__tt_')) continue
 
 		// Get directory URL from contract
 		const directoryUrl = await registryContract
