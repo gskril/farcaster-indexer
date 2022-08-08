@@ -1,21 +1,11 @@
-require('dotenv').config()
-const got = require('got')
-const cron = require('node-cron')
-const { providers, Contract, utils } = require('ethers')
-const { MongoClient, ServerApiVersion } = require('mongodb')
+import 'dotenv/config'
+import got from 'got'
+import cron from 'node-cron'
+import abi from './registry-abi.js'
+import { PrismaClient } from '@prisma/client'
+import { providers, Contract, utils } from 'ethers'
 
-const client = new MongoClient(process.env.MONGODB_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-  serverApi: ServerApiVersion.v1,
-})
-
-client.connect((err) => {
-  if (err) {
-    console.error(err)
-    return
-  }
-})
+const prisma = new PrismaClient()
 
 const provider = new providers.AlchemyProvider(
   'rinkeby',
@@ -24,43 +14,25 @@ const provider = new providers.AlchemyProvider(
 
 const registryContract = new Contract(
   '0xe3Be01D99bAa8dB9905b33a3cA391238234B79D1',
-  require('./registry-abi.js'),
+  abi,
   provider
 )
 
 async function indexCasts() {
   const startTime = Date.now()
-  const db = client.db('farcaster')
-  const oldConnection = db.collection('casts')
-  const newCollection = db.collection('casts_temp')
-
-  // If the temp table already exists, drop it
-  try {
-    await newCollection.drop()
-  } catch {}
-
-  // Avoid indexing duplicate casts
-  await newCollection.createIndex({ merkleRoot: 1 }, { unique: true })
 
   const allCasts = []
   let profilesIndexed = 0
-  const profiles = await db
-    .collection('profiles')
-    .find({})
-    .toArray()
-    .catch(() => {
-      console.error('Error getting number of profiles from MongoDB')
-      return null
-    })
+  const profiles = await prisma.profiles.findMany()
 
   if (!profiles) return
   console.log(`Indexing casts from ${profiles.length} profiles...`)
 
   for (let i = 0; i < profiles.length; i++) {
     const profile = profiles[i]
-    const name = profile.body.displayName
+    const name = profile.username
 
-    const activity = await got(profile.body.addressActivityUrl)
+    const activity = await got(profile.address_activity)
       .json()
       .catch(() => {
         console.log(`Could not get activity for ${name}`)
@@ -68,21 +40,52 @@ async function indexCasts() {
       })
 
     if (!activity) continue
-    allCasts.push(...activity)
+
+    // Remove deleted casts and recasts
+    const cleanedActivity = activity.filter((cast) => {
+      return (
+        !cast.body.data.text.startsWith('delete:') &&
+        !cast.body.data.text.startsWith('recast:')
+      )
+    })
+
+    allCasts.push(...cleanedActivity)
     profilesIndexed++
   }
 
-  await newCollection.insertMany(allCasts).catch((err) => {
-    console.log(`Error saving casts to MongoDB.`, err.message)
+  // Delete all casts where the merkleRoot is in allCasts.merkleRoot
+  await prisma.casts.deleteMany({
+    where: {
+      merkle_root: {
+        in: allCasts.map((cast) => cast.merkleRoot),
+      },
+    },
   })
 
-  // Replace existing collection with new casts
-  try {
-    await oldConnection.drop()
-  } catch (err) {
-    console.log('Error dropping collection.', err.codeName)
-  }
-  await newCollection.rename('casts')
+  // Add all casts to database
+  await prisma.casts.createMany({
+    data: allCasts.map((cast) => {
+      return {
+        published_at: cast.body.publishedAt,
+        sequence: cast.body.sequence,
+        username: cast.body.username,
+        address: cast.body.address,
+        text: cast.body.data.text,
+        reply_parent_merkle_root: cast.body.data.replyParentMerkleRoot,
+        prev_merkle_root: cast.body.prevMerkleRoot,
+        merkle_root: cast.merkleRoot,
+        signature: cast.signature,
+        display_name: cast.meta?.displayName,
+        avatar: cast.meta?.avatar,
+        is_verified_avatar: cast.meta?.isVerifiedAvatar,
+        num_reply_children: cast.meta?.numReplyChildren,
+        reactions: cast.meta?.reactions?.count,
+        recasts: cast.meta?.recasts?.count,
+        watches: cast.meta?.watches?.count,
+        reply_parent_username: cast.meta?.replyParentUsername?.username,
+      }
+    }),
+  })
 
   const endTime = Date.now()
   const secondsTaken = (endTime - startTime) / 1000
@@ -93,19 +96,8 @@ async function indexCasts() {
 
 async function indexProfiles() {
   const startTime = Date.now()
-  const db = client.db('farcaster')
-  const oldConnection = db.collection('profiles')
-  const newCollection = db.collection('profiles_temp')
 
-  // If the temp table already exists, drop it
-  try {
-    await newCollection.drop()
-  } catch {}
-
-  // Avoid indexing duplicate profiles
-  await newCollection.createIndex({ merkleRoot: 1 }, { unique: true })
-
-  let profilesIndexed = 0
+  const profiles = []
   const numberOfProfiles = await registryContract
     .usernamesLength()
     .catch(() => {
@@ -160,31 +152,41 @@ async function indexProfiles() {
       .then((res) => res.signerAddress)
       .catch(() => null)
 
-    // Save directories to MongoDB
-    await newCollection
-      .insertOne(directory)
-      .then(() => profilesIndexed++)
-      .catch((err) => {
-        console.log(
-          `Error saving directory for @${username} ${
-            err.message.includes('dup key') && '(duplicate cast found)'
-          }`
-        )
-      })
+    const formatted = {
+      index: directory.index,
+      merkle_root: directory.merkleRoot,
+      signature: directory.signature,
+      username: directory.username,
+      address_activity: directory.body.addressActivityUrl,
+      avatar: directory.body.avatarUrl,
+      proof: directory.body.proofUrl,
+      timestamp: directory.body.timestamp,
+      version: directory.body.version,
+      connected_address: directory.connectedAddress,
+    }
+
+    // Add directory to profiles array
+    profiles.push(formatted)
   }
 
-  // Replace existing collection with new one
-  try {
-    await oldConnection.drop()
-  } catch (err) {
-    console.log('Error dropping collection.', err.codeName)
-  }
-  await newCollection.rename('profiles')
+  // Delete all profiles where the id is in profiles.id
+  await prisma.profiles
+    .deleteMany({
+      where: {
+        index: {
+          in: profiles.map((profile) => profile.index),
+        },
+      },
+    })
+    .then((res) => console.log(`Deleted ${res.count} profiles`))
+
+  // Add all profiles to database
+  await prisma.profiles.createMany({ data: profiles })
 
   const endTime = Date.now()
   const secondsTaken = (endTime - startTime) / 1000
   console.log(
-    `Indexed ${profilesIndexed} directories in ${secondsTaken} seconds`
+    `Indexed ${profiles.length} directories in ${secondsTaken} seconds`
   )
 }
 
