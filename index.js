@@ -24,6 +24,7 @@ async function indexCasts() {
   const allCasts = []
   let profilesIndexed = 0
   const profiles = await prisma.profiles.findMany()
+  const existingCasts = await prisma.casts.findMany()
 
   if (!profiles) return
   console.log(`Indexing casts from ${profiles.length} profiles...`)
@@ -49,23 +50,8 @@ async function indexCasts() {
       )
     })
 
-    allCasts.push(...cleanedActivity)
-    profilesIndexed++
-  }
-
-  // Delete all casts where the merkleRoot is in allCasts.merkleRoot
-  await prisma.casts.deleteMany({
-    where: {
-      merkle_root: {
-        in: allCasts.map((cast) => cast.merkleRoot),
-      },
-    },
-  })
-
-  // Add all casts to database
-  await prisma.casts.createMany({
-    data: allCasts.map((cast) => {
-      return {
+    cleanedActivity.map((cast) => {
+      allCasts.push({
         published_at: cast.body.publishedAt,
         sequence: cast.body.sequence,
         username: cast.body.username,
@@ -83,9 +69,33 @@ async function indexCasts() {
         recasts: cast.meta?.recasts?.count,
         watches: cast.meta?.watches?.count,
         reply_parent_username: cast.meta?.replyParentUsername?.username,
+      })
+    })
+
+    for await (const cast of allCasts) {
+      // Check if there's an existing cast with the same properties
+      const existingCast = existingCasts.find((c) => {
+        return (
+          c.merkle_root === cast.merkle_root &&
+          c.reactions === cast.reactions &&
+          c.recasts === cast.recasts
+        )
+      })
+
+      // Upsert the cast if it doesn't exist or if it has new engagement
+      if (!existingCast) {
+        await prisma.casts.upsert({
+          where: {
+            merkle_root: cast.merkle_root,
+          },
+          create: cast,
+          update: cast,
+        })
       }
-    }),
-  })
+    }
+
+    profilesIndexed++
+  }
 
   const endTime = Date.now()
   const secondsTaken = (endTime - startTime) / 1000
@@ -96,8 +106,8 @@ async function indexCasts() {
 
 async function indexProfiles() {
   const startTime = Date.now()
+  const existingProfiles = await prisma.profiles.findMany()
 
-  const profiles = []
   const numberOfProfiles = await registryContract
     .usernamesLength()
     .catch(() => {
@@ -165,28 +175,32 @@ async function indexProfiles() {
       connected_address: directory.connectedAddress,
     }
 
-    // Add directory to profiles array
-    profiles.push(formatted)
-  }
-
-  // Delete all profiles where the id is in profiles.id
-  await prisma.profiles
-    .deleteMany({
-      where: {
-        index: {
-          in: profiles.map((profile) => profile.index),
+    // Check if there's an existing profile with the same properties
+    if (
+      !existingProfiles.find((profile) => {
+        return (
+          profile.address_activity === formatted.address_activity &&
+          profile.avatar === formatted.avatar &&
+          profile.proof === formatted.proof &&
+          profile.connected_address === formatted.connected_address
+        )
+      })
+    ) {
+      // Upsert new/modified profiles to the database
+      await prisma.profiles.upsert({
+        where: {
+          index: formatted.index,
         },
-      },
-    })
-    .then((res) => console.log(`Deleted ${res.count} profiles`))
-
-  // Add all profiles to database
-  await prisma.profiles.createMany({ data: profiles })
+        create: formatted,
+        update: formatted,
+      })
+    }
+  }
 
   const endTime = Date.now()
   const secondsTaken = (endTime - startTime) / 1000
   console.log(
-    `Indexed ${profiles.length} directories in ${secondsTaken} seconds`
+    `Indexed ${numberOfProfiles} directories in ${secondsTaken} seconds`
   )
 }
 
