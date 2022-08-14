@@ -2,10 +2,13 @@ import 'dotenv/config'
 import got from 'got'
 import cron from 'node-cron'
 import abi from './registry-abi.js'
-import { PrismaClient } from '@prisma/client'
 import { providers, Contract, utils } from 'ethers'
+import { createClient } from '@supabase/supabase-js'
 
-const prisma = new PrismaClient()
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_ANON_KEY
+)
 
 const provider = new providers.AlchemyProvider(
   'rinkeby',
@@ -23,13 +26,21 @@ async function indexCasts() {
 
   const allCasts = []
   let profilesIndexed = 0
-  const profiles = await prisma.profiles.findMany()
-  const existingCasts = await prisma.casts.findMany()
+  const { data: profiles, error: profilesError } = await supabase
+    .from('profiles')
+    .select()
+
+  if (profilesError) {
+    console.error(profilesError)
+    return
+  }
 
   if (!profiles) return
   console.log(`Indexing casts from ${profiles.length} profiles...`)
 
-  for (let i = 0; i < profiles.length; i++) {
+  for (let i = 10; i < profiles.length; i++) {
+    if (i === 20) break
+
     const profile = profiles[i]
     const name = profile.username
 
@@ -57,56 +68,47 @@ async function indexCasts() {
         username: cast.body.username,
         address: cast.body.address,
         text: cast.body.data.text,
-        reply_parent_merkle_root: cast.body.data.replyParentMerkleRoot,
-        prev_merkle_root: cast.body.prevMerkleRoot,
+        reply_parent_merkle_root: cast.body.data.replyParentMerkleRoot || null,
+        prev_merkle_root: cast.body.prevMerkleRoot || null,
         merkle_root: cast.merkleRoot,
         signature: cast.signature,
-        display_name: cast.meta?.displayName,
-        avatar: cast.meta?.avatar,
-        is_verified_avatar: cast.meta?.isVerifiedAvatar,
-        num_reply_children: cast.meta?.numReplyChildren,
-        reactions: cast.meta?.reactions?.count,
-        recasts: cast.meta?.recasts?.count,
-        watches: cast.meta?.watches?.count,
-        reply_parent_username: cast.meta?.replyParentUsername?.username,
+        display_name: cast.meta?.displayName || null,
+        avatar: cast.meta?.avatar || null,
+        is_verified_avatar: cast.meta?.isVerifiedAvatar || null,
+        num_reply_children: cast.meta?.numReplyChildren || null,
+        reactions: cast.meta?.reactions?.count || null,
+        recasts: cast.meta?.recasts?.count || null,
+        watches: cast.meta?.watches?.count || null,
+        reply_parent_username: cast.meta?.replyParentUsername?.username || null,
       })
     })
 
-    for await (const cast of allCasts) {
-      // Check if there's an existing cast with the same properties
-      const existingCast = existingCasts.find((c) => {
-        return (
-          c.merkle_root === cast.merkle_root &&
-          c.reactions === cast.reactions &&
-          c.recasts === cast.recasts
-        )
-      })
-
-      // Upsert the cast if it doesn't exist or if it has new engagement
-      if (!existingCast) {
-        await prisma.casts.upsert({
-          where: {
-            merkle_root: cast.merkle_root,
-          },
-          create: cast,
-          update: cast,
-        })
-      }
-    }
-
     profilesIndexed++
+  }
+
+  const { count, error: upsertCastError } = await supabase
+    .from('casts')
+    .upsert(allCasts, {
+      count: 'exact',
+      onConflict: 'merkle_root',
+    })
+
+  if (upsertCastError) {
+    console.error(upsertCastError)
+    // console.log(allCasts)
+    return
   }
 
   const endTime = Date.now()
   const secondsTaken = (endTime - startTime) / 1000
   console.log(
-    `Saved ${allCasts.length} casts from ${profilesIndexed} profiles in ${secondsTaken} seconds`
+    `Saved ${count} casts from ${profilesIndexed} profiles in ${secondsTaken} seconds`
   )
 }
 
 async function indexProfiles() {
+  const allProfiles = []
   const startTime = Date.now()
-  const existingProfiles = await prisma.profiles.findMany()
 
   const numberOfProfiles = await registryContract
     .usernamesLength()
@@ -150,7 +152,7 @@ async function indexProfiles() {
         return res
       })
       .catch(() => {
-        console.log(`Error getting directory for @${username}`)
+        console.log(`Error getting directory for @${username} (${i})`)
         return null
       })
 
@@ -168,39 +170,32 @@ async function indexProfiles() {
       signature: directory.signature,
       username: directory.username,
       address_activity: directory.body.addressActivityUrl,
-      avatar: directory.body.avatarUrl,
+      avatar: directory.body.avatarUrl || null,
       proof: directory.body.proofUrl,
       timestamp: directory.body.timestamp,
       version: directory.body.version,
       connected_address: directory.connectedAddress,
     }
 
-    // Check if there's an existing profile with the same properties
-    if (
-      !existingProfiles.find((profile) => {
-        return (
-          profile.address_activity === formatted.address_activity &&
-          profile.avatar === formatted.avatar &&
-          profile.proof === formatted.proof &&
-          profile.connected_address === formatted.connected_address
-        )
-      })
-    ) {
-      // Upsert new/modified profiles to the database
-      await prisma.profiles.upsert({
-        where: {
-          index: formatted.index,
-        },
-        create: formatted,
-        update: formatted,
-      })
-    }
+    allProfiles.push(formatted)
+  }
+
+  const { count: upsertedProfiles, error: upsertErr } = await supabase
+    .from('profiles')
+    .upsert(allProfiles, {
+      count: 'exact',
+    })
+
+  if (upsertErr) {
+    console.log(allProfiles)
+    console.error(upsertErr)
+    return
   }
 
   const endTime = Date.now()
   const secondsTaken = (endTime - startTime) / 1000
   console.log(
-    `Indexed ${numberOfProfiles} directories in ${secondsTaken} seconds`
+    `Indexed ${upsertedProfiles} directories in ${secondsTaken} seconds`
   )
 }
 
