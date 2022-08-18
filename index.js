@@ -169,16 +169,29 @@ async function indexProfiles() {
       })
     }
 
+    const ethereumAddressRegex = /0x[a-fA-F0-9]{40}/
+    let farcasterAddress = directoryUrl.match(ethereumAddressRegex)
+    if (farcasterAddress) {
+      farcasterAddress = farcasterAddress[0]
+    }
+
+    const profile = farcasterAddress
+      ? await getProfileInfo(farcasterAddress)
+      : null
+
     const formatted = {
       index: directory.index,
       merkle_root: directory.merkleRoot,
-      signature: directory.signature,
+      signature: directory.signature || null,
       username: directory.username,
+      display_name: profile?.name || null,
+      followers: profile?.followers || null,
       address_activity: directory.body.addressActivityUrl,
       avatar: directory.body.avatarUrl || null,
       proof: directory.body.proofUrl,
       timestamp: directory.body.timestamp,
       version: directory.body.version,
+      address: farcasterAddress,
       connected_address: directory.connectedAddress,
       wallet_balance: walletBalance,
     }
@@ -189,6 +202,7 @@ async function indexProfiles() {
   const { count: upsertedProfiles, error: upsertErr } = await supabase
     .from('profiles')
     .upsert(allProfiles, {
+      onConflict: 'index',
       count: 'exact',
     })
 
@@ -221,6 +235,12 @@ async function getWalletValue({ address, ethPrice }) {
   )
     .json()
     .then((res) => res.result[0].balance / 1e18)
+
+  const wethBalance = await got(
+    `https://api.etherscan.io/api?module=account&action=tokenbalance&contractaddress=0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2&address=${address}&tag=latest&apikey=${process.env.ETHERSCAN_API_KEY}`
+  )
+    .json()
+    .then((res) => res.result / 1e18)
 
   const nftValueEth = await got(
     `https://api.opensea.io/api/v1/collections?asset_owner=${address}&offset=0&limit=300`
@@ -259,8 +279,20 @@ async function getWalletValue({ address, ethPrice }) {
   const stableCoinBalance = usdcBalance + daiBalance
 
   const total = Math.floor(
-    stableCoinBalance + (ethBalance + nftValueEth) * ethPrice
+    stableCoinBalance + (ethBalance + nftValueEth + wethBalance) * ethPrice
   )
-  console.log(total)
   return total
+}
+
+async function getProfileInfo(farcasterAddress) {
+  return await got(
+    `https://api.farcaster.xyz/indexer/profiles/${farcasterAddress}`
+  )
+    .json()
+    .then((res) => {
+      return {
+        name: res.user.displayName,
+        followers: res.followStats.numFollowers,
+      }
+    })
 }
