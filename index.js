@@ -38,9 +38,7 @@ async function indexCasts() {
   if (!profiles) return
   console.log(`Indexing casts from ${profiles.length} profiles...`)
 
-  for (let i = 10; i < profiles.length; i++) {
-    if (i === 20) break
-
+  for (let i = 0; i < profiles.length; i++) {
     const profile = profiles[i]
     const name = profile.username
 
@@ -95,7 +93,6 @@ async function indexCasts() {
 
   if (upsertCastError) {
     console.error(upsertCastError)
-    // console.log(allCasts)
     return
   }
 
@@ -164,6 +161,14 @@ async function indexProfiles() {
       .then((res) => res.signerAddress)
       .catch(() => null)
 
+    let walletBalance = null
+    if (directory.connectedAddress) {
+      walletBalance = await getWalletValue({
+        address: directory.connectedAddress,
+        ethPrice: 1800,
+      })
+    }
+
     const formatted = {
       index: directory.index,
       merkle_root: directory.merkleRoot,
@@ -175,6 +180,7 @@ async function indexProfiles() {
       timestamp: directory.body.timestamp,
       version: directory.body.version,
       connected_address: directory.connectedAddress,
+      wallet_balance: walletBalance,
     }
 
     allProfiles.push(formatted)
@@ -208,3 +214,53 @@ cron.schedule('0 */2 * * *', () => {
 cron.schedule('*/30 * * * *', () => {
   indexCasts()
 })
+
+async function getWalletValue({ address, ethPrice }) {
+  const ethBalance = await got(
+    `https://api.etherscan.io/api?module=account&action=balancemulti&address=${address}&apikey=${process.env.ETHERSCAN_API_KEY}`
+  )
+    .json()
+    .then((res) => res.result[0].balance / 1e18)
+
+  const nftValueEth = await got(
+    `https://api.opensea.io/api/v1/collections?asset_owner=${address}&offset=0&limit=300`
+  )
+    .json()
+    .then((res) => {
+      const nfts = res.map((collection) => {
+        // return collection
+        return {
+          name: collection.primary_asset_contracts[0]?.name,
+          price: collection.stats.one_day_average_price,
+          count: collection.owned_asset_count,
+        }
+      })
+
+      // Add total price of nfts
+      const totalPrice = nfts.reduce((acc, curr) => {
+        return acc + curr.price * curr.count
+      }, 0)
+
+      return totalPrice
+    })
+
+  const usdcBalance = await got(
+    `https://api.etherscan.io/api?module=account&action=tokenbalance&contractaddress=0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48&address=${address}&tag=latest&apikey=${process.env.ETHERSCAN_API_KEY}`
+  )
+    .json()
+    .then((res) => res.result / 1e6)
+
+  const daiBalance = await got(
+    `https://api.etherscan.io/api?module=account&action=tokenbalance&contractaddress=0x6b175474e89094c44da98b954eedeac495271d0f&address=${address}&tag=latest&apikey=${process.env.ETHERSCAN_API_KEY}`
+  )
+    .json()
+    .then((res) => res.result / 1e18)
+
+  const stableCoinBalance = usdcBalance + daiBalance
+
+  const total = Math.floor(
+    stableCoinBalance + (ethBalance + nftValueEth) * ethPrice
+  )
+  console.log(total)
+  return total
+}
