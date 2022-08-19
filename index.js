@@ -21,6 +21,37 @@ const registryContract = new Contract(
   provider
 )
 
+const tokenAddress = {
+  stEth: {
+    id: 'staked-ether',
+    address: '0xae7ab96520de3a18e5e111b5eaab095312d7fe84',
+  },
+  weth: {
+    address: '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2',
+  },
+  usdc: {
+    address: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
+  },
+  usdt: {
+    address: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
+  },
+  dai: {
+    address: '0x6B175474E89094C44Da98b954EedeAC495271d0F',
+  },
+  ape: {
+    id: 'apecoin',
+    address: '0x4d224452801ACEd8B2F0aebE155379bb5D594381',
+  },
+  rpl: {
+    id: 'rocket-pool',
+    address: '0xD33526068D116cE69F19A9ee46F0bd304F21A51f',
+  },
+  ens: {
+    id: 'ethereum-name-service',
+    address: '0xC18360217D8F7Ab5e7c516566761Ea12Ce7F9D72',
+  },
+}
+
 /**
  * Index all profiles in the Farcaster account registry and insert them into a Supabase table.
  */
@@ -124,6 +155,10 @@ async function indexProfiles() {
   console.log(`Indexing ${numberOfProfiles} profiles...`)
 
   const ethPrice = await getEthPrice()
+  const apePrice = await getErc20Price(tokenAddress.ape.id)
+  const rplPrice = await getErc20Price(tokenAddress.rpl.id)
+  const ensPrice = await getErc20Price(tokenAddress.ens.id)
+  const stEthPrice = await getErc20Price(tokenAddress.stEth.id)
 
   for (let i = 0; i < numberOfProfiles; i++) {
     const byte32Name = await registryContract.usernameAtIndex(i).catch(() => {
@@ -173,7 +208,11 @@ async function indexProfiles() {
     if (directory.connectedAddress) {
       walletBalance = await getWalletValue({
         address: directory.connectedAddress,
-        ethPrice: ethPrice,
+        ethPrice,
+        apePrice,
+        rplPrice,
+        ensPrice,
+        stEthPrice,
       })
     }
 
@@ -243,58 +282,90 @@ cron.schedule('*/30 * * * *', () => {
  * @param {number} ethPrice Current price of Ethereum in USD
  * @returns Value of the tokens in the wallet in USD
  */
-async function getWalletValue({ address, ethPrice }) {
+async function getWalletValue({
+  address,
+  ethPrice,
+  apePrice,
+  rplPrice,
+  ensPrice,
+  stEthPrice,
+}) {
   const ethBalance = await got(
     `https://api.etherscan.io/api?module=account&action=balancemulti&address=${address}&apikey=${process.env.ETHERSCAN_API_KEY}`
   )
     .json()
     .then((res) => res.result[0].balance / 1e18)
 
-  const wethBalance = await got(
-    `https://api.etherscan.io/api?module=account&action=tokenbalance&contractaddress=0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2&address=${address}&tag=latest&apikey=${process.env.ETHERSCAN_API_KEY}`
-  )
-    .json()
-    .then((res) => res.result / 1e18)
+  const wethBalance = await getErc20Balance({
+    address,
+    tokenAddress: tokenAddress.weth.address,
+    decimals: 1e18,
+  })
 
-  const nftValueEth = await got(
-    `https://api.opensea.io/api/v1/collections?asset_owner=${address}&offset=0&limit=300`
-  )
-    .json()
-    .then((res) => {
-      const nfts = res.map((collection) => {
-        // return collection
-        return {
-          name: collection.primary_asset_contracts[0]?.name,
-          price: collection.stats.one_day_average_price,
-          count: collection.owned_asset_count,
-        }
-      })
+  const usdtBalance = await getErc20Balance({
+    address,
+    tokenAddress: tokenAddress.usdt.address,
+    decimals: 1e6,
+  })
 
-      // Add total price of nfts
-      const totalPrice = nfts.reduce((acc, curr) => {
-        return acc + curr.price * curr.count
-      }, 0)
+  const rplBalance = await getErc20Balance({
+    address,
+    tokenAddress: tokenAddress.rpl.address,
+    decimals: 1e18,
+  })
 
-      return totalPrice
-    })
+  const stEthBalance = await getErc20Balance({
+    address,
+    tokenAddress: tokenAddress.stEth.address,
+    decimals: 1e18,
+  })
 
-  const usdcBalance = await got(
-    `https://api.etherscan.io/api?module=account&action=tokenbalance&contractaddress=0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48&address=${address}&tag=latest&apikey=${process.env.ETHERSCAN_API_KEY}`
-  )
-    .json()
-    .then((res) => res.result / 1e6)
+  const apeBalance = await getErc20Balance({
+    address,
+    tokenAddress: tokenAddress.ape.address,
+    decimals: 1e18,
+  })
 
-  const daiBalance = await got(
-    `https://api.etherscan.io/api?module=account&action=tokenbalance&contractaddress=0x6b175474e89094c44da98b954eedeac495271d0f&address=${address}&tag=latest&apikey=${process.env.ETHERSCAN_API_KEY}`
-  )
-    .json()
-    .then((res) => res.result / 1e18)
+  const ensBalance = await getErc20Balance({
+    address,
+    tokenAddress: tokenAddress.ens.address,
+    decimals: 1e18,
+  })
 
-  const stableCoinBalance = usdcBalance + daiBalance
+  const usdcBalance = await getErc20Balance({
+    address,
+    tokenAddress: tokenAddress.usdc.address,
+    decimals: 1e6,
+  })
+
+  const daiBalance = await getErc20Balance({
+    address,
+    tokenAddress: tokenAddress.dai.address,
+    decimals: 1e18,
+  })
+
+  const ethValue = ethPrice * ethBalance
+  const wethValue = ethPrice * wethBalance
+  const rplValue = rplPrice * rplBalance
+  const apeValue = apePrice * apeBalance
+  const ensValue = ensPrice * ensBalance
+  const stEthValue = stEthPrice * stEthBalance
+  const stableCoinValue = usdcBalance + daiBalance + usdtBalance
+
+  const nftValueEth = await getNftCollectionValue(address)
+  const nftValue = ethPrice * nftValueEth
 
   const total = Math.floor(
-    stableCoinBalance + (ethBalance + nftValueEth + wethBalance) * ethPrice
+    ethValue +
+      wethValue +
+      rplValue +
+      apeValue +
+      ensValue +
+      stEthValue +
+      stableCoinValue +
+      nftValue
   )
+
   return total
 }
 
@@ -326,4 +397,67 @@ async function getEthPrice() {
   )
     .json()
     .then((res) => res.ethereum.usd)
+}
+
+/**
+ * Get the price of an ERC-20 token in USD.
+ * @param {string} coinId Coingecko ID of the token
+ * @returns {number} Current price of the ERC-20 token in USD
+ */
+async function getErc20Price(coinId) {
+  return await got(
+    `https://api.coingecko.com/api/v3/simple/price?ids=${coinId}&vs_currencies=usd`
+  )
+    .json()
+    .then((res) => res[coinId].usd)
+}
+
+/**
+ * Get the balance of an ERC-20 token in a wallet.
+ * @param {string} address Ethereum address of the wallet
+ * @param {string} tokenAddress Contract address of the ERC-20 token
+ * @returns {number} Balance of the ERC-20 token in the wallet
+ */
+async function getErc20Balance({ address, tokenAddress, decimals }) {
+  return await got(
+    `https://api.etherscan.io/api?module=account&action=tokenbalance&contractaddress=${tokenAddress}&address=${address}&tag=latest&apikey=${process.env.ETHERSCAN_API_KEY}`
+  )
+    .json()
+    .then((res) => {
+      if (res.status === '0') {
+        console.error('Error getting ERC-20 balance.', res.result)
+        return 0
+      } else {
+        return res.result / decimals
+      }
+    })
+}
+
+/**
+ * Get the estimated value of an NFT collection.
+ * @param {*} address Ethereum address
+ * @returns {number} Estimated value of the NFT collection in ETH
+ */
+async function getNftCollectionValue(address) {
+  return await got(
+    `https://api.opensea.io/api/v1/collections?asset_owner=${address}&offset=0&limit=300`
+  )
+    .json()
+    .then((res) => {
+      const nfts = res.map((collection) => {
+        // return collection
+        return {
+          name: collection.primary_asset_contracts[0]?.name,
+          price: collection.stats.one_day_average_price,
+          count: collection.owned_asset_count,
+        }
+      })
+
+      // Add total price of nfts
+      const totalPrice = nfts.reduce((acc, curr) => {
+        return acc + curr.price * curr.count
+      }, 0)
+
+      return totalPrice
+    })
 }
