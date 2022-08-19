@@ -15,15 +15,15 @@ ORDER BY
 SELECT SUM(wallet_balance) FROM profiles;
 
 
--- Casts per hour over the last 4 weeks, with day label
+-- Casts per hour over the last 7 days with day label
 SELECT
   date_trunc('hour', (to_timestamp(casts.published_at / 1000))) AS hour,
   COUNT(*) AS num_casts,
   date_part('dow', (to_timestamp(casts.published_at / 1000))) AS dow
 FROM casts
+WHERE (to_timestamp(casts.published_at / 1000) > (now() - interval '7 days'))
 GROUP BY hour, dow
-ORDER BY hour DESC
-LIMIT 24 * 28;
+ORDER BY dow, hour ASC;
 
 
 -- Unique monthly casters
