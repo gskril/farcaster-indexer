@@ -8,7 +8,7 @@
     "node-cron": "3.0.0"
   },
   "scripts": {
-    "start": "node index"
+    "start": "node src/index"
   },
   "type": "module",
   "author": "Greg Skriloff",
