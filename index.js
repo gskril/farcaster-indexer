@@ -21,6 +21,9 @@ const registryContract = new Contract(
   provider
 )
 
+/**
+ * Index all profiles in the Farcaster account registry and insert them into a Supabase table.
+ */
 async function indexCasts() {
   const startTime = Date.now()
 
@@ -103,6 +106,9 @@ async function indexCasts() {
   )
 }
 
+/**
+ * Index all profiles in the Farcaster account registry and insert them into a Supabase table.
+ */
 async function indexProfiles() {
   const allProfiles = []
   const startTime = Date.now()
@@ -116,6 +122,8 @@ async function indexProfiles() {
 
   if (numberOfProfiles === 0) return
   console.log(`Indexing ${numberOfProfiles} profiles...`)
+
+  const ethPrice = await getEthPrice()
 
   for (let i = 0; i < numberOfProfiles; i++) {
     const byte32Name = await registryContract.usernameAtIndex(i).catch(() => {
@@ -165,7 +173,7 @@ async function indexProfiles() {
     if (directory.connectedAddress) {
       walletBalance = await getWalletValue({
         address: directory.connectedAddress,
-        ethPrice: 1800,
+        ethPrice: ethPrice,
       })
     }
 
@@ -229,6 +237,12 @@ cron.schedule('*/30 * * * *', () => {
   indexCasts()
 })
 
+/**
+ * Get the value of certain tokens in an Ethereum wallet.
+ * @param {string} address Ethereum address of the wallet
+ * @param {number} ethPrice Current price of Ethereum in USD
+ * @returns Value of the tokens in the wallet in USD
+ */
 async function getWalletValue({ address, ethPrice }) {
   const ethBalance = await got(
     `https://api.etherscan.io/api?module=account&action=balancemulti&address=${address}&apikey=${process.env.ETHERSCAN_API_KEY}`
@@ -284,6 +298,11 @@ async function getWalletValue({ address, ethPrice }) {
   return total
 }
 
+/**
+ * Get the display name and follower count of a Farcaster profile.
+ * @param {string} address Farcaster account address
+ * @returns {object} Object with a profile's display name and follower count
+ */
 async function getProfileInfo(farcasterAddress) {
   return await got(
     `https://api.farcaster.xyz/indexer/profiles/${farcasterAddress}`
@@ -295,4 +314,16 @@ async function getProfileInfo(farcasterAddress) {
         followers: res.followStats.numFollowers,
       }
     })
+}
+
+/**
+ * Get the price of ether in USD.
+ * @returns {number} Current price of ether in USD
+ */
+async function getEthPrice() {
+  return await got(
+    'https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd'
+  )
+    .json()
+    .then((res) => res.ethereum.usd)
 }
