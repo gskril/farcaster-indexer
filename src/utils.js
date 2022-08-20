@@ -178,10 +178,21 @@ export async function getErc20Balance({ address, tokenAddress, decimals }) {
     `https://api.etherscan.io/api?module=account&action=tokenbalance&contractaddress=${tokenAddress}&address=${address}&tag=latest&apikey=${process.env.ETHERSCAN_API_KEY}`
   )
     .json()
-    .then((res) => {
+    .then(async (res) => {
       if (res.status === '0') {
-        console.error('Error getting ERC-20 balance.', res.result)
-        return 0
+        console.error(
+          'Error getting ERC-20 balance. Checking fallback.',
+          res.result
+        )
+        return await got(
+          `https://erc20-balance.vercel.app/api/balance?token=${tokenAddress}&owner=${address}&decimals=${decimals}`
+        )
+          .json()
+          .then((res) => {
+            console.log('Fallback custom API worked')
+            return Number(res.balance)
+          })
+          .catch(() => 0)
       } else {
         return res.result / decimals
       }
