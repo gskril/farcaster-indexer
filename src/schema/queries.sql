@@ -26,13 +26,23 @@ GROUP BY hour, dow
 ORDER BY dow, hour ASC;
 
 
--- Unique monthly casters
+-- List of unique monthly casters
 SELECT DISTINCT
   address
 FROM
   casts
 WHERE
   to_timestamp((casts.published_at / 1000))::date > (now() - '30 days'::interval);
+
+
+-- Number of unique casters per week over the last year
+SELECT
+  date_trunc('week', (to_timestamp(casts.published_at / 1000))) AS week,
+  COUNT(DISTINCT address) AS count
+FROM casts
+WHERE (to_timestamp(casts.published_at / 1000) > (now() - interval '1 year'))
+GROUP BY week
+ORDER BY week DESC;
 
 
 -- Farcaster profiles with verified NFT avatar
