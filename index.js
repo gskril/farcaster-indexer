@@ -194,6 +194,6 @@ cron.schedule('0 */2 * * *', () => {
 })
 
 // Run job 30 mins
-cron.schedule('*/30 * * * *', () => {
+cron.schedule('*/40 * * * *', () => {
   indexCasts()
 })
