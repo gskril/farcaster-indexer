@@ -5,15 +5,16 @@ CREATE TABLE profiles (
   "signature" text,
   "username" text,
   "display_name" text,
+  "bio" text,
   "followers" int4,
   "address_activity" text,
   "avatar" text,
   "proof" text,
   "timestamp" int8,
+  "registered_at" int8,
   "version" int2,
   "address" text,
-  "connected_address" text,
-  "wallet_balance" int4,
+  "connected_address" text
 );
 
 -- Casts Table Definition
@@ -31,8 +32,11 @@ CREATE TABLE casts (
   "avatar" text,
   "is_verified_avatar" bool,
   "num_reply_children" int2,
-  "reactions" int2,
+  "reaction_count" int2,
+  "reaction_type" text,
   "recasts" int2,
   "watches" int2,
   "reply_parent_username" text,
+  "mentions" jsonb,
+  "uri" text
 );

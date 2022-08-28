@@ -1,17 +1,11 @@
 import 'dotenv/config'
 import got from 'got'
 import cron from 'node-cron'
-import abi from './registry-abi.js'
 import { providers, Contract, utils } from 'ethers'
 import { createClient } from '@supabase/supabase-js'
 
-import {
-  tokenAddress,
-  getWalletValue,
-  getProfileInfo,
-  getEthPrice,
-  getErc20Price,
-} from './utils.js'
+import abi from './registry-abi.js'
+import { breakIntoChunks, cleanUserActivity, getProfileInfo } from './utils.js'
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -62,15 +56,15 @@ async function indexCasts() {
 
     if (!activity) continue
 
-    // Remove deleted casts and recasts
-    const cleanedActivity = activity.filter((cast) => {
-      return (
-        !cast.body.data.text.startsWith('delete:') &&
-        !cast.body.data.text.startsWith('recast:')
-      )
-    })
+    // Exclude deletes and recasts
+    const cleanedActivity = cleanUserActivity(activity)
 
     cleanedActivity.map((cast) => {
+      // TODO: add URI support for non-parent casts
+      const uri = cast.body.data.replyParentMerkleRoot
+        ? null
+        : `farcaster://casts/${cast.merkleRoot}/${cast.merkleRoot}`
+
       allCasts.push({
         published_at: cast.body.publishedAt,
         sequence: cast.body.sequence,
@@ -85,32 +79,41 @@ async function indexCasts() {
         avatar: cast.meta?.avatar || null,
         is_verified_avatar: cast.meta?.isVerifiedAvatar || null,
         num_reply_children: cast.meta?.numReplyChildren || null,
-        reactions: cast.meta?.reactions?.count || null,
+        reaction_type: cast.meta?.reactions?.type || null,
+        reaction_count: cast.meta?.reactions?.count || null,
         recasts: cast.meta?.recasts?.count || null,
         watches: cast.meta?.watches?.count || null,
         reply_parent_username: cast.meta?.replyParentUsername?.username || null,
+        mentions: cast.meta?.mentions || null,
+        uri,
       })
     })
 
     profilesIndexed++
   }
 
-  const { count, error: upsertCastError } = await supabase
-    .from('casts')
-    .upsert(allCasts, {
+  // Break allCasts into chunks of 1000
+  const chunks = breakIntoChunks(allCasts, 1000)
+
+  // Upsert each chunk into the Supabase table
+  for (let i = 0; i < chunks.length; i++) {
+    const chunk = chunks[i]
+
+    const { error } = await supabase.from('casts').upsert(chunk, {
       count: 'exact',
       onConflict: 'merkle_root',
     })
 
-  if (upsertCastError) {
-    console.error(upsertCastError)
-    return
+    if (error) {
+      console.error(error)
+      return
+    }
   }
 
   const endTime = Date.now()
   const secondsTaken = (endTime - startTime) / 1000
   console.log(
-    `Saved ${count} casts from ${profilesIndexed} profiles in ${secondsTaken} seconds`
+    `Saved casts from ${profilesIndexed} profiles in ${secondsTaken} seconds`
   )
 }
 
@@ -131,12 +134,6 @@ async function indexProfiles() {
   if (numberOfProfiles === 0) return
   console.log(`Indexing ${numberOfProfiles} profiles...`)
 
-  const ethPrice = await getEthPrice()
-  const apePrice = await getErc20Price(tokenAddress.ape.id)
-  const rplPrice = await getErc20Price(tokenAddress.rpl.id)
-  const ensPrice = await getErc20Price(tokenAddress.ens.id)
-  const stEthPrice = await getErc20Price(tokenAddress.stEth.id)
-
   for (let i = 0; i < numberOfProfiles; i++) {
     const byte32Name = await registryContract.usernameAtIndex(i).catch(() => {
       console.log(`Could not get username at index ${i}`)
@@ -149,6 +146,8 @@ async function indexProfiles() {
 
     // Skip test accounts
     if (username.startsWith('__tt_')) continue
+    // Skip unregistered accounts (TODO: read this from the contract)
+    if (username === 'spoon' || username === 'gdip') continue
 
     // Get directory URL from contract
     const directoryUrl = await registryContract
@@ -181,18 +180,6 @@ async function indexProfiles() {
       .then((res) => res.signerAddress)
       .catch(() => null)
 
-    let walletBalance = null
-    if (directory.connectedAddress) {
-      walletBalance = await getWalletValue({
-        address: directory.connectedAddress,
-        ethPrice,
-        apePrice,
-        rplPrice,
-        ensPrice,
-        stEthPrice,
-      })
-    }
-
     const ethereumAddressRegex = /0x[a-fA-F0-9]{40}/
     let farcasterAddress = directoryUrl.match(ethereumAddressRegex)
     if (farcasterAddress) {
@@ -209,38 +196,42 @@ async function indexProfiles() {
       signature: directory.signature || null,
       username: directory.username,
       display_name: profile?.name || null,
+      bio: profile?.bio || null,
       followers: profile?.followers || null,
       address_activity: directory.body.addressActivityUrl,
       avatar: directory.body.avatarUrl || null,
       proof: directory.body.proofUrl,
       timestamp: directory.body.timestamp,
+      registered_at: profile?.registeredAt || null,
       version: directory.body.version,
       address: farcasterAddress,
       connected_address: directory.connectedAddress,
-      wallet_balance: walletBalance,
     }
 
     allProfiles.push(formatted)
   }
 
-  const { count: upsertedProfiles, error: upsertErr } = await supabase
-    .from('profiles')
-    .upsert(allProfiles, {
+  // Break allProfiles into chunks of 1000
+  const chunks = breakIntoChunks(allProfiles, 1000)
+
+  // Upsert each chunk into the Supabase table
+  for (let i = 0; i < chunks.length; i++) {
+    const chunk = chunks[i]
+
+    const { error } = await supabase.from('profiles').upsert(chunk, {
       onConflict: 'index',
       count: 'exact',
     })
 
-  if (upsertErr) {
-    console.log(allProfiles)
-    console.error(upsertErr)
-    return
+    if (error) {
+      console.error(error)
+      return
+    }
   }
 
   const endTime = Date.now()
   const secondsTaken = (endTime - startTime) / 1000
-  console.log(
-    `Indexed ${upsertedProfiles} directories in ${secondsTaken} seconds`
-  )
+  console.log(`Indexed directories in ${secondsTaken} seconds`)
 }
 
 // Run job every 2 hours
