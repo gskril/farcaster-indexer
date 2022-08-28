@@ -77,7 +77,7 @@ async function indexCasts() {
         signature: cast.signature,
         display_name: cast.meta?.displayName || null,
         avatar: cast.meta?.avatar || null,
-        is_verified_avatar: cast.meta?.isVerifiedAvatar || null,
+        is_verified_avatar: cast.meta?.isVerifiedAvatar || false,
         num_reply_children: cast.meta?.numReplyChildren || null,
         reaction_type: cast.meta?.reactions?.type || null,
         reaction_count: cast.meta?.reactions?.count || null,
