@@ -1,0 +1,57 @@
+import got from 'got'
+
+/**
+ * Get the display name and follower count of a Farcaster profile.
+ * @param {string} address Farcaster account address
+ * @returns {object} Object with a profile's display name and follower count
+ */
+export async function getProfileInfo(farcasterAddress) {
+  return await got(
+    `https://api.farcaster.xyz/indexer/profiles/${farcasterAddress}`
+  )
+    .json()
+    .then((res) => {
+      return {
+        name: res.user.displayName,
+        followers: res.followStats.numFollowers,
+        bio: res.user.profile?.bio?.text,
+        registeredAt: res.user.registeredAt,
+      }
+    })
+}
+
+export function cleanUserActivity(activity) {
+  // Get the merkle root of all casts that were deleted by the user
+  const deletedCasts = activity
+    .filter((cast) => {
+      return cast.body.data.text.startsWith('delete:farcaster://casts/')
+    })
+    .map((cast) => {
+      return cast.body.data.text.split('delete:farcaster://casts/')[1]
+    })
+
+  // Remove deleted casts and recasts
+  const cleanedActivity = activity.filter((cast) => {
+    return (
+      !cast.body.data.text.startsWith('delete:') &&
+      !cast.body.data.text.startsWith('recast:') &&
+      !deletedCasts.includes(cast.merkleRoot)
+    )
+  })
+
+  return cleanedActivity
+}
+
+/**
+ * Break a large array into smaller chunks.
+ * @param {array} array Array to break into smaller chunks
+ * @param {number} chunkSize Size of each chunk
+ * @returns {array} Array of smaller chunks
+ */
+export function breakIntoChunks(array, chunkSize) {
+  const chunks = []
+  for (let i = 0; i < array.length; i += chunkSize) {
+    chunks.push(array.slice(i, i + chunkSize))
+  }
+  return chunks
+}
