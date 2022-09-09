@@ -18,6 +18,10 @@ export async function getProfileInfo(farcasterAddress) {
         registeredAt: res.user.registeredAt,
       }
     })
+    .catch((err) => {
+      console.error(`Error getting profile info for ${farcasterAddress}.`, err)
+      return null
+    })
 }
 
 export function cleanUserActivity(activity) {
