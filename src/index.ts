@@ -35,21 +35,15 @@ const eventToWatch: IdRegistryEvents = 'Register'
 idRegistry.on(eventToWatch, async (to, id) => {
   console.log('New user registered.', Number(id), to)
 
-  const profile = await getProfileInfo(to)
-
   const { error } = await supabase.from('profiles_new').upsert({
     id: Number(id),
     address: to,
-    username: profile?.username || null,
-    display_name: profile?.displayName || null,
-    followers: profile?.followerCount || null,
-    following: profile?.followingCount || null,
-    referrer: profile?.referrerUsername || null,
   })
 
   if (error) {
-    console.error(error)
+    throw error
   } else {
+    console.log('Successfully added profile.')
   }
 })
 
