@@ -28,7 +28,7 @@ export interface FlattenedProfile {
   avatar_verified?: boolean
   followers?: number
   following?: number
-  bio?: string
+  bio?: string | null
   telegram?: string | null
   referrer?: string | null
   connected_address?: string
