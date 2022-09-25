@@ -1,5 +1,4 @@
 export interface Profile {
-  id: number
   address: string
   username: string
   displayName: string
@@ -30,8 +29,8 @@ export interface FlattenedProfile {
   followers?: number
   following?: number
   bio?: string
-  telegram?: string
-  referrer?: string
+  telegram?: string | null
+  referrer?: string | null
   connected_address?: string
   registered_at?: Date
   updated_at?: Date
