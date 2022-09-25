@@ -4,14 +4,6 @@ import {
   BigNumber,
   BigNumberish,
 } from 'ethers'
-import { EthersContractContextV5 } from 'ethereum-abi-types-generator'
-
-export type ContractContext = EthersContractContextV5<
-  NameRegistry,
-  NameRegistryMethodNames,
-  NameRegistryEventsContext,
-  NameRegistryEvents
->
 
 export declare type EventFilter = {
   address?: string

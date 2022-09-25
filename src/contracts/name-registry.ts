@@ -1,7 +1,5 @@
 export const nameRegistryAddr = '0xe3be01d99baa8db9905b33a3ca391238234b79d1'
 
-export * from './types/name-registry'
-
 export const nameRegistryAbi = [
   { inputs: [], name: 'CallFailed', type: 'error' },
   { inputs: [], name: 'CommitReplay', type: 'error' },

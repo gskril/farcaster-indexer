@@ -1,7 +1,5 @@
 export const idRegistryAddr = '0xda107a1caf36d198b12c16c7b6a1d1c795978c42'
 
-export * from './types/id-registry'
-
 export const idRegistryAbi = [
   { inputs: [], name: 'Escrow', type: 'error' },
   { inputs: [], name: 'HasId', type: 'error' },
