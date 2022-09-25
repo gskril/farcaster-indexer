@@ -1,11 +1,8 @@
 export const idRegistryAddr = '0xda107a1caf36d198b12c16c7b6a1d1c795978c42'
 
+export * from './types/id-registry'
+
 export const idRegistryAbi = [
-  {
-    inputs: [{ internalType: 'address', name: '_forwarder', type: 'address' }],
-    stateMutability: 'nonpayable',
-    type: 'constructor',
-  },
   { inputs: [], name: 'Escrow', type: 'error' },
   { inputs: [], name: 'HasId', type: 'error' },
   { inputs: [], name: 'HasNoId', type: 'error' },
@@ -16,8 +13,18 @@ export const idRegistryAbi = [
   {
     anonymous: false,
     inputs: [
-      { indexed: true, internalType: 'address', name: 'by', type: 'address' },
-      { indexed: true, internalType: 'uint256', name: 'id', type: 'uint256' },
+      {
+        indexed: true,
+        internalType: 'address',
+        name: 'by',
+        type: 'address',
+      },
+      {
+        indexed: true,
+        internalType: 'uint256',
+        name: 'id',
+        type: 'uint256',
+      },
     ],
     name: 'CancelRecovery',
     type: 'event',
@@ -25,8 +32,18 @@ export const idRegistryAbi = [
   {
     anonymous: false,
     inputs: [
-      { indexed: true, internalType: 'uint256', name: 'id', type: 'uint256' },
-      { indexed: false, internalType: 'string', name: 'url', type: 'string' },
+      {
+        indexed: true,
+        internalType: 'uint256',
+        name: 'id',
+        type: 'uint256',
+      },
+      {
+        indexed: false,
+        internalType: 'string',
+        name: 'url',
+        type: 'string',
+      },
     ],
     name: 'ChangeHome',
     type: 'event',
@@ -34,7 +51,12 @@ export const idRegistryAbi = [
   {
     anonymous: false,
     inputs: [
-      { indexed: true, internalType: 'uint256', name: 'id', type: 'uint256' },
+      {
+        indexed: true,
+        internalType: 'uint256',
+        name: 'id',
+        type: 'uint256',
+      },
       {
         indexed: true,
         internalType: 'address',
@@ -58,7 +80,12 @@ export const idRegistryAbi = [
     name: 'ChangeTrustedCaller',
     type: 'event',
   },
-  { anonymous: false, inputs: [], name: 'DisableTrustedOnly', type: 'event' },
+  {
+    anonymous: false,
+    inputs: [],
+    name: 'DisableTrustedOnly',
+    type: 'event',
+  },
   {
     anonymous: false,
     inputs: [
@@ -81,15 +108,30 @@ export const idRegistryAbi = [
   {
     anonymous: false,
     inputs: [
-      { indexed: true, internalType: 'address', name: 'to', type: 'address' },
-      { indexed: true, internalType: 'uint256', name: 'id', type: 'uint256' },
+      {
+        indexed: true,
+        internalType: 'address',
+        name: 'to',
+        type: 'address',
+      },
+      {
+        indexed: true,
+        internalType: 'uint256',
+        name: 'id',
+        type: 'uint256',
+      },
       {
         indexed: false,
         internalType: 'address',
         name: 'recovery',
         type: 'address',
       },
-      { indexed: false, internalType: 'string', name: 'url', type: 'string' },
+      {
+        indexed: false,
+        internalType: 'string',
+        name: 'url',
+        type: 'string',
+      },
     ],
     name: 'Register',
     type: 'event',
@@ -103,8 +145,18 @@ export const idRegistryAbi = [
         name: 'from',
         type: 'address',
       },
-      { indexed: true, internalType: 'address', name: 'to', type: 'address' },
-      { indexed: true, internalType: 'uint256', name: 'id', type: 'uint256' },
+      {
+        indexed: true,
+        internalType: 'address',
+        name: 'to',
+        type: 'address',
+      },
+      {
+        indexed: true,
+        internalType: 'uint256',
+        name: 'id',
+        type: 'uint256',
+      },
     ],
     name: 'RequestRecovery',
     type: 'event',
@@ -118,8 +170,18 @@ export const idRegistryAbi = [
         name: 'from',
         type: 'address',
       },
-      { indexed: true, internalType: 'address', name: 'to', type: 'address' },
-      { indexed: true, internalType: 'uint256', name: 'id', type: 'uint256' },
+      {
+        indexed: true,
+        internalType: 'address',
+        name: 'to',
+        type: 'address',
+      },
+      {
+        indexed: true,
+        internalType: 'uint256',
+        name: 'id',
+        type: 'uint256',
+      },
     ],
     name: 'Transfer',
     type: 'event',
@@ -146,31 +208,8 @@ export const idRegistryAbi = [
     type: 'function',
   },
   {
-    inputs: [
-      { internalType: 'address', name: '_trustedCaller', type: 'address' },
-    ],
-    name: 'changeTrustedCaller',
-    outputs: [],
-    stateMutability: 'nonpayable',
-    type: 'function',
-  },
-  {
     inputs: [{ internalType: 'address', name: 'from', type: 'address' }],
     name: 'completeRecovery',
-    outputs: [],
-    stateMutability: 'nonpayable',
-    type: 'function',
-  },
-  {
-    inputs: [],
-    name: 'completeTransferOwnership',
-    outputs: [],
-    stateMutability: 'nonpayable',
-    type: 'function',
-  },
-  {
-    inputs: [],
-    name: 'disableTrustedOnly',
     outputs: [],
     stateMutability: 'nonpayable',
     type: 'function',
@@ -179,20 +218,6 @@ export const idRegistryAbi = [
     inputs: [{ internalType: 'address', name: '', type: 'address' }],
     name: 'idOf',
     outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }],
-    stateMutability: 'view',
-    type: 'function',
-  },
-  {
-    inputs: [{ internalType: 'address', name: 'forwarder', type: 'address' }],
-    name: 'isTrustedForwarder',
-    outputs: [{ internalType: 'bool', name: '', type: 'bool' }],
-    stateMutability: 'view',
-    type: 'function',
-  },
-  {
-    inputs: [],
-    name: 'owner',
-    outputs: [{ internalType: 'address', name: '', type: 'address' }],
     stateMutability: 'view',
     type: 'function',
   },
@@ -208,13 +233,6 @@ export const idRegistryAbi = [
     type: 'function',
   },
   {
-    inputs: [],
-    name: 'renounceOwnership',
-    outputs: [],
-    stateMutability: 'nonpayable',
-    type: 'function',
-  },
-  {
     inputs: [
       { internalType: 'address', name: 'from', type: 'address' },
       { internalType: 'address', name: 'to', type: 'address' },
@@ -222,27 +240,6 @@ export const idRegistryAbi = [
     name: 'requestRecovery',
     outputs: [],
     stateMutability: 'nonpayable',
-    type: 'function',
-  },
-  {
-    inputs: [{ internalType: 'address', name: 'newOwner', type: 'address' }],
-    name: 'requestTransferOwnership',
-    outputs: [],
-    stateMutability: 'nonpayable',
-    type: 'function',
-  },
-  {
-    inputs: [{ internalType: 'address', name: 'to', type: 'address' }],
-    name: 'transfer',
-    outputs: [],
-    stateMutability: 'nonpayable',
-    type: 'function',
-  },
-  {
-    inputs: [{ internalType: 'address', name: '', type: 'address' }],
-    name: 'transferOwnership',
-    outputs: [],
-    stateMutability: 'view',
     type: 'function',
   },
   {
