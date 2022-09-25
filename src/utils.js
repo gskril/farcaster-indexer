@@ -6,16 +6,15 @@ import got from 'got'
  * @returns {object} Object with a profile's display name and follower count
  */
 export async function getProfileInfo(farcasterAddress) {
-  return await got(
-    `https://api.farcaster.xyz/indexer/profiles/${farcasterAddress}`
-  )
+  return await got(`https://api.farcaster.xyz/v1/profiles/${farcasterAddress}`)
     .json()
     .then((res) => {
+      const user = res.result.user
       return {
-        name: res.user.displayName,
-        followers: res.followStats.numFollowers,
-        bio: res.user.profile?.bio?.text,
-        registeredAt: res.user.registeredAt,
+        name: user.displayName,
+        followers: user.followerCount,
+        following: user.followingCount,
+        bio: user.profile?.bio?.text,
       }
     })
     .catch((err) => {
