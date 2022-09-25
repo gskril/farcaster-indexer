@@ -6,7 +6,7 @@
   "scripts": {
     "build": "tsc",
     "clean": "rm -rf ./dist",
-    "start": "node src/index"
+    "start": "tsc && node ./dist/index"
   },
   "dependencies": {
     "@supabase/supabase-js": "^1.35.6",
