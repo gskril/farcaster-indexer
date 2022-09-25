@@ -1,4 +1,9 @@
-import { ContractTransaction, BigNumber, BigNumberish } from 'ethers'
+import {
+  ContractTransaction,
+  BigNumber,
+  BigNumberish,
+  BaseContract,
+} from 'ethers'
 
 export declare type EventFilter = {
   address?: string
@@ -105,7 +110,7 @@ export interface TransferEventEmittedResponse {
   to: string
   id: BigNumberish
 }
-export interface IdRegistry {
+export interface IdRegistry extends BaseContract {
   /**
    * Payable: false
    * Constant: false

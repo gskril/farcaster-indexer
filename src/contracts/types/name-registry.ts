@@ -3,6 +3,7 @@ import {
   BytesLike as Arrayish,
   BigNumber,
   BigNumberish,
+  BaseContract,
 } from 'ethers'
 
 export declare type EventFilter = {
@@ -230,7 +231,7 @@ export interface UnpausedEventEmittedResponse {
 export interface UpgradedEventEmittedResponse {
   implementation: string
 }
-export interface NameRegistry {
+export interface NameRegistry extends BaseContract {
   /**
    * Payable: false
    * Constant: true
