@@ -17,7 +17,7 @@ import {
 import { nameRegistryAddr, nameRegistryAbi } from './contracts/name-registry.js'
 
 import { breakIntoChunks, cleanUserActivity, getProfileInfo } from './utils.js'
-import { getIdRegistryEvents } from './contracts/utils.js'
+import { getIdRegistryEvents } from './functions/read-logs.js'
 
 // Set up the provider
 const ALCHEMY_SECRET = process.env.ALCHEMY_SECRET
@@ -31,12 +31,36 @@ const idRegistry = new Contract(
 ) as IdRegistry
 
 const eventToWatch: IdRegistryEvents = 'Register'
-idRegistry.on(eventToWatch, async (to, id, recovery, url) => {
-  console.log('New user registered.', to, id)
+idRegistry.on(eventToWatch, async (to, id) => {
+  console.log('New user registered.', Number(id), to)
+
+  const profile = await getProfileInfo(to)
+
+  const { error } = await supabase.from('profiles_new').upsert({
+    id: Number(id),
+    address: to,
+    username: profile?.username || null,
+    display_name: profile?.displayName || null,
+    followers: profile?.followerCount || null,
+    following: profile?.followingCount || null,
+    referrer: profile?.referrerUsername || null,
+  })
+
+  if (error) {
+    console.error(error)
+  } else {
+  }
 })
 
+// ONE TIME DUMP ↓ should normally add by listening to contract events like above
 // Get all logs from the ID Registry contract since creation
-await getIdRegistryEvents({
+const registrations = await getIdRegistryEvents({
   provider,
   contract: idRegistry,
 })
+
+// Insert to Supabase
+await supabase
+  .from('profiles_new')
+  .upsert(registrations)
+  .then(() => console.log('Inserted to Supabase'))

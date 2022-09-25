@@ -1,26 +1,22 @@
 import got from 'got'
+import { Profile } from './types'
 
 /**
  * Get the display name and follower count of a Farcaster profile.
  * @param {string} address Farcaster account address
- * @returns {object} Object with a profile's display name and follower count
+ * @returns {Profile | null} Object with a profile's display name and follower count
  */
-export async function getProfileInfo(farcasterAddress: string) {
-  return await got(`https://api.farcaster.xyz/v1/profiles/${farcasterAddress}`)
-    .json()
-    .then((res: any) => {
-      const user = res.result.user
-      return {
-        name: user.displayName,
-        followers: user.followerCount,
-        following: user.followingCount,
-        bio: user.profile?.bio?.text,
-      }
-    })
-    .catch((err) => {
-      console.error(`Error getting profile info for ${farcasterAddress}.`, err)
-      return null
-    })
+export async function getProfileInfo(
+  farcasterAddress: string
+): Promise<Profile | null> {
+  try {
+    return await got(
+      `https://api.farcaster.xyz/v1/profiles/${farcasterAddress}`
+    ).json()
+  } catch (err) {
+    console.error(`Error getting profile info for ${farcasterAddress}.`, err)
+    return null
+  }
 }
 
 export function cleanUserActivity(activity: any) {
