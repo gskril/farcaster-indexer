@@ -9,6 +9,7 @@ import { Cast, FlattenedCast, FlattenedProfile } from '../types/index'
  */
 export async function indexAllCasts() {
   const startTime = Date.now()
+  console.log('Indexing casts...')
   const { data: _profiles, error: profilesError } = await supabase
     .from('profiles_new')
     .select('*')
@@ -24,7 +25,6 @@ export async function indexAllCasts() {
   let profilesIndexed = 0
 
   for (const profile of profiles) {
-
     const _activity = await got(
       `https://api.farcaster.xyz/v1/profiles/${profile.address}/casts`
     )
@@ -122,6 +122,6 @@ export async function indexAllCasts() {
   const endTime = Date.now()
   const secondsTaken = (endTime - startTime) / 1000
   console.log(
-    `Saved casts from ${profilesIndexed} profiles in ${secondsTaken} seconds`
+    `Saved ${allCasts.length} casts from ${profilesIndexed} profiles in ${secondsTaken} seconds`
   )
 }
