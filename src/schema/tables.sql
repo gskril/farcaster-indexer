@@ -1,42 +1,51 @@
 -- Profile Table Definition
 CREATE TABLE profiles (
-  "index" int4 NOT NULL PRIMARY KEY,
-  "merkle_root" text NOT NULL,
-  "signature" text,
+  "id" int8 NOT NULL PRIMARY KEY,
+  "address" text NOT NULL,
   "username" text,
   "display_name" text,
+  "avatar_url" text,
+  "avatar_verified" bool,
+  "followers" int8,
+  "following" int8,
   "bio" text,
-  "followers" int4,
-  "address_activity" text,
-  "avatar" text,
-  "proof" text,
-  "timestamp" int8,
-  "registered_at" int8,
-  "version" int2,
-  "address" text,
-  "connected_address" text
+  "telegram" text,
+  "referrer" text,
+  "connected_address" text,
+  "registered_at" timestamptz,
+  "updated_at" timestamptz DEFAULT now(),
 );
 
 -- Casts Table Definition
 CREATE TABLE casts (
-  "published_at" int8 NOT NULL,
-  "sequence" int4 NOT NULL,
-  "username" text NOT NULL,
-  "address" text NOT NULL,
-  "text" text NOT NULL,
+  "type" text,
+  "published_at" timestamptz,
+  "sequence" int8,
+  "address" text,
+  "username" text,
+  "text" text,
   "reply_parent_merkle_root" text,
   "prev_merkle_root" text,
+  "signature" text,
   "merkle_root" text NOT NULL PRIMARY KEY,
-  "signature" text NOT NULL,
+  "thread_merkle_root" text,
   "display_name" text,
-  "avatar" text,
-  "is_verified_avatar" bool,
-  "num_reply_children" int2,
-  "reaction_count" int2,
-  "reaction_type" text,
-  "recasts" int2,
-  "watches" int2,
-  "reply_parent_username" text,
+  "avatar_url" text,
+  "avatar_verified" bool,
   "mentions" jsonb,
-  "uri" text
+  "num_reply_children" int8,
+  "reply_parent_username" text,
+  "reply_parent_address" text,
+  "reactions" int8,
+  "recasts" int8,
+  "watches" int8,
+  "recasters" jsonb,
+  "deleted" bool,
 );
+
+-- Function to allow regex searching via Supabase API
+CREATE OR REPLACE FUNCTION casts_regex (regex text)
+RETURNS SETOF casts LANGUAGE sql
+AS $function$
+  SELECT * FROM casts WHERE text ~ regex;
+$function$;

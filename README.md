@@ -4,11 +4,15 @@ Index all profiles and casts on the Farcaster protocol. Powers the [Farcaster Se
 
 ## How it works
 
-The [Farcaster Registry](https://rinkeby.etherscan.io/address/0xe3Be01D99bAa8dB9905b33a3cA391238234B79D1) has functions `usernamesLength()` and `usernameAtIndex()`.
+### Profiles:
 
-This script iterates over `usernameAtIndex()` and returns profiles' [host directory](https://www.farcaster.xyz/docs/host). Data from directories and an additional client-side API is saved to a [Supabase](https://supabase.com/) table called `profiles`.
+- On start, upsert all past `Register` events from the [ID Registry](0xda107a1caf36d198b12c16c7b6a1d1c795978c42) to a Supabase table
+- Watch the ID Registry for new events and adds them to the table
+- Iterate through Farcaster APIs every 2 hours to populate all profile data
 
-In a seperate process, all casts from each profile are saved to a table called `casts`.
+### Casts:
+
+- Iterate through Farcaster APIs every 30 minutes and upserts all casts to a Supabase table
 
 ## How to use
 
