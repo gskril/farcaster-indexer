@@ -35,7 +35,7 @@ export async function updateAllProfiles() {
       id: profile.id,
       address: p.address,
       username: p.username,
-      display_name: p.displayName,
+      display_name: p.displayName || null,
       avatar_url: p.avatar?.url || null,
       avatar_verified: p.avatar?.isVerified || false,
       followers: p.followerCount,
