@@ -24,8 +24,6 @@ export async function indexAllCasts() {
   let profilesIndexed = 0
 
   for (const profile of profiles) {
-    if (profilesIndexed > 100) break
-    console.log(profile.username)
 
     const _activity = await got(
       `https://api.farcaster.xyz/v1/profiles/${profile.address}/casts`
@@ -46,8 +44,10 @@ export async function indexAllCasts() {
         ? null
         : `farcaster://casts/${cast.merkleRoot}/${cast.merkleRoot}`
 
-      // Only include casts that are from the profile owner
-      if (cast.body.username !== profile.username) {
+      if (
+        cast.body.username !== profile.username || // Only include casts that are from the profile owner
+        allCasts.find((c: FlattenedCast) => c.merkle_root === cast.merkleRoot) // Don't include duplicate casts
+      ) {
         return
       }
 
