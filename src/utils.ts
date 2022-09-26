@@ -1,5 +1,5 @@
 import got from 'got'
-import { Profile } from './types'
+import { Cast, Profile } from './types'
 
 /**
  * Get the display name and follower count of a Farcaster profile.
@@ -19,7 +19,12 @@ export async function getProfileInfo(
   }
 }
 
-export function cleanUserActivity(activity: any) {
+/**
+ * Remove recasts
+ * @param activity Farcaster user activity
+ * @returns Farcaster user activity without recasts
+ */
+export function cleanUserActivity(activity: Cast[]) {
   // Get the merkle root of all casts that were deleted by the user
   const deletedCasts = activity
     .filter((cast: any) => {

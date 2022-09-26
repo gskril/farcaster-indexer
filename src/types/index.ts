@@ -80,26 +80,26 @@ export interface Cast {
 
 export interface FlattenedCast {
   type: 'text-short'
-  published_at: number
+  published_at: Date
   sequence: number
   address: string
   username: string
   text: string
-  reply_parent_merkle_root: string
-  prev_merkle_root: string
+  reply_parent_merkle_root: string | null
+  prev_merkle_root: string | null
   signature: string
   merkle_root: string
   thread_merkle_root: string
-  display_name: string
-  avatar_url: string
+  display_name: string | null
+  avatar_url: string | null
   avatar_verified: boolean
-  mentions: JSON
-  num_reply_children: number
-  reply_parent_username: string
-  reply_parent_address: string
-  reactions: number
-  recasts: number
-  watches: number
-  recasters: JSON
+  mentions: JSON | any
+  num_reply_children: number | null
+  reply_parent_username: string | null
+  reply_parent_address: string | null
+  reactions: number | null
+  recasts: number | null
+  watches: number | null
+  recasters: JSON | any
   deleted: boolean
 }
