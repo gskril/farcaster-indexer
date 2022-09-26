@@ -1,23 +1,12 @@
 import 'dotenv/config'
-import { providers, Contract, utils } from 'ethers'
+import { providers, Contract } from 'ethers'
 import cron from 'node-cron'
-import got from 'got'
 import supabase from './supabase.js'
 
-import {
-  IdRegistry,
-  IdRegistryEvents,
-  RegisterEventEmittedResponse,
-} from './contracts/types/id-registry.js'
+import { upsertAllRegistrations } from './functions/read-logs.js'
+import { IdRegistry, IdRegistryEvents } from './contracts/types/id-registry.js'
 import { idRegistryAddr, idRegistryAbi } from './contracts/id-registry.js'
-import {
-  NameRegistry,
-  NameRegistryEvents,
-} from './contracts/types/name-registry.js'
-import { nameRegistryAddr, nameRegistryAbi } from './contracts/name-registry.js'
-
-import { breakIntoChunks, cleanUserActivity, getProfileInfo } from './utils.js'
-import { getIdRegistryEvents } from './functions/read-logs.js'
+import { indexAllCasts } from './functions/index-casts.js'
 import { updateAllProfiles } from './functions/update-profiles.js'
 
 // Set up the provider
@@ -31,33 +20,31 @@ const idRegistry = new Contract(
   provider
 ) as IdRegistry
 
+// Listen for new events on the ID Registry
 const eventToWatch: IdRegistryEvents = 'Register'
 idRegistry.on(eventToWatch, async (to, id) => {
   console.log('New user registered.', Number(id), to)
 
-  const { error } = await supabase.from('profiles_new').upsert({
+  // Save to supabase
+  const { error } = await supabase.from('profiles_new').insert({
     id: Number(id),
     address: to,
   })
 
   if (error) {
     throw error
-  } else {
-    console.log('Successfully added profile.')
   }
 })
 
-await updateAllProfiles()
+// Make sure we didn't miss any profiles when the indexer was offline
+await upsertAllRegistrations(provider, idRegistry)
 
-// ONE TIME DUMP ↓ should normally add by listening to contract events like above
-// Get all logs from the ID Registry contract since creation
-/* const registrations = await getIdRegistryEvents({
-  provider,
-  contract: idRegistry,
+// Run job every 30 minutes
+cron.schedule('*/30 * * * *', async () => {
+  await indexAllCasts()
 })
 
-// Insert to Supabase
-await supabase
-  .from('profiles_new')
-  .upsert(registrations)
-  .then(() => console.log('Inserted to Supabase')) */
+// Run job every 2 hours
+cron.schedule('0 */2 * * *', async () => {
+  await updateAllProfiles()
+})
