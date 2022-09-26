@@ -10,7 +10,7 @@ import { Cast, CastsApi, FlattenedCast, FlattenedProfile } from '../types/index'
 export async function indexAllCasts() {
   const startTime = Date.now()
   const { data: _profiles, error: profilesError } = await supabase
-    .from('profiles_new')
+    .from('profiles')
     .select('*')
     .order('id', { ascending: true })
 
@@ -68,7 +68,7 @@ export async function indexAllCasts() {
 
   // Upsert each chunk into the Supabase table
   for (const chunk of chunks) {
-    const { error } = await supabase.from('casts_new').upsert(chunk, {
+    const { error } = await supabase.from('casts').upsert(chunk, {
       onConflict: 'merkle_root',
     })
 

@@ -72,7 +72,7 @@ export async function getRegisteredDateFromOldTable() {
     .select('username, connected_address, registered_at')
 
   const { data: newProfiles } = await supabase
-    .from('profiles_new')
+    .from('profiles')
     .select('*')
     .order('id', { ascending: true })
 
@@ -95,7 +95,7 @@ export async function getRegisteredDateFromOldTable() {
     }
   })
 
-  const { error } = await supabase.from('profiles_new').upsert(profilesToUpdate)
+  const { error } = await supabase.from('profiles').upsert(profilesToUpdate)
   if (error) {
     console.log(error)
   } else {

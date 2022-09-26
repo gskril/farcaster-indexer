@@ -7,7 +7,7 @@ export async function updateAllProfiles() {
   const startTime = new Date()
   console.log('Updating profiles...')
   const { data: _profiles, error: profilesError } = await supabase
-    .from('profiles_new')
+    .from('profiles')
     .select('*')
     .order('id', { ascending: true })
 
@@ -52,7 +52,7 @@ export async function updateAllProfiles() {
   const chunks = breakIntoChunks(updatedProfiles, 100)
   for (const chunk of chunks) {
     const { error } = await supabase
-      .from('profiles_new')
+      .from('profiles')
       .upsert(chunk, { onConflict: 'id' })
 
     if (error) {
