@@ -31,12 +31,8 @@ export async function indexAllCasts() {
     const activity: Cast[] = cleanUserActivity(_activity)
 
     activity.map((cast: Cast) => {
-      if (
-        cast.body.username !== profile.username || // Only include casts that are from the profile owner
-        !cast.meta.recast // Don't include recasts
-      ) {
-        return
-      }
+      // don't save recasts
+      if (cast.meta?.recast) return
 
       allCasts.push({
         type: 'text-short',
