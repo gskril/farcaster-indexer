@@ -8,6 +8,7 @@ import { IdRegistry, IdRegistryEvents } from './contracts/types/id-registry.js'
 import { idRegistryAddr, idRegistryAbi } from './contracts/id-registry.js'
 import { indexAllCasts } from './functions/index-casts.js'
 import { updateAllProfiles } from './functions/update-profiles.js'
+import { FlattenedProfile } from './types/index.js'
 
 // Set up the provider
 const ALCHEMY_SECRET = process.env.ALCHEMY_SECRET
@@ -25,15 +26,14 @@ const eventToWatch: IdRegistryEvents = 'Register'
 idRegistry.on(eventToWatch, async (to, id) => {
   console.log('New user registered.', Number(id), to)
 
-  // Save to supabase
-  const { error } = await supabase.from('profiles_new').insert({
+  const profile: FlattenedProfile = {
     id: Number(id),
     address: to,
-  })
-
-  if (error) {
-    throw error
+    registered_at: new Date(),
   }
+
+  // Save to supabase
+  await supabase.from('profiles_new').insert(profile)
 })
 
 // Make sure we didn't miss any profiles when the indexer was offline

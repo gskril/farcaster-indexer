@@ -5,6 +5,7 @@ import { breakIntoChunks } from '../utils.js'
 
 export async function updateAllProfiles() {
   const startTime = new Date()
+  console.log('Updating profiles...')
   const { data: _profiles, error: profilesError } = await supabase
     .from('profiles_new')
     .select('*')
