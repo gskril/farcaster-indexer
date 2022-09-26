@@ -2,7 +2,7 @@ import got from 'got'
 import supabase from '../supabase.js'
 import { breakIntoChunks, cleanUserActivity } from '../utils.js'
 
-import { Cast, FlattenedCast, FlattenedProfile } from '../types/index'
+import { Cast, CastsApi, FlattenedCast, FlattenedProfile } from '../types/index'
 
 /**
  * Index the casts from all Farcaster profiles and insert them into Supabase
@@ -25,28 +25,15 @@ export async function indexAllCasts() {
   let profilesIndexed = 0
 
   for (const profile of profiles) {
-    const _activity = await got(
-      `https://api.farcaster.xyz/v1/profiles/${profile.address}/casts`
-    )
-      .json()
-      .then((res: any) => res.result.casts)
-      .catch(() => {
-        console.error(`Could not get activity for @${profile.username}`)
-        return null
-      })
+    const _activity = await getProfileActivity(profile)
 
     if (!_activity) continue
     const activity: Cast[] = cleanUserActivity(_activity)
 
     activity.map((cast: Cast) => {
-      // TODO: add URI support for non-parent casts
-      const uri = cast.body.data.replyParentMerkleRoot
-        ? null
-        : `farcaster://casts/${cast.merkleRoot}/${cast.merkleRoot}`
-
       if (
         cast.body.username !== profile.username || // Only include casts that are from the profile owner
-        allCasts.find((c: FlattenedCast) => c.merkle_root === cast.merkleRoot) // Don't include duplicate casts
+        !cast.meta.recast // Don't include recasts
       ) {
         return
       }
@@ -124,4 +111,45 @@ export async function indexAllCasts() {
   console.log(
     `Saved ${allCasts.length} casts from ${profilesIndexed} profiles in ${secondsTaken} seconds`
   )
+}
+
+/**
+ * Iterate through all the pages of a profile's activity and return the full activity
+ * @param profile Flattened Farcaster profile from Supabase
+ * @returns Array of all casts by a user
+ */
+async function getProfileActivity(profile: FlattenedProfile): Promise<Cast[]> {
+  const allCasts: Cast[] = new Array()
+  let endpoint: string = `https://api.farcaster.xyz/v1/profiles/${profile.address}/casts`
+
+  // paginate through pages of casts with the cursor at res.meta.next
+  while (true) {
+    const res = await getPageActivity(endpoint)
+    allCasts.push(...res.result.casts)
+
+    if (res.meta?.next) {
+      endpoint = res.meta.next
+    } else {
+      break
+    }
+  }
+
+  return allCasts
+
+  async function getPageActivity(url: string): Promise<CastsApi> {
+    return await got(url)
+      .json()
+      .then((_res: any) => {
+        const res: CastsApi = _res
+        return res
+      })
+      .catch((err) => {
+        console.error(`Could not get activity for @${profile.username}`)
+        return {
+          result: {
+            casts: [],
+          },
+        }
+      })
+  }
 }

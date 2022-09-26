@@ -36,6 +36,15 @@ export interface FlattenedProfile {
   updated_at?: Date
 }
 
+export interface CastsApi {
+  result: {
+    casts: Cast[]
+  }
+  meta?: {
+    next?: string
+  }
+}
+
 export interface Cast {
   body: {
     type: 'text-short'
@@ -75,6 +84,7 @@ export interface Cast {
     watches: {
       count: number
     }
+    recast?: boolean
   }
 }
 
