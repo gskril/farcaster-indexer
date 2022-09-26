@@ -9,7 +9,6 @@ import { Cast, CastsApi, FlattenedCast, FlattenedProfile } from '../types/index'
  */
 export async function indexAllCasts() {
   const startTime = Date.now()
-  console.log('Indexing casts...')
   const { data: _profiles, error: profilesError } = await supabase
     .from('profiles_new')
     .select('*')
@@ -115,37 +114,15 @@ export async function indexAllCasts() {
  * @returns Array of all casts by a user
  */
 async function getProfileActivity(profile: FlattenedProfile): Promise<Cast[]> {
-  const allCasts: Cast[] = new Array()
-  let endpoint: string = `https://api.farcaster.xyz/v1/profiles/${profile.address}/casts`
+  const _activity = await got(
+    `https://guardian.farcaster.xyz/origin/address_activity/${profile.address}`
+  )
+    .json()
+    .catch((err) => {
+      console.error(`Could not get activity for @${profile.username}`, err)
+      return []
+    })
 
-  // paginate through pages of casts with the cursor at res.meta.next
-  while (true) {
-    const res = await getPageActivity(endpoint)
-    allCasts.push(...res.result.casts)
-
-    if (res.meta?.next) {
-      endpoint = res.meta.next
-    } else {
-      break
-    }
-  }
-
-  return allCasts
-
-  async function getPageActivity(url: string): Promise<CastsApi> {
-    return await got(url)
-      .json()
-      .then((_res: any) => {
-        const res: CastsApi = _res
-        return res
-      })
-      .catch((err) => {
-        console.error(`Could not get activity for @${profile.username}`)
-        return {
-          result: {
-            casts: [],
-          },
-        }
-      })
-  }
+  const activity = _activity as Cast[]
+  return activity
 }
