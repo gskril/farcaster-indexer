@@ -1,5 +1,6 @@
 import got from 'got'
-import { Cast, Profile } from './types'
+import supabase from './supabase.js'
+import { Cast, FlattenedProfile, Profile } from './types'
 
 /**
  * Get the display name and follower count of a Farcaster profile.
@@ -58,4 +59,46 @@ export function breakIntoChunks(array: any[], chunkSize: number) {
     chunks.push(array.slice(i, i + chunkSize))
   }
   return chunks
+}
+
+/**
+ * Used in migration to keep the original registered_at date for profiles
+ */
+export async function getRegisteredDateFromOldTable() {
+  const profilesToUpdate: FlattenedProfile[] = new Array()
+
+  const { data: oldProfiles } = await supabase
+    .from('profiles')
+    .select('username, connected_address, registered_at')
+
+  const { data: newProfiles } = await supabase
+    .from('profiles_new')
+    .select('*')
+    .order('id', { ascending: true })
+
+  newProfiles!.map((p) => {
+    if (p.connected_address !== null) {
+      // find the matching old profile by connected_address
+      const oldProfile = oldProfiles!.find(
+        (op: any) => op.connected_address === p.connected_address
+      )
+
+      if (oldProfile) {
+        // set the registered_at of the new profile to the old profile's registered_at
+        p.registered_at = new Date(oldProfile.registered_at)
+        profilesToUpdate.push(p)
+      } else {
+        console.log('no address to match for', p.username)
+      }
+    } else {
+      console.log('no address to match for', p.username)
+    }
+  })
+
+  const { error } = await supabase.from('profiles_new').upsert(profilesToUpdate)
+  if (error) {
+    console.log(error)
+  } else {
+    console.log('updated all registered_at dates')
+  }
 }
