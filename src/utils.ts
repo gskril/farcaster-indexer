@@ -32,9 +32,9 @@ export function cleanUserActivity(activity: any) {
   // Remove deleted casts and recasts
   const cleanedActivity = activity.filter((cast: any) => {
     return (
-      !cast.body.data.text.startsWith('delete:') &&
-      !cast.body.data.text.startsWith('recast:') &&
-      !deletedCasts.includes(cast.merkleRoot)
+      // !deletedCasts.includes(cast.merkleRoot) &&
+      // !cast.body.data.text.startsWith('delete:') &&
+      !cast.body.data.text.startsWith('recast:')
     )
   })
 
