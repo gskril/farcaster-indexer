@@ -24,7 +24,7 @@ export interface FlattenedProfile {
   address: string
   username?: string
   display_name?: string
-  avatar_url?: string
+  avatar_url?: string | null
   avatar_verified?: boolean
   followers?: number
   following?: number
