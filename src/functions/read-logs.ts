@@ -2,7 +2,7 @@ import { BaseContract } from 'ethers'
 import { FlattenedProfile } from '../types'
 import { Provider } from '@ethersproject/providers'
 import supabase from '../supabase.js'
-import { profilesTable } from '..'
+import { profilesTable } from '../index.js'
 
 interface GetLogsParams {
   provider: Provider
