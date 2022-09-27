@@ -22,3 +22,5 @@ Index all profiles and casts on the Farcaster protocol. Powers the [Farcaster Se
 4. Rename `.env.example` to `.env` and configure your variables
 5. Run `yarn install` to install dependencies
 6. Run `yarn start` to start the server
+
+I suggest also creating a duplicate of both tables and appending '\_dev' to the names. Just run `yarn dev` instead of `yarn start` to use the dev tables.

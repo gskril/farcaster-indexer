@@ -1,4 +1,5 @@
 import got from 'got'
+import { profilesTable } from '../index.js'
 import supabase from '../supabase.js'
 import { FlattenedProfile, Profile } from '../types/index.js'
 import { breakIntoChunks } from '../utils.js'
@@ -7,7 +8,7 @@ export async function updateAllProfiles() {
   const startTime = new Date()
   console.log('Updating profiles...')
   const { data: _profiles, error: profilesError } = await supabase
-    .from('profiles')
+    .from(profilesTable)
     .select('*')
     .order('id', { ascending: true })
 
@@ -52,7 +53,7 @@ export async function updateAllProfiles() {
   const chunks = breakIntoChunks(updatedProfiles, 100)
   for (const chunk of chunks) {
     const { error } = await supabase
-      .from('profiles')
+      .from(profilesTable)
       .upsert(chunk, { onConflict: 'id' })
 
     if (error) {

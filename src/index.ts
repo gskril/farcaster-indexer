@@ -3,12 +3,16 @@ import { providers, Contract } from 'ethers'
 import cron from 'node-cron'
 import supabase from './supabase.js'
 
-import { upsertAllRegistrations } from './functions/read-logs.js'
+import { FlattenedProfile } from './types/index.js'
 import { IdRegistry, IdRegistryEvents } from './contracts/types/id-registry.js'
 import { idRegistryAddr, idRegistryAbi } from './contracts/id-registry.js'
 import { indexAllCasts } from './functions/index-casts.js'
 import { updateAllProfiles } from './functions/update-profiles.js'
-import { FlattenedProfile } from './types/index.js'
+import { upsertAllRegistrations } from './functions/read-logs.js'
+
+const isDev = process.argv.includes('--dev')
+export const castsTable = isDev ? 'casts_dev' : 'casts'
+export const profilesTable = isDev ? 'profiles_dev' : 'profiles'
 
 // Set up the provider
 const ALCHEMY_SECRET = process.env.ALCHEMY_SECRET
@@ -33,7 +37,7 @@ idRegistry.on(eventToWatch, async (to, id) => {
   }
 
   // Save to supabase
-  await supabase.from('profiles').insert(profile)
+  await supabase.from(profilesTable).insert(profile)
 })
 
 // Make sure we didn't miss any profiles when the indexer was offline

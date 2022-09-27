@@ -1,8 +1,9 @@
+import { breakIntoChunks, cleanUserActivity } from '../utils.js'
+import { castsTable, profilesTable } from '../index.js'
 import got from 'got'
 import supabase from '../supabase.js'
-import { breakIntoChunks, cleanUserActivity } from '../utils.js'
 
-import { Cast, CastsApi, FlattenedCast, FlattenedProfile } from '../types/index'
+import { Cast, FlattenedCast, FlattenedProfile } from '../types/index'
 
 /**
  * Index the casts from all Farcaster profiles and insert them into Supabase
@@ -10,7 +11,7 @@ import { Cast, CastsApi, FlattenedCast, FlattenedProfile } from '../types/index'
 export async function indexAllCasts() {
   const startTime = Date.now()
   const { data: _profiles, error: profilesError } = await supabase
-    .from('profiles')
+    .from(profilesTable)
     .select('*')
     .order('id', { ascending: true })
 
@@ -68,7 +69,7 @@ export async function indexAllCasts() {
 
   // Upsert each chunk into the Supabase table
   for (const chunk of chunks) {
-    const { error } = await supabase.from('casts').upsert(chunk, {
+    const { error } = await supabase.from(castsTable).upsert(chunk, {
       onConflict: 'merkle_root',
     })
 
