@@ -57,7 +57,9 @@ export async function indexAllCasts() {
         recasts: cast.meta?.recasts?.count || null,
         watches: cast.meta?.watches?.count || null,
         recasters: cast.meta?.recasters || [],
-        deleted: false,
+        deleted: cast.body.data.text.startsWith('delete:farcaster://')
+          ? true
+          : false,
       })
     })
 
