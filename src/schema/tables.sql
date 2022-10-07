@@ -13,7 +13,7 @@ CREATE TABLE profiles (
   "referrer" text,
   "connected_address" text,
   "registered_at" timestamptz,
-  "updated_at" timestamptz DEFAULT now(),
+  "updated_at" timestamptz DEFAULT now()
 );
 
 -- Casts Table Definition
@@ -40,7 +40,7 @@ CREATE TABLE casts (
   "recasts" int8,
   "watches" int8,
   "recasters" jsonb,
-  "deleted" bool,
+  "deleted" bool
 );
 
 -- Function to allow regex searching via Supabase API
