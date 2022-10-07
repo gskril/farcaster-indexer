@@ -28,7 +28,7 @@ export async function indexAllCasts() {
     const _activity = await getProfileActivity(profile)
 
     if (!_activity) continue
-    const activity: Cast[] = cleanUserActivity(_activity)
+    const activity: Cast[] = _activity
 
     activity.map((cast: Cast) => {
       // don't save recasts
@@ -60,6 +60,7 @@ export async function indexAllCasts() {
         deleted: cast.body.data.text.startsWith('delete:farcaster://')
           ? true
           : false,
+        recast: cast.body.data.text.startsWith('recast:') ? true : false,
       })
     })
 

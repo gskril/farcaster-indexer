@@ -112,4 +112,5 @@ export interface FlattenedCast {
   watches: number | null
   recasters: JSON | any
   deleted: boolean
+  recast: boolean
 }

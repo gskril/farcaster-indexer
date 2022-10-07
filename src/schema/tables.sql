@@ -40,7 +40,8 @@ CREATE TABLE casts (
   "recasts" int8,
   "watches" int8,
   "recasters" jsonb,
-  "deleted" bool
+  "deleted" bool,
+  "recast" bool
 );
 
 -- Function to allow regex searching via Supabase API
