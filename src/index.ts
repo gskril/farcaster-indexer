@@ -6,7 +6,7 @@ import supabase from './supabase.js'
 import { FlattenedProfile } from './types/index.js'
 import { IdRegistry, IdRegistryEvents } from './contracts/types/id-registry.js'
 import { idRegistryAddr, idRegistryAbi } from './contracts/id-registry.js'
-import { indexAllCasts } from './functions/index-casts.js'
+import { indexAllCasts, indexAllCastsForUser } from './functions/index-casts.js'
 import { updateAllProfiles } from './functions/update-profiles.js'
 import { upsertAllRegistrations } from './functions/read-logs.js'
 
@@ -45,10 +45,12 @@ await upsertAllRegistrations(provider, idRegistry)
 
 // Run job every 30 minutes
 cron.schedule('*/30 * * * *', async () => {
-  await indexAllCasts()
+ await indexAllCasts()
 })
 
 // Run job every 2 hours
 cron.schedule('0 */2 * * *', async () => {
   await updateAllProfiles()
 })
+
+// await indexAllCastsForUser('XXX')
