@@ -6,16 +6,15 @@ import { expose } from 'threads/worker'
 
 expose({
   async saveCastsForChunk(chunk: FlattenedProfile[]) {
-    const allCasts: FlattenedCast[] = []
-
     for (const profile of chunk) {
       const _activity = await getProfileActivity(profile)
 
       if (!_activity) continue
       const activity: Cast[] = _activity
+      const userCasts: FlattenedCast[] = []
 
       activity.map((cast: Cast) => {
-        allCasts.push({
+        userCasts.push({
           type: 'text-short',
           published_at: new Date(cast.body.publishedAt),
           sequence: cast.body.sequence,
@@ -43,36 +42,36 @@ expose({
         })
       })
 
-      console.log(`Processed casts from ${profile.username}`)
-    }
+      const { error } = await supabase.from(castsTable).upsert(userCasts, {
+        onConflict: 'merkle_root',
+      })
 
-    const { error } = await supabase.from(castsTable).upsert(allCasts, {
-      onConflict: 'merkle_root',
-    })
+      if (error) {
+        console.error(error)
 
-    if (error) {
-      console.error(error)
+        // check if any two casts have the same merkle root
+        const merkleRoots = userCasts.map((cast: FlattenedCast) => cast.merkle_root)
+        const uniqueMerkleRoots = [...new Set(merkleRoots)]
+        if (merkleRoots.length !== uniqueMerkleRoots.length) {
+          console.error('Duplicate merkle roots found in chunk')
+          // find which merkle roots are duplicated and who posted them
+          const duplicates = merkleRoots.filter(
+            (merkleRoot: string, index: number) =>
+              merkleRoots.indexOf(merkleRoot) !== index && merkleRoots.indexOf(merkleRoot) < index,
+          )
+          console.error(duplicates)
 
-      // check if any two casts have the same merkle root
-      const merkleRoots = allCasts.map((cast: FlattenedCast) => cast.merkle_root)
-      const uniqueMerkleRoots = [...new Set(merkleRoots)]
-      if (merkleRoots.length !== uniqueMerkleRoots.length) {
-        console.error('Duplicate merkle roots found in chunk')
-        // find which merkle roots are duplicated and who posted them
-        const duplicates = merkleRoots.filter(
-          (merkleRoot: string, index: number) =>
-            merkleRoots.indexOf(merkleRoot) !== index && merkleRoots.indexOf(merkleRoot) < index,
-        )
-        console.error(duplicates)
+          // find the address of the profiles who have a cast with a merkle root from the duplicates array
+          const duplicateAddresses = userCasts
+            .filter((cast: FlattenedCast) => duplicates.includes(cast.merkle_root))
+            .map((cast: FlattenedCast) => cast.address)
+          console.error(duplicateAddresses)
+        }
 
-        // find the address of the profiles who have a cast with a merkle root from the duplicates array
-        const duplicateAddresses = allCasts
-          .filter((cast: FlattenedCast) => duplicates.includes(cast.merkle_root))
-          .map((cast: FlattenedCast) => cast.address)
-        console.error(duplicateAddresses)
+        return
       }
 
-      return
+      console.log(`Saved ${userCasts.length} casts from ${profile.username}`)
     }
 
     console.log('Finished saving casts for chunk')

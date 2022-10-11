@@ -23,7 +23,7 @@ export async function indexAllCasts() {
   const profiles: FlattenedProfile[] = _profiles
 
   const worker = await spawn(new Worker('./worker'))
-  const chunks = breakIntoChunks(profiles, 50)
+  const chunks = breakIntoChunks(profiles, 500)
 
   console.log(`There are ${chunks.length} chunks`)
 
