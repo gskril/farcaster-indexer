@@ -52,9 +52,6 @@ export async function indexAllCastsForUser(address: string) {
   const allCasts: FlattenedCast[] = []
 
   activity.map((cast: Cast) => {
-    // don't save recasts
-    if (cast.meta?.recast) return
-
     allCasts.push(flattenCast(cast))
   })
 
