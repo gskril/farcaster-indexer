@@ -2,7 +2,7 @@ import { breakIntoChunks, cleanUserActivity } from '../utils.js'
 import { castsTable, profilesTable } from '../index.js'
 import got from 'got'
 import supabase from '../supabase.js'
-import { spawn, Worker } from 'threads'
+import { spawn, Thread, Worker } from 'threads'
 
 import { Cast, FlattenedCast, FlattenedProfile } from '../types/index'
 
@@ -28,6 +28,8 @@ export async function indexAllCasts() {
   console.log(`There are ${chunks.length} chunks`)
 
   await Promise.all(chunks.map(chunk => worker.saveCastsForChunk(chunk)))
+
+  await Thread.terminate(worker)
 
   console.log('Finished')
 }
