@@ -2,6 +2,7 @@ import { breakIntoChunks, cleanUserActivity } from '../utils.js'
 import { castsTable, profilesTable } from '../index.js'
 import got from 'got'
 import supabase from '../supabase.js'
+import { spawn, Worker } from 'threads'
 
 import { Cast, FlattenedCast, FlattenedProfile } from '../types/index'
 
@@ -20,88 +21,20 @@ export async function indexAllCasts() {
 
   console.log(`Indexing casts from ${_profiles.length} profiles...`)
   const profiles: FlattenedProfile[] = _profiles
-  let profilesIndexed = 0
 
-  for (const profile of profiles) {
-    const _activity = await getProfileActivity(profile)
+  const worker = await spawn(new Worker('./worker'))
+  const chunks = breakIntoChunks(profiles, 50)
 
-    if (!_activity) continue
-    const activity: Cast[] = _activity
-    const userCasts: FlattenedCast[] = []
+  console.log(`There are ${chunks.length} chunks`)
 
-    activity.map((cast: Cast) => {
-      userCasts.push({
-        type: 'text-short',
-        published_at: new Date(cast.body.publishedAt),
-        sequence: cast.body.sequence,
-        address: cast.body.address,
-        username: cast.body.username,
-        text: cast.body.data.text,
-        reply_parent_merkle_root: cast.body.data.replyParentMerkleRoot || null,
-        prev_merkle_root: cast.body.prevMerkleRoot || null,
-        signature: cast.signature,
-        merkle_root: cast.merkleRoot,
-        thread_merkle_root: cast.threadMerkleRoot,
-        display_name: cast.meta?.displayName || null,
-        avatar_url: cast.meta?.avatar || null,
-        avatar_verified: cast.meta?.isVerifiedAvatar || false,
-        mentions: cast.meta?.mentions || [],
-        num_reply_children: cast.meta?.numReplyChildren || null,
-        reply_parent_username: cast.meta?.replyParentUsername?.username || null,
-        reply_parent_address: cast.meta?.replyParentUsername?.address || null,
-        reactions: cast.meta?.reactions?.count || null,
-        recasts: cast.meta?.recasts?.count || null,
-        watches: cast.meta?.watches?.count || null,
-        recasters: cast.meta?.recasters || [],
-        deleted: cast.body.data.text.startsWith('delete:farcaster://')
-          ? true
-          : false,
-        recast: cast.body.data.text.startsWith('recast:') ? true : false,
-      })
-    })
+  await Promise.all(chunks.map(chunk => worker.saveCastsForChunk(chunk)))
 
-    const { error } = await supabase.from(castsTable).upsert(userCasts, {
-      onConflict: 'merkle_root',
-    })
-
-    if (error) {
-      console.error(error)
-
-      // check if any two casts have the same merkle root
-      const merkleRoots = userCasts.map((cast: FlattenedCast) => cast.merkle_root)
-      const uniqueMerkleRoots = [...new Set(merkleRoots)]
-      if (merkleRoots.length !== uniqueMerkleRoots.length) {
-        console.error('Duplicate merkle roots found in chunk')
-        // find which merkle roots are duplicated and who posted them
-        const duplicates = merkleRoots.filter(
-          (merkleRoot: string, index: number) =>
-            merkleRoots.indexOf(merkleRoot) !== index &&
-            merkleRoots.indexOf(merkleRoot) < index
-        )
-        console.error(duplicates)
-
-        // find the address of the profiles who have a cast with a merkle root from the duplicates array
-        const duplicateAddresses = userCasts
-          .filter((cast: FlattenedCast) =>
-            duplicates.includes(cast.merkle_root)
-          )
-          .map((cast: FlattenedCast) => cast.address)
-        console.error(duplicateAddresses)
-      }
-
-      return
-    }
-
-    console.log(
-      `Saved ${userCasts.length} casts from ${profilesIndexed} profiles`
-    )
-    profilesIndexed++
-  }
+  console.log('Finished')
 }
 
 export async function indexAllCastsForUser(address: string) {
   const _activity = await got(
-    `https://guardian.farcaster.xyz/origin/address_activity/${address}`
+    `https://guardian.farcaster.xyz/origin/address_activity/${address}`,
   ).json()
 
   const activity = _activity as Cast[]
@@ -134,9 +67,7 @@ export async function indexAllCastsForUser(address: string) {
       recasts: cast.meta?.recasts?.count || null,
       watches: cast.meta?.watches?.count || null,
       recasters: cast.meta?.recasters || [],
-      deleted: cast.body.data.text.startsWith('delete:farcaster://')
-        ? true
-        : false,
+      deleted: cast.body.data.text.startsWith('delete:farcaster://') ? true : false,
       recast: cast.body.data.text.startsWith('recast:') ? true : false,
     })
   })
@@ -161,16 +92,13 @@ export async function indexAllCastsForUser(address: string) {
         // find which merkle roots are duplicated and who posted them
         const duplicates = merkleRoots.filter(
           (merkleRoot: string, index: number) =>
-            merkleRoots.indexOf(merkleRoot) !== index &&
-            merkleRoots.indexOf(merkleRoot) < index
+            merkleRoots.indexOf(merkleRoot) !== index && merkleRoots.indexOf(merkleRoot) < index,
         )
         console.error(duplicates)
 
         // find the address of the profiles who have a cast with a merkle root from the duplicates array
         const duplicateAddresses = chunk
-          .filter((cast: FlattenedCast) =>
-            duplicates.includes(cast.merkle_root)
-          )
+          .filter((cast: FlattenedCast) => duplicates.includes(cast.merkle_root))
           .map((cast: FlattenedCast) => cast.address)
         console.error(duplicateAddresses)
       }
@@ -179,9 +107,7 @@ export async function indexAllCastsForUser(address: string) {
     }
   }
 
-  console.log(
-    `Saved ${allCasts.length} casts from ${address} profiles`
-  )
+  console.log(`Saved ${allCasts.length} casts from ${address} profiles`)
 }
 
 /**
@@ -191,10 +117,10 @@ export async function indexAllCastsForUser(address: string) {
  */
 async function getProfileActivity(profile: FlattenedProfile): Promise<Cast[]> {
   const _activity = await got(
-    `https://guardian.farcaster.xyz/origin/address_activity/${profile.address}`
+    `https://guardian.farcaster.xyz/origin/address_activity/${profile.address}`,
   )
     .json()
-    .catch((err) => {
+    .catch(err => {
       console.error(`Could not get activity for @${profile.username}`, err)
       return []
     })

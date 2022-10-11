@@ -19,11 +19,7 @@ const ALCHEMY_SECRET = process.env.ALCHEMY_SECRET
 const provider = new providers.AlchemyProvider('goerli', ALCHEMY_SECRET)
 
 // Create ID Registry contract interface
-const idRegistry = new Contract(
-  idRegistryAddr,
-  idRegistryAbi,
-  provider
-) as IdRegistry
+const idRegistry = new Contract(idRegistryAddr, idRegistryAbi, provider) as IdRegistry
 
 // Listen for new events on the ID Registry
 const eventToWatch: IdRegistryEvents = 'Register'
@@ -43,9 +39,9 @@ idRegistry.on(eventToWatch, async (to, id) => {
 // Make sure we didn't miss any profiles when the indexer was offline
 await upsertAllRegistrations(provider, idRegistry)
 
-// Run job every 30 minutes
-cron.schedule('*/30 * * * *', async () => {
- await indexAllCasts()
+// Run job every 10 minutes
+cron.schedule('*/15 * * * *', async () => {
+  await indexAllCasts()
 })
 
 // Run job every 2 hours

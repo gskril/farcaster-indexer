@@ -14,7 +14,9 @@
     "dotenv": "^16.0.1",
     "ethers": "^5.7.1",
     "got": "^11.8.2",
-    "node-cron": "3.0.0"
+    "node-cron": "3.0.0",
+    "threads": "^1.7.0",
+    "ts-node": "^10.9.1"
   },
   "devDependencies": {
     "@types/node": "^18.7.21",
