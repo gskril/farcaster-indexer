@@ -10,6 +10,7 @@ import { Cast, FlattenedCast, FlattenedProfile } from '../types/index'
  * Index the casts from all Farcaster profiles and insert them into Supabase
  */
 export async function indexAllCasts() {
+  const startTime = Date.now()
   const { data: _profiles, error: profilesError } = await supabase
     .from(profilesTable)
     .select('*')
@@ -31,7 +32,10 @@ export async function indexAllCasts() {
 
   await Thread.terminate(worker)
 
-  console.log('Finished')
+  const endTime = Date.now()
+  const secondsTaken = (endTime - startTime) / 1000
+
+  console.log(`Finished in ${secondsTaken} seconds`)
 }
 
 export async function indexAllCastsForUser(address: string) {
