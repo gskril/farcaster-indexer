@@ -9,6 +9,7 @@ import { idRegistryAddr, idRegistryAbi } from './contracts/id-registry.js'
 import { indexAllCasts } from './functions/index-casts.js'
 import { updateAllProfiles } from './functions/update-profiles.js'
 import { upsertAllRegistrations } from './functions/read-logs.js'
+import { deleteCasts } from './functions/delete-casts.js'
 
 const isDev = process.argv.includes('--dev')
 export const castsTable = isDev ? 'casts_dev' : 'casts'
@@ -46,6 +47,7 @@ await upsertAllRegistrations(provider, idRegistry)
 // Run job every 30 minutes
 cron.schedule('*/30 * * * *', async () => {
   await indexAllCasts()
+  await deleteCasts()
 })
 
 // Run job every 2 hours
