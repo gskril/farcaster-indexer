@@ -14,13 +14,16 @@ Index all profiles and casts on the Farcaster protocol. Powers the [Farcaster Se
 
 - Iterate through Farcaster APIs every 30 minutes and upserts all casts to a Supabase table
 
+Soon, both profiles and casts will read from [Farcaster Hubs](https://github.com/farcasterxyz/hub) instead of client APIs.
+
 ## How to use
 
-1. Create a new project on [Supabase](https://supabase.com/) (it's free)
+1. Create a new project on [Supabase](https://supabase.com/)
 2. Navigate to the SQL editor
 3. Paste [this code](/src/schema/tables.sql) to create your tables
-4. Rename `.env.example` to `.env` and configure your variables
-5. Run `yarn install` to install dependencies
-6. Run `yarn start` to start the server
+4. Change the max rows in Supabsae (Settings > API > API settings) to 5000
+5. Rename `.env.example` to `.env` and configure your variables
+6. Run `yarn install` to install dependencies
+7. Run `yarn start` to start the server
 
 I suggest also creating a duplicate of both tables and appending '\_dev' to the names. Just run `yarn dev` instead of `yarn start` to use the dev tables.
