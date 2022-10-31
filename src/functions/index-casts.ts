@@ -27,7 +27,7 @@ export async function indexAllCasts() {
   for (const profile of profiles) {
     const _activity = await getProfileActivity(profile)
 
-    if (!_activity) continue
+    if (!_activity || _activity.length === 0) continue
     const activity: Cast[] = cleanUserActivity(_activity)
 
     activity.map((cast: Cast) => {
@@ -122,7 +122,11 @@ async function getProfileActivity(profile: FlattenedProfile): Promise<Cast[]> {
   )
     .json()
     .catch((err) => {
-      console.error(`Could not get activity for @${profile.username}`, err)
+      const identifier = profile.username
+        ? `@${profile.username}`
+        : profile.address
+
+      console.error(`Could not get activity for ${identifier}`, err)
       return []
     })
 
