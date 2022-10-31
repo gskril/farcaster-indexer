@@ -27,7 +27,7 @@ export async function indexAllCasts() {
   for (const profile of profiles) {
     const _activity = await getProfileActivity(profile)
 
-    if (!_activity || _activity.length === 0) continue
+    if (!_activity) continue
     const activity: Cast[] = cleanUserActivity(_activity)
 
     activity.map((cast: Cast) => {
@@ -117,11 +117,6 @@ export async function indexAllCasts() {
  * @returns Array of all casts by a user
  */
 async function getProfileActivity(profile: FlattenedProfile): Promise<Cast[]> {
-  if (!profile.username) {
-    console.log(`No username found for profile with id ${profile.id}`)
-    return []
-  }
-
   const _activity = await got(
     `https://guardian.farcaster.xyz/origin/address_activity/${profile.address}`
   )
