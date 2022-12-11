@@ -7,13 +7,15 @@
     "build": "tsc",
     "clean": "rm -rf ./dist",
     "start": "tsc && node ./dist/index",
-    "dev": "tsc && node ./dist/index.js --dev"
+    "dev": "tsc && node ./dist/index.js --dev",
+    "auth": "tsc && node ./dist/helpers/auth.js"
   },
   "dependencies": {
+    "@standard-crypto/farcaster-js": "^5.1.0",
     "@supabase/supabase-js": "^2.1.3",
     "dotenv": "^16.0.1",
     "ethers": "^5.7.2",
-    "got": "^12.5.3",
+    "got": "^11.8.2",
     "node-cron": "3.0.0"
   },
   "devDependencies": {
