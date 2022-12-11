@@ -6,7 +6,7 @@
 CREATE TABLE IF NOT EXISTS public.profiles
 (
     id bigint NOT NULL,
-    address text COLLATE pg_catalog."default" NOT NULL,
+    address text COLLATE pg_catalog."default",
     username text COLLATE pg_catalog."default",
     display_name text COLLATE pg_catalog."default",
     avatar_url text COLLATE pg_catalog."default",
@@ -19,7 +19,7 @@ CREATE TABLE IF NOT EXISTS public.profiles
     connected_address text COLLATE pg_catalog."default",
     registered_at timestamp with time zone,
     updated_at timestamp with time zone DEFAULT now(),
-    CONSTRAINT profiles_pkey PRIMARY KEY (id, address)
+    CONSTRAINT profiles_pkey PRIMARY KEY (id)
 )
 
 TABLESPACE pg_default;
