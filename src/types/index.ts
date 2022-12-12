@@ -1,27 +1,78 @@
-export interface Profile {
-  address: string
-  username: string
-  displayName: string
-  avatar: {
-    url: string
-    isVerified: boolean
+export interface MerkleResponse {
+  result: {
+    casts?: Cast[]
+    users?: Profile[]
   }
-  followerCount: number
-  followingCount: number
+  next: {
+    cursor: string
+  }
+}
+
+export interface Profile {
+  fid: number
+  username: string
+  displayName?: string
+  pfp?: {
+    url: string
+    verified: boolean
+  }
   profile: {
     bio: {
       text: string
-    }
-    directMessageTargets: {
-      telegram: string
+      mentions: any[]
     }
   }
-  referrerUsername: string
+  followerCount: number
+  followingCount: number
+  referrerUsername?: string
+}
+
+export interface Cast {
+  hash: string
+  threadHash: string
+  author: {
+    fid: number
+    username: string
+    displayName: string
+    pfp: {
+      url: string
+      verified: boolean
+    }
+    profile: {
+      bio: {
+        text: string
+        mentions: Array<string>
+      }
+    }
+    followerCount: number
+    followingCount: number
+  }
+  text: string
+  timestamp: number
+  replies: {
+    count: number
+  }
+  reactions: {
+    count: number
+  }
+  recasts: {
+    count: number
+    recasters: Array<any>
+  }
+  watches: {
+    count: number
+  }
+}
+
+export interface Verification {
+  fid: number
+  address: string
+  timestamp: number
 }
 
 export interface FlattenedProfile {
   id: number
-  address: string
+  address?: string
   username?: string
   display_name?: string | null
   avatar_url?: string | null
@@ -29,63 +80,10 @@ export interface FlattenedProfile {
   followers?: number
   following?: number
   bio?: string | null
-  telegram?: string | null
   referrer?: string | null
   connected_address?: string
   registered_at?: Date
   updated_at?: Date
-}
-
-export interface CastsApi {
-  result: {
-    casts: Cast[]
-  }
-  meta?: {
-    next?: string
-  }
-}
-
-export interface Cast {
-  body: {
-    type: 'text-short'
-    publishedAt: number
-    sequence: number
-    address: string
-    username: string
-    data: {
-      text: string
-      replyParentMerkleRoot: string
-    }
-    prevMerkleRoot: string
-  }
-  signature: string
-  merkleRoot: string
-  threadMerkleRoot: string
-  meta: {
-    displayName: string
-    avatar: string
-    isVerifiedAvatar: boolean
-    mentions: {
-      address: string
-      username: string
-    }[]
-    numReplyChildren: number
-    replyParentUsername: {
-      address: string
-      username: string
-    }
-    reactions: {
-      count: number
-    }
-    recasters: Profile[]
-    recasts: {
-      count: number
-    }
-    watches: {
-      count: number
-    }
-    recast?: boolean
-  }
 }
 
 export interface FlattenedCast {
