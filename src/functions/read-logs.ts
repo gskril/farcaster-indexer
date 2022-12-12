@@ -2,7 +2,6 @@ import { BaseContract } from 'ethers'
 import { FlattenedProfile } from '../types'
 import { Provider } from '@ethersproject/providers'
 import supabase from '../supabase.js'
-import { profilesTable } from '../index.js'
 
 interface GetLogsParams {
   provider: Provider
@@ -75,7 +74,7 @@ export async function upsertAllRegistrations(
   })
 
   // Insert to Supabase to make sure we have didn't miss data while the indexer was down
-  const { error } = await supabase.from(profilesTable).upsert(allRegistrations)
+  const { error } = await supabase.from('profiles').upsert(allRegistrations)
 
   if (error) {
     console.error('Error upserting profiles', error)

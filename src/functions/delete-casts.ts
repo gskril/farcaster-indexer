@@ -1,4 +1,3 @@
-import { castsTable } from '../index.js'
 import supabase from '../supabase.js'
 
 /**
@@ -8,7 +7,7 @@ import supabase from '../supabase.js'
 export async function deleteCasts() {
   const deleteSyntax = 'delete:farcaster://casts/'
   const { data: deleteMessages, error: deletedMessagesErr } = await supabase
-    .from(castsTable)
+    .from('casts')
     .select('text')
     .like('text', `${deleteSyntax}%`)
     .order('published_at', { ascending: false })
@@ -23,7 +22,7 @@ export async function deleteCasts() {
   )
 
   const { error: deleteErr } = await supabase
-    .from(castsTable)
+    .from('casts')
     .update({ deleted: true })
     .in(
       'merkle_root',

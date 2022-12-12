@@ -8,14 +8,23 @@ export interface MerkleResponse {
   }
 }
 
+interface PFP {
+  url: string
+  verified: boolean
+}
+
+interface ProfileCore {
+  fid: number
+  username: string
+  displayName: string
+  pfp?: PFP
+}
+
 export interface Profile {
   fid: number
   username: string
   displayName?: string
-  pfp?: {
-    url: string
-    verified: boolean
-  }
+  pfp?: PFP
   profile: {
     bio: {
       text: string
@@ -30,25 +39,24 @@ export interface Profile {
 export interface Cast {
   hash: string
   threadHash: string
+  parentHash: string
   author: {
     fid: number
     username: string
     displayName: string
-    pfp: {
-      url: string
-      verified: boolean
-    }
-    profile: {
+    pfp?: PFP
+    profile?: {
       bio: {
         text: string
         mentions: Array<string>
       }
     }
-    followerCount: number
-    followingCount: number
+    followerCount?: number
+    followingCount?: number
   }
   text: string
   timestamp: number
+  mentions?: ProfileCore[]
   replies: {
     count: number
   }
@@ -87,27 +95,20 @@ export interface FlattenedProfile {
 }
 
 export interface FlattenedCast {
-  type: 'text-short'
-  published_at: Date
-  sequence: number
-  address: string
-  username: string
+  hash: string
+  thread_hash: string
+  parent_hash: string | null
+  author_fid: number
+  author_username: string
+  author_display_name: string
+  author_pfp_url: string | null
+  author_pfp_verified: boolean | null
   text: string
-  reply_parent_merkle_root: string | null
-  prev_merkle_root: string | null
-  signature: string
-  merkle_root: string
-  thread_merkle_root: string
-  display_name: string | null
-  avatar_url: string | null
-  avatar_verified: boolean
-  mentions: JSON | any
-  num_reply_children: number | null
-  reply_parent_username: string | null
-  reply_parent_address: string | null
-  reactions: number | null
-  recasts: number | null
-  watches: number | null
-  recasters: JSON | any
+  published_at: Date
+  mentions: ProfileCore[] | null
+  replies_count: number
+  reactions_count: number
+  recasts_count: number
+  watches_count: number
   deleted: boolean
 }

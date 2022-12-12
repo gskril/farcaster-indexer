@@ -9,11 +9,6 @@ import { idRegistryAddr, idRegistryAbi } from './contracts/id-registry.js'
 import { indexAllCasts } from './functions/index-casts.js'
 import { updateAllProfiles } from './functions/update-profiles.js'
 import { upsertAllRegistrations } from './functions/read-logs.js'
-import { deleteCasts } from './functions/delete-casts.js'
-
-const isDev = process.argv.includes('--dev')
-export const castsTable = isDev ? 'casts_dev' : 'casts'
-export const profilesTable = isDev ? 'profiles_dev' : 'profiles'
 
 // Set up the provider
 const ALCHEMY_SECRET = process.env.ALCHEMY_SECRET
@@ -38,19 +33,19 @@ idRegistry.on(eventToWatch, async (to, id) => {
   }
 
   // Save to supabase
-  await supabase.from(profilesTable).insert(profile)
+  await supabase.from('profiles').insert(profile)
 })
 
 // Make sure we didn't miss any profiles when the indexer was offline
 await upsertAllRegistrations(provider, idRegistry)
 
-// Run job every 30 minutes
-cron.schedule('*/30 * * * *', async () => {
-  await indexAllCasts()
-  await deleteCasts()
+// Run job every minute
+cron.schedule('* * * * *', async () => {
+  // Index the latest 10k casts (~5 days)
+  await indexAllCasts(10_000)
 })
 
-// Run job every 2 hours
-cron.schedule('0 */2 * * *', async () => {
+// Run job every 30 minutes
+cron.schedule('*/30 * * * *', async () => {
   await updateAllProfiles()
 })

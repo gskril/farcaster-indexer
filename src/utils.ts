@@ -1,5 +1,4 @@
 import got from 'got'
-import { profilesTable } from './index.js'
 import supabase from './supabase.js'
 import { Cast, FlattenedProfile, Profile } from './types'
 
@@ -69,11 +68,11 @@ export async function getRegisteredDateFromOldTable() {
   const profilesToUpdate: FlattenedProfile[] = new Array()
 
   const { data: oldProfiles } = await supabase
-    .from(profilesTable)
+    .from('profiles')
     .select('username, connected_address, registered_at')
 
   const { data: newProfiles } = await supabase
-    .from(profilesTable)
+    .from('profiles')
     .select('*')
     .order('id', { ascending: true })
 
@@ -96,7 +95,7 @@ export async function getRegisteredDateFromOldTable() {
     }
   })
 
-  const { error } = await supabase.from(profilesTable).upsert(profilesToUpdate)
+  const { error } = await supabase.from('profiles').upsert(profilesToUpdate)
   if (error) {
     console.log(error)
   } else {

@@ -1,15 +1,13 @@
 import { breakIntoChunks } from '../utils.js'
 import { FlattenedProfile, MerkleResponse, Profile } from '../types/index.js'
 import { MERKLE_REQUEST_OPTIONS } from '../merkle.js'
-import { profilesTable } from '../index.js'
 import got from 'got'
 import supabase from '../supabase.js'
 
 /**
  * Reformat and upsert all profiles into the database
- * @returns An array of all Farcaster profiles
  */
-export async function updateAllProfiles(): Promise<FlattenedProfile[]> {
+export async function updateAllProfiles() {
   const allProfiles = await getAllProfiles()
 
   const formattedProfiles: FlattenedProfile[] = allProfiles.map((p) => {
@@ -31,7 +29,7 @@ export async function updateAllProfiles(): Promise<FlattenedProfile[]> {
   const chunks = breakIntoChunks(formattedProfiles, 500)
   for (const chunk of chunks) {
     const { error } = await supabase
-      .from(profilesTable)
+      .from('profiles')
       .upsert(chunk, { onConflict: 'id' })
 
     if (error) {
@@ -39,8 +37,12 @@ export async function updateAllProfiles(): Promise<FlattenedProfile[]> {
     }
   }
 
-  console.log(`Updated ${allProfiles.length} profiles`)
-  return formattedProfiles
+  const length = new Intl.NumberFormat('en-US', {
+    notation: 'compact',
+    compactDisplay: 'short',
+  }).format(allProfiles.length)
+
+  console.log(`Updated ${length} profiles`)
 }
 
 /**

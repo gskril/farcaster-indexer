@@ -40,30 +40,23 @@ GRANT ALL ON TABLE public.profiles TO service_role;
 
 CREATE TABLE IF NOT EXISTS public.casts
 (
-    type text COLLATE pg_catalog."default",
-    published_at timestamp with time zone,
-    sequence bigint,
-    address text COLLATE pg_catalog."default",
-    username text COLLATE pg_catalog."default",
-    text text COLLATE pg_catalog."default",
-    reply_parent_merkle_root text COLLATE pg_catalog."default",
-    prev_merkle_root text COLLATE pg_catalog."default",
-    signature text COLLATE pg_catalog."default",
-    merkle_root text COLLATE pg_catalog."default" NOT NULL,
-    thread_merkle_root text COLLATE pg_catalog."default",
-    display_name text COLLATE pg_catalog."default",
-    avatar_url text COLLATE pg_catalog."default",
-    avatar_verified boolean,
+    hash text COLLATE pg_catalog."default" NOT NULL,
+    thread_hash text COLLATE pg_catalog."default" NOT NULL,
+    parent_hash text COLLATE pg_catalog."default",
+    author_fid integer NOT NULL,
+    author_username text COLLATE pg_catalog."default",
+    author_display_name text COLLATE pg_catalog."default",
+    author_pfp_url text COLLATE pg_catalog."default",
+    author_pfp_verified boolean,
+    text text COLLATE pg_catalog."default" NOT NULL,
+    published_at timestamp with time zone NOT NULL,
     mentions jsonb,
-    num_reply_children bigint,
-    reply_parent_username text COLLATE pg_catalog."default",
-    reply_parent_address text COLLATE pg_catalog."default",
-    reactions bigint,
-    recasts bigint,
-    watches bigint,
-    recasters jsonb,
-    deleted boolean,
-    CONSTRAINT casts_pkey PRIMARY KEY (merkle_root)
+    replies_count integer,
+    reactions_count integer,
+    recasts_count integer,
+    watches_count integer,
+    deleted boolean DEFAULT false,
+    CONSTRAINT casts_pkey PRIMARY KEY (hash)
 )
 
 TABLESPACE pg_default;
