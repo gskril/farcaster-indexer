@@ -8,6 +8,7 @@ import supabase from '../supabase.js'
  * Reformat and upsert all profiles into the database
  */
 export async function updateAllProfiles() {
+  const startTime = Date.now()
   const allProfiles = await getAllProfiles()
 
   const formattedProfiles: FlattenedProfile[] = allProfiles.map((p) => {
@@ -37,12 +38,15 @@ export async function updateAllProfiles() {
     }
   }
 
+  const endTime = Date.now()
+  const duration = (endTime - startTime) / 1000
+
   const length = new Intl.NumberFormat('en-US', {
     notation: 'compact',
     compactDisplay: 'short',
   }).format(allProfiles.length)
 
-  console.log(`Updated ${length} profiles`)
+  console.log(`Updated ${length} profiles in ${duration} seconds`)
 }
 
 /**
