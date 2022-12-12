@@ -1,8 +1,9 @@
-import { breakIntoChunks } from '../utils.js'
-import { FlattenedProfile, MerkleResponse, Profile } from '../types/index.js'
-import { MERKLE_REQUEST_OPTIONS } from '../merkle.js'
 import got from 'got'
+
+import { MERKLE_REQUEST_OPTIONS } from '../merkle.js'
 import supabase from '../supabase.js'
+import { FlattenedProfile, MerkleResponse, Profile } from '../types/index.js'
+import { breakIntoChunks } from '../utils.js'
 
 /**
  * Reformat and upsert all profiles into the database

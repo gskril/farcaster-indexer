@@ -1,6 +1,6 @@
+import { MerkleAPIClient } from '@standard-crypto/farcaster-js'
 import 'dotenv/config'
 import { Wallet } from 'ethers'
-import { MerkleAPIClient } from '@standard-crypto/farcaster-js'
 
 const FC_MNEMONIC = process.env.FC_MNEMONIC
 

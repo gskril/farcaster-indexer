@@ -1,9 +1,9 @@
-import { breakIntoChunks, cleanUserActivity } from '../utils.js'
 import got from 'got'
-import supabase from '../supabase.js'
 
-import { Cast, FlattenedCast, MerkleResponse } from '../types/index'
 import { MERKLE_REQUEST_OPTIONS } from '../merkle.js'
+import supabase from '../supabase.js'
+import { Cast, FlattenedCast, MerkleResponse } from '../types/index'
+import { breakIntoChunks } from '../utils.js'
 
 /**
  * Index the casts from all Farcaster profiles and insert them into Supabase
