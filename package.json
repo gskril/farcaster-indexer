@@ -6,8 +6,8 @@
   "scripts": {
     "build": "tsc",
     "clean": "rm -rf ./dist",
-    "start": "tsc && node ./dist/index",
-    "dev": "tsc && node ./dist/index.js --dev",
+    "start": "tsc && node ./dist/index.js",
+    "dev": "tsc && node ./dist/index.js",
     "auth": "tsc && node ./dist/helpers/auth.js"
   },
   "dependencies": {
