@@ -8,7 +8,8 @@
     "clean": "rm -rf ./dist",
     "start": "tsc && node ./dist/index.js",
     "dev": "tsc && node ./dist/index.js",
-    "auth": "tsc && node ./dist/helpers/auth.js"
+    "auth": "tsc && node ./dist/helpers/auth.js",
+    "seed": "tsc && node ./dist/helpers/seed.js"
   },
   "dependencies": {
     "@standard-crypto/farcaster-js": "^5.1.0",

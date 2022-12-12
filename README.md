@@ -25,7 +25,13 @@ yarn install
 yarn run auth
 ```
 
-Run the indexer. If you're running it for the first time and want to fetch all historical casts, temporarily remove the number argument from `indexAllCasts()` on line ~45 of [index.ts](./src/index.ts).
+Seed your database with all profiles and casts from the protocol. This could take 5-10 minutes.
+
+```
+yarn run seed
+```
+
+Run the indexer
 
 ```
 yarn start
