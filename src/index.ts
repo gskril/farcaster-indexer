@@ -5,6 +5,7 @@ import cron from 'node-cron'
 import { idRegistryAddr, idRegistryAbi } from './contracts/id-registry.js'
 import { IdRegistry, IdRegistryEvents } from './contracts/types/id-registry.js'
 import { indexAllCasts } from './functions/index-casts.js'
+import { indexVerifications } from './functions/index-verifications.js'
 import { upsertAllRegistrations } from './functions/read-logs.js'
 import { updateAllProfiles } from './functions/update-profiles.js'
 import supabase from './supabase.js'
@@ -43,4 +44,9 @@ await upsertAllRegistrations(provider, idRegistry)
 cron.schedule('* * * * *', async () => {
   await indexAllCasts(10_000)
   await updateAllProfiles()
+})
+
+// Run job every hour
+cron.schedule('0 * * * *', async () => {
+  await indexVerifications()
 })

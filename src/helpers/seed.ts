@@ -1,6 +1,7 @@
 import 'dotenv/config'
 import { providers, Contract } from 'ethers'
 
+import { indexVerifications } from '../functions/index-verifications.js'
 import { idRegistryAddr, idRegistryAbi } from './../contracts/id-registry.js'
 import { IdRegistry } from './../contracts/types/id-registry.js'
 import { indexAllCasts } from './../functions/index-casts.js'
@@ -21,3 +22,7 @@ const idRegistry = new Contract(
 await upsertAllRegistrations(provider, idRegistry)
 await updateAllProfiles()
 await indexAllCasts()
+
+if (process.argv.includes('--verifications')) {
+  await indexVerifications()
+}

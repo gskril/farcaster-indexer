@@ -25,10 +25,13 @@ yarn install
 yarn run auth
 ```
 
-Seed your database with all profiles and casts from the protocol. This could take 5-10 minutes.
+Seed your database with protocol data. This will take just ~5 minutes for profiles and casts (default), or ~30 minutes for everything (include the `--verifications` flag).
 
 ```
 yarn run seed
+# or
+yarn run seed --verifications
+
 ```
 
 Run the indexer

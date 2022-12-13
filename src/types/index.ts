@@ -2,8 +2,9 @@ export interface MerkleResponse {
   result: {
     casts?: Cast[]
     users?: Profile[]
+    verifications?: Verification[]
   }
-  next: {
+  next?: {
     cursor: string
   }
 }
@@ -111,4 +112,10 @@ export interface FlattenedCast {
   recasts_count: number
   watches_count: number
   deleted: boolean
+}
+
+export interface FlattenedVerification {
+  fid: number
+  address: string
+  created_at: Date
 }

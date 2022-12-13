@@ -9,7 +9,8 @@
     "start": "tsc && node ./dist/index.js",
     "dev": "tsc && node ./dist/index.js",
     "auth": "tsc && node ./dist/helpers/auth.js",
-    "seed": "tsc && node ./dist/helpers/seed.js"
+    "seed": "tsc && node ./dist/helpers/seed.js",
+    "seed:verifications": "tsc && node ./dist/helpers/seed.js --verifications"
   },
   "dependencies": {
     "@standard-crypto/farcaster-js": "^5.1.0",
