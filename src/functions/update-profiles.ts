@@ -31,7 +31,7 @@ export async function updateAllProfiles() {
   const chunks = breakIntoChunks(formattedProfiles, 500)
   for (const chunk of chunks) {
     const { error } = await supabase
-      .from('profiles')
+      .from('profile')
       .upsert(chunk, { onConflict: 'id' })
 
     if (error) {

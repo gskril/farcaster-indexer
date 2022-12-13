@@ -9,6 +9,7 @@
     "start": "tsc && node ./dist/index.js",
     "dev": "tsc && node ./dist/index.js",
     "auth": "tsc && node ./dist/helpers/auth.js",
+    "migrate": "tsc && node ./dist/helpers/migrate-profiles.js",
     "seed": "tsc && node ./dist/helpers/seed.js",
     "seed:verifications": "tsc && node ./dist/helpers/seed.js --verifications"
   },

@@ -15,7 +15,7 @@ import {
 export async function indexVerifications() {
   const startTime = Date.now()
   const { data: profiles, error: supabaseError } = await supabase
-    .from('profiles')
+    .from('profile')
     .select('id', { count: 'exact' })
 
   if (supabaseError) {
@@ -42,7 +42,7 @@ export async function indexVerifications() {
     if (profile.id % 200 === 0) {
       const formattedVerifications = formatVerifications(verifications)
       const { error } = await supabase
-        .from('verifications')
+        .from('verification')
         .upsert(formattedVerifications)
 
       if (error) {
@@ -57,7 +57,7 @@ export async function indexVerifications() {
   const formattedVerifications = formatVerifications(verifications)
 
   const { error } = await supabase
-    .from('verifications')
+    .from('verification')
     .upsert(formattedVerifications)
 
   if (error) {

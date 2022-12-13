@@ -34,7 +34,7 @@ idRegistry.on(eventToWatch, async (to, id) => {
   }
 
   // Save to supabase
-  await supabase.from('profiles').insert(profile)
+  await supabase.from('profile').insert(profile)
 })
 
 // Make sure we didn't miss any profiles when the indexer was offline

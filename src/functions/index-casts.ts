@@ -40,7 +40,7 @@ export async function indexAllCasts(limit?: number) {
 
   // Upsert each chunk into the Supabase table
   for (const chunk of chunks) {
-    const { error } = await supabase.from('casts').upsert(chunk, {
+    const { error } = await supabase.from('cast').upsert(chunk, {
       onConflict: 'hash',
     })
 
