@@ -29,7 +29,7 @@ idRegistry.on(eventToWatch, async (to, id) => {
 
   const profile: FlattenedProfile = {
     id: Number(id),
-    address: to,
+    owner: to,
     registered_at: new Date(),
   }
 

@@ -50,7 +50,7 @@ const getIdRegistryEvents = async ({
     if (logDesc.name == 'Register') {
       registerEvents.push({
         id: Number(id),
-        address: to,
+        owner: to,
       })
     }
   }
@@ -59,7 +59,7 @@ const getIdRegistryEvents = async ({
 }
 
 /**
- * Upsert the id and address from all registrations in the IdRegistry contract to Supabase
+ * Upsert the id and owner from all registrations in the IdRegistry contract to Supabase
  * to make sure that we have a complete list of all profiles.
  * @param provider Ethers provider
  * @param contract IdRegistry contract

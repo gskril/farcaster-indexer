@@ -81,7 +81,7 @@ export interface Verification {
 
 export interface FlattenedProfile {
   id: number
-  address?: string
+  owner?: string
   username?: string
   display_name?: string | null
   avatar_url?: string | null
@@ -90,7 +90,6 @@ export interface FlattenedProfile {
   following?: number
   bio?: string | null
   referrer?: string | null
-  connected_address?: string
   registered_at?: Date
   updated_at?: Date
 }
