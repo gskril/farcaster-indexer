@@ -52,12 +52,10 @@ export async function indexAllCasts(limit?: number) {
   const endTime = Date.now()
   const duration = (endTime - startTime) / 1000
 
-  const length = new Intl.NumberFormat('en-US', {
-    notation: 'compact',
-    compactDisplay: 'short',
-  }).format(formattedCasts.length)
-
-  console.log(`Updated ${length} casts in ${duration} seconds`)
+  if (duration > 45) {
+    // If it takes more than 45 seconds, log the duration so we can optimize
+    console.log(`Updated ${formattedCasts.length} casts in ${duration} seconds`)
+  }
 }
 
 /**

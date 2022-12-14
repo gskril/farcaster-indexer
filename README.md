@@ -31,7 +31,6 @@ Seed your database with protocol data. This will take ~5-10 minutes for profiles
 yarn run seed
 # or
 yarn run seed --verifications
-
 ```
 
 The Merkle APIs don't include a registration timestamp for users. For new registrations, we get the timestamp by watching events on the ID Registry contract. If you were running the previous version of this indexer, you can migrate this data. Otherwise you can skip this step.
