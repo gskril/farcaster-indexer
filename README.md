@@ -25,7 +25,7 @@ yarn install
 yarn run auth
 ```
 
-Seed your database with protocol data. This will take just ~5 minutes for profiles and casts (default), or ~30 minutes for everything (include the `--verifications` flag).
+Seed your database with protocol data. This will take ~5-10 minutes for profiles and casts (default), or ~30 minutes for everything (include the `--verifications` flag).
 
 ```
 yarn run seed
@@ -34,7 +34,7 @@ yarn run seed --verifications
 
 ```
 
-The Merkle APIs don't include registration timestamp for users. For new registrations, we got the timestamp by watching events on the ID Registry contract. If you were running the previous version of this indexer, you can migrate this data. Otherwise you can skip this step.
+The Merkle APIs don't include a registration timestamp for users. For new registrations, we get the timestamp by watching events on the ID Registry contract. If you were running the previous version of this indexer, you can migrate this data. Otherwise you can skip this step.
 
 ```
 yarn run migrate
