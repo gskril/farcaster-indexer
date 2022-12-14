@@ -1,27 +1,87 @@
-export interface Profile {
-  address: string
+export interface MerkleResponse {
+  result: {
+    casts?: Cast[]
+    users?: Profile[]
+    verifications?: Verification[]
+  }
+  next?: {
+    cursor: string
+  }
+}
+
+interface PFP {
+  url: string
+  verified: boolean
+}
+
+interface ProfileCore {
+  fid: number
   username: string
   displayName: string
-  avatar: {
-    url: string
-    isVerified: boolean
-  }
-  followerCount: number
-  followingCount: number
+  pfp?: PFP
+}
+
+export interface Profile {
+  fid: number
+  username: string
+  displayName?: string
+  pfp?: PFP
   profile: {
     bio: {
       text: string
-    }
-    directMessageTargets: {
-      telegram: string
+      mentions: any[]
     }
   }
-  referrerUsername: string
+  followerCount: number
+  followingCount: number
+  referrerUsername?: string
+}
+
+export interface Cast {
+  hash: string
+  threadHash: string
+  parentHash: string
+  author: {
+    fid: number
+    username: string
+    displayName: string
+    pfp?: PFP
+    profile?: {
+      bio: {
+        text: string
+        mentions: Array<string>
+      }
+    }
+    followerCount?: number
+    followingCount?: number
+  }
+  text: string
+  timestamp: number
+  mentions?: ProfileCore[]
+  replies: {
+    count: number
+  }
+  reactions: {
+    count: number
+  }
+  recasts: {
+    count: number
+    recasters: Array<any>
+  }
+  watches: {
+    count: number
+  }
+}
+
+export interface Verification {
+  fid: number
+  address: string
+  timestamp: number
 }
 
 export interface FlattenedProfile {
   id: number
-  address: string
+  owner?: string
   username?: string
   display_name?: string | null
   avatar_url?: string | null
@@ -29,87 +89,32 @@ export interface FlattenedProfile {
   followers?: number
   following?: number
   bio?: string | null
-  telegram?: string | null
   referrer?: string | null
-  connected_address?: string
   registered_at?: Date
   updated_at?: Date
 }
 
-export interface CastsApi {
-  result: {
-    casts: Cast[]
-  }
-  meta?: {
-    next?: string
-  }
-}
-
-export interface Cast {
-  body: {
-    type: 'text-short'
-    publishedAt: number
-    sequence: number
-    address: string
-    username: string
-    data: {
-      text: string
-      replyParentMerkleRoot: string
-    }
-    prevMerkleRoot: string
-  }
-  signature: string
-  merkleRoot: string
-  threadMerkleRoot: string
-  meta: {
-    displayName: string
-    avatar: string
-    isVerifiedAvatar: boolean
-    mentions: {
-      address: string
-      username: string
-    }[]
-    numReplyChildren: number
-    replyParentUsername: {
-      address: string
-      username: string
-    }
-    reactions: {
-      count: number
-    }
-    recasters: Profile[]
-    recasts: {
-      count: number
-    }
-    watches: {
-      count: number
-    }
-    recast?: boolean
-  }
-}
-
 export interface FlattenedCast {
-  type: 'text-short'
-  published_at: Date
-  sequence: number
-  address: string
-  username: string
+  hash: string
+  thread_hash: string
+  parent_hash: string | null
+  author_fid: number
+  author_username: string
+  author_display_name: string
+  author_pfp_url: string | null
+  author_pfp_verified: boolean | null
   text: string
-  reply_parent_merkle_root: string | null
-  prev_merkle_root: string | null
-  signature: string
-  merkle_root: string
-  thread_merkle_root: string
-  display_name: string | null
-  avatar_url: string | null
-  avatar_verified: boolean
-  mentions: JSON | any
-  num_reply_children: number | null
-  reply_parent_username: string | null
-  reply_parent_address: string | null
-  reactions: number | null
-  recasts: number | null
-  watches: number | null
-  recasters: JSON | any
+  published_at: Date
+  mentions: ProfileCore[] | null
+  replies_count: number
+  reactions_count: number
+  recasts_count: number
+  watches_count: number
   deleted: boolean
+}
+
+export interface FlattenedVerification {
+  fid: number
+  address: string
+  created_at: Date
 }

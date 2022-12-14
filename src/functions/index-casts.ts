@@ -1,135 +1,136 @@
-import { breakIntoChunks, cleanUserActivity } from '../utils.js'
-import { castsTable, profilesTable } from '../index.js'
 import got from 'got'
-import supabase from '../supabase.js'
 
-import { Cast, FlattenedCast, FlattenedProfile } from '../types/index'
+import { MERKLE_REQUEST_OPTIONS } from '../merkle.js'
+import supabase from '../supabase.js'
+import { Cast, FlattenedCast, MerkleResponse } from '../types/index'
+import { breakIntoChunks } from '../utils.js'
 
 /**
  * Index the casts from all Farcaster profiles and insert them into Supabase
+ * @param limit The max number of recent casts to index
  */
-export async function indexAllCasts() {
+export async function indexAllCasts(limit?: number) {
   const startTime = Date.now()
-  const { data: _profiles, error: profilesError } = await supabase
-    .from(profilesTable)
-    .select('*')
-    .order('id', { ascending: true })
+  const allCasts = await getAllCasts(limit)
+  const cleanedCasts = cleanCasts(allCasts)
 
-  if (!_profiles || _profiles.length === 0 || profilesError) {
-    throw new Error('No profiles found.')
-  }
+  const formattedCasts: FlattenedCast[] = cleanedCasts.map((c) => {
+    return {
+      hash: c.hash,
+      thread_hash: c.threadHash,
+      parent_hash: c.parentHash || null,
+      author_fid: c.author.fid,
+      author_username: c.author.username,
+      author_display_name: c.author.displayName,
+      author_pfp_url: c.author.pfp?.url || null,
+      author_pfp_verified: c.author.pfp?.verified || false,
+      text: c.text,
+      published_at: new Date(c.timestamp),
+      mentions: c.mentions || null,
+      replies_count: c.replies.count,
+      reactions_count: c.reactions.count,
+      recasts_count: c.recasts.count,
+      watches_count: c.watches.count,
+      deleted: false,
+    }
+  })
 
-  console.log(`Indexing casts from ${_profiles.length} profiles...`)
-  const profiles: FlattenedProfile[] = _profiles
-  const allCasts: FlattenedCast[] = []
-  let profilesIndexed = 0
-
-  for (const profile of profiles) {
-    const _activity = await getProfileActivity(profile)
-
-    if (!_activity || _activity.length === 0) continue
-    const activity: Cast[] = cleanUserActivity(_activity)
-
-    activity.map((cast: Cast) => {
-      // don't save recasts
-      if (cast.meta?.recast) return
-
-      allCasts.push({
-        type: 'text-short',
-        published_at: new Date(cast.body.publishedAt),
-        sequence: cast.body.sequence,
-        address: cast.body.address,
-        username: cast.body.username,
-        text: cast.body.data.text,
-        reply_parent_merkle_root: cast.body.data.replyParentMerkleRoot || null,
-        prev_merkle_root: cast.body.prevMerkleRoot || null,
-        signature: cast.signature,
-        merkle_root: cast.merkleRoot,
-        thread_merkle_root: cast.threadMerkleRoot,
-        display_name: cast.meta?.displayName || null,
-        avatar_url: cast.meta?.avatar || null,
-        avatar_verified: cast.meta?.isVerifiedAvatar || false,
-        mentions: cast.meta?.mentions || [],
-        num_reply_children: cast.meta?.numReplyChildren || null,
-        reply_parent_username: cast.meta?.replyParentUsername?.username || null,
-        reply_parent_address: cast.meta?.replyParentUsername?.address || null,
-        reactions: cast.meta?.reactions?.count || null,
-        recasts: cast.meta?.recasts?.count || null,
-        watches: cast.meta?.watches?.count || null,
-        recasters: cast.meta?.recasters || [],
-        deleted: cast.body.data.text.startsWith('delete:farcaster://')
-          ? true
-          : false,
-      })
-    })
-
-    profilesIndexed++
-  }
-
-  // Break allCasts into chunks of 1000
-  const chunks = breakIntoChunks(allCasts, 1000)
+  // Break formattedCasts into chunks of 1000
+  const chunks = breakIntoChunks(formattedCasts, 1000)
 
   // Upsert each chunk into the Supabase table
   for (const chunk of chunks) {
-    const { error } = await supabase.from(castsTable).upsert(chunk, {
-      onConflict: 'merkle_root',
+    const { error } = await supabase.from('casts').upsert(chunk, {
+      onConflict: 'hash',
     })
 
     if (error) {
-      console.error(error)
-
-      // check if any two casts have the same merkle root
-      const merkleRoots = chunk.map((cast: FlattenedCast) => cast.merkle_root)
-      const uniqueMerkleRoots = [...new Set(merkleRoots)]
-      if (merkleRoots.length !== uniqueMerkleRoots.length) {
-        console.error('Duplicate merkle roots found in chunk')
-        // find which merkle roots are duplicated and who posted them
-        const duplicates = merkleRoots.filter(
-          (merkleRoot: string, index: number) =>
-            merkleRoots.indexOf(merkleRoot) !== index &&
-            merkleRoots.indexOf(merkleRoot) < index
-        )
-        console.error(duplicates)
-
-        // find the address of the profiles who have a cast with a merkle root from the duplicates array
-        const duplicateAddresses = chunk
-          .filter((cast: FlattenedCast) =>
-            duplicates.includes(cast.merkle_root)
-          )
-          .map((cast: FlattenedCast) => cast.address)
-        console.error(duplicateAddresses)
-      }
-
-      return
+      throw error
     }
   }
 
   const endTime = Date.now()
-  const secondsTaken = (endTime - startTime) / 1000
-  console.log(
-    `Saved ${allCasts.length} casts from ${profilesIndexed} profiles in ${secondsTaken} seconds`
-  )
+  const duration = (endTime - startTime) / 1000
+
+  const length = new Intl.NumberFormat('en-US', {
+    notation: 'compact',
+    compactDisplay: 'short',
+  }).format(formattedCasts.length)
+
+  console.log(`Updated ${length} casts in ${duration} seconds`)
 }
 
 /**
- * Iterate through all the pages of a profile's activity and return the full activity
- * @param profile Flattened Farcaster profile from Supabase
- * @returns Array of all casts by a user
+ * Get the latest casts from the Merkle API. 100k casts every ~35 seconds on local machine.
+ * @param limit The maximum number of casts to return. If not provided, all casts will be returned.
+ * @returns An array of all casts on Farcaster
  */
-async function getProfileActivity(profile: FlattenedProfile): Promise<Cast[]> {
-  const _activity = await got(
-    `https://guardian.farcaster.xyz/origin/address_activity/${profile.address}`
-  )
-    .json()
-    .catch((err) => {
-      const identifier = profile.username
-        ? `@${profile.username}`
-        : profile.address
+async function getAllCasts(limit?: number): Promise<Cast[]> {
+  const allCasts: Cast[] = new Array()
+  let endpoint = buildCastEndpoint()
 
-      console.error(`Could not get activity for ${identifier}`, err)
-      return []
-    })
+  while (true) {
+    const _response = await got(endpoint, MERKLE_REQUEST_OPTIONS).json()
 
-  const activity = _activity as Cast[]
-  return activity
+    const response = _response as MerkleResponse
+    const casts = response.result.casts
+
+    if (!casts) throw new Error('No casts found')
+
+    for (const cast of casts) {
+      allCasts.push(cast)
+    }
+
+    // If limit is provided, stop when we reach it
+    if (limit && allCasts.length >= limit) {
+      break
+    }
+
+    // If there are more casts, get the next page
+    const cursor = response.next?.cursor
+    if (cursor) {
+      endpoint = buildCastEndpoint(cursor)
+    } else {
+      break
+    }
+  }
+
+  return allCasts
+}
+
+/**
+ * Helper function to build the profile endpoint with a cursor
+ * @param cursor
+ */
+function buildCastEndpoint(cursor?: string): string {
+  return `https://api.farcaster.xyz/v2/recent-casts?limit=1000${
+    cursor ? `&cursor=${cursor}` : ''
+  }`
+}
+
+function cleanCasts(casts: Cast[]): Cast[] {
+  const cleanedCasts: Cast[] = new Array()
+
+  for (const cast of casts) {
+    // Remove recasts
+    if (cast.text.startsWith('recast:farcaster://')) continue
+
+    // TODO: find way to remove deleted casts
+
+    // Remove some data from mentions
+    if (cast.mentions) {
+      cast.mentions = cast.mentions.map((m) => {
+        return {
+          fid: m.fid,
+          username: m.username,
+          displayName: m.displayName,
+          pfp: m.pfp,
+        }
+      })
+    }
+
+    cleanedCasts.push(cast)
+  }
+
+  return cleanedCasts
 }

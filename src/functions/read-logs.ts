@@ -1,8 +1,8 @@
-import { BaseContract } from 'ethers'
-import { FlattenedProfile } from '../types'
 import { Provider } from '@ethersproject/providers'
+import { BaseContract } from 'ethers'
+
 import supabase from '../supabase.js'
-import { profilesTable } from '../index.js'
+import { FlattenedProfile } from '../types'
 
 interface GetLogsParams {
   provider: Provider
@@ -50,7 +50,7 @@ const getIdRegistryEvents = async ({
     if (logDesc.name == 'Register') {
       registerEvents.push({
         id: Number(id),
-        address: to,
+        owner: to,
       })
     }
   }
@@ -59,7 +59,7 @@ const getIdRegistryEvents = async ({
 }
 
 /**
- * Upsert the id and address from all registrations in the IdRegistry contract to Supabase
+ * Upsert the id and owner from all registrations in the IdRegistry contract to Supabase
  * to make sure that we have a complete list of all profiles.
  * @param provider Ethers provider
  * @param contract IdRegistry contract
@@ -75,12 +75,12 @@ export async function upsertAllRegistrations(
   })
 
   // Insert to Supabase to make sure we have didn't miss data while the indexer was down
-  const { error } = await supabase.from(profilesTable).upsert(allRegistrations)
+  const { error } = await supabase.from('profile').upsert(allRegistrations)
 
   if (error) {
-    console.error('Error upserting profiles', error)
+    console.error('Error inserting registrations', error)
   } else {
-    console.log('Upserted all registrations to Supabase')
+    console.log('Inserted all registrations to Supabase')
   }
 
   return allRegistrations

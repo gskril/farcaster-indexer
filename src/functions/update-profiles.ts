@@ -1,81 +1,93 @@
 import got from 'got'
-import { profilesTable } from '../index.js'
+
+import { MERKLE_REQUEST_OPTIONS } from '../merkle.js'
 import supabase from '../supabase.js'
-import { FlattenedProfile, Profile } from '../types/index.js'
+import { FlattenedProfile, MerkleResponse, Profile } from '../types/index.js'
 import { breakIntoChunks } from '../utils.js'
 
+/**
+ * Reformat and upsert all profiles into the database
+ */
 export async function updateAllProfiles() {
-  const startTime = new Date()
-  console.log('Updating profiles...')
-  const { data: _profiles, error: profilesError } = await supabase
-    .from(profilesTable)
-    .select('*')
-    .order('id', { ascending: true })
+  const startTime = Date.now()
+  const allProfiles = await getAllProfiles()
 
-  if (!_profiles || _profiles.length === 0 || profilesError) {
-    throw new Error('No profiles found.')
-  }
-
-  const profiles: FlattenedProfile[] = _profiles
-  const updatedProfiles: FlattenedProfile[] = []
-
-  for (const profile of profiles) {
-    const res: any = await got(
-      `https://api.farcaster.xyz/v1/profiles/${profile.address}`
-    ).json()
-
-    if (res.error) {
-      throw new Error(res.error)
-    }
-
-    const p: Profile = res.result.user
-
-    const connectedAddress = await getConnectedAddress(p.address)
-
-    updatedProfiles.push({
-      id: profile.id,
-      address: p.address,
+  const formattedProfiles: FlattenedProfile[] = allProfiles.map((p) => {
+    return {
+      id: p.fid,
       username: p.username,
       display_name: p.displayName || null,
-      avatar_url: p.avatar?.url || null,
-      avatar_verified: p.avatar?.isVerified || false,
+      avatar_url: p.pfp?.url || null,
+      avatar_verified: p.pfp?.verified || false,
       followers: p.followerCount,
       following: p.followingCount,
       bio: p.profile?.bio?.text || null,
-      telegram: p.profile?.directMessageTargets?.telegram || null,
-      referrer: p.referrerUsername || null,
-      connected_address: connectedAddress,
+      referrer: p?.referrerUsername || null,
       updated_at: new Date(),
-    })
-  }
+    }
+  })
 
-  // Break profiles into chunks of 100
-  const chunks = breakIntoChunks(updatedProfiles, 100)
+  // Upsert profiles in chunks to avoid locking the table
+  const chunks = breakIntoChunks(formattedProfiles, 500)
   for (const chunk of chunks) {
     const { error } = await supabase
-      .from(profilesTable)
+      .from('profile')
       .upsert(chunk, { onConflict: 'id' })
 
     if (error) {
-      console.error('Error inserting chunk of profiles.', error)
-      return
+      throw error
     }
   }
 
-  const endTime = new Date()
-  const elapsedTime = (endTime.getTime() - startTime.getTime()) / 1000
-  console.log(`Updated ${profiles.length} profiles in ${elapsedTime} seconds.`)
-  return updatedProfiles
+  const endTime = Date.now()
+  const duration = (endTime - startTime) / 1000
+
+  const length = new Intl.NumberFormat('en-US', {
+    notation: 'compact',
+    compactDisplay: 'short',
+  }).format(allProfiles.length)
+
+  console.log(`Updated ${length} profiles in ${duration} seconds`)
 }
 
-async function getConnectedAddress(address: string) {
-  const res: any = await got(
-    `https://api.farcaster.xyz/v1/verified_addresses/${address}`
-  ).json()
+/**
+ * Get all profiles from the Merkle API
+ * @returns An array of all Farcaster profiles
+ */
+async function getAllProfiles(): Promise<Profile[]> {
+  const allProfiles: Profile[] = new Array()
+  let endpoint = buildProfileEndpoint()
 
-  if (res.error) {
-    return null
-  } else {
-    return res.result?.verifiedAddresses[0]?.signerAddress || null
+  while (true) {
+    const _response = await got(endpoint, MERKLE_REQUEST_OPTIONS).json()
+
+    const response = _response as MerkleResponse
+    const profiles = response.result.users
+
+    if (!profiles) throw new Error('No profiles found')
+
+    for (const profile of profiles) {
+      allProfiles.push(profile)
+    }
+
+    // If there are more profiles, get the next page
+    const cursor = response.next?.cursor
+    if (cursor) {
+      endpoint = buildProfileEndpoint(cursor)
+    } else {
+      break
+    }
   }
+
+  return allProfiles as Profile[]
+}
+
+/**
+ * Helper function to build the profile endpoint with a cursor
+ * @param cursor
+ */
+function buildProfileEndpoint(cursor?: string): string {
+  return `https://api.farcaster.xyz/v2/recent-users?limit=1000${
+    cursor ? `&cursor=${cursor}` : ''
+  }`
 }
