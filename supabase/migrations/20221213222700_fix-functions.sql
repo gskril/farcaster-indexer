@@ -17,7 +17,9 @@ $function$;
 CREATE OR REPLACE VIEW public.profile_with_verification AS
 SELECT
 	profile.*,
-	jsonb_agg((to_jsonb (verification.*) - 'fid')) AS verifications
+	jsonb_agg((to_jsonb (verification.*) - 'fid')
+ORDER BY
+	verification.created_at) AS verifications
 FROM
 	profile
 	LEFT OUTER JOIN verification ON profile.id = verification.fid
