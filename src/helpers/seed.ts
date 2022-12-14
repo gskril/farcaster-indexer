@@ -26,7 +26,7 @@ console.log('Seeding profiles from Merkle APIs...')
 await updateAllProfiles()
 
 console.log('Seeding casts from Merkle APIs...')
-await indexAllCasts(1000)
+await indexAllCasts()
 
 if (process.argv.includes('--verifications')) {
   console.log('Seeding verifications from Merkle APIs...')
