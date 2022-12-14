@@ -19,10 +19,18 @@ const idRegistry = new Contract(
   provider
 ) as IdRegistry
 
+console.log('Seeding registrations from contract logs...')
 await upsertAllRegistrations(provider, idRegistry)
+
+console.log('Seeding profiles from Merkle APIs...')
 await updateAllProfiles()
-await indexAllCasts()
+
+console.log('Seeding casts from Merkle APIs...')
+await indexAllCasts(1000)
 
 if (process.argv.includes('--verifications')) {
+  console.log('Seeding verifications from Merkle APIs...')
   await indexVerifications()
 }
+
+console.log('Seeding complete!')

@@ -71,6 +71,7 @@ export interface Cast {
   watches: {
     count: number
   }
+  parentAuthor?: Profile
 }
 
 export interface Verification {
@@ -110,6 +111,8 @@ export interface FlattenedCast {
   reactions_count: number
   recasts_count: number
   watches_count: number
+  parent_author_fid: number | null
+  parent_author_username: string | null
   deleted: boolean
 }
 
