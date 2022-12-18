@@ -42,8 +42,8 @@ export async function updateAllProfiles() {
   const endTime = Date.now()
   const duration = (endTime - startTime) / 1000
 
-  if (duration > 45) {
-    // If it takes more than 45 seconds, log the duration so we can optimize
+  if (duration > 60) {
+    // If it takes more than 60 seconds, log the duration so we can optimize
     console.log(`Updated ${allProfiles.length} profiles in ${duration} seconds`)
   }
 }
