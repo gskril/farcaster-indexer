@@ -13,15 +13,29 @@ import {
  * Takes ~20 minutes to run.
  */
 export async function indexVerifications() {
+  const itemsPerRequest = 1000
   const startTime = Date.now()
-  const { data: profiles, error: supabaseError } = await supabase
-    .from('profile')
-    .select('id', { count: 'exact' })
+  const profiles: { id: number }[] = new Array()
 
-  if (supabaseError) {
-    throw supabaseError
+  // Get all profiles from the database, 1000 at a time (default Supabase setting)
+  while (true) {
+    const { data, error } = await supabase
+      .from('profile')
+      .select('id')
+      .range(profiles.length, profiles.length + itemsPerRequest)
+
+    if (error) {
+      throw error
+    }
+
+    profiles.push(...data)
+
+    if (data.length < itemsPerRequest) {
+      break
+    }
   }
 
+  let verificationCount = 0
   const verifications: Verification[] = new Array()
 
   for (const profile of profiles) {
@@ -35,6 +49,7 @@ export async function indexVerifications() {
     const res = _res as MerkleResponse
 
     if (res.result.verifications) {
+      verificationCount += res.result.verifications.length
       verifications.push(...res.result.verifications)
     }
 
@@ -67,7 +82,9 @@ export async function indexVerifications() {
   const endTime = Date.now()
   const timeElapsed = (endTime - startTime) / 1000
 
-  console.log(`Upserted all verifications in ${timeElapsed} seconds`)
+  console.log(
+    `Upserted ${verificationCount} verifications in ${timeElapsed} seconds`
+  )
 }
 
 /**
