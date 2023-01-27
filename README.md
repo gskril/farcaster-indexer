@@ -6,13 +6,15 @@ Soon, both profiles and casts will read from [Farcaster Hubs](https://github.com
 
 ## How to run locally
 
-Create a new Supabase project via [CLI](https://supabase.com/docs/reference/cli). This will create all the tables for you.
+Requirements: [Node.js](https://nodejs.org/en/download/), [Yarn](https://classic.yarnpkg.com/en/docs/install/), [Docker](https://docs.docker.com/get-docker/), [Supabase CLI](https://supabase.com/docs/guides/cli)
+
+Create a local Supabase instance. This will create all the tables for you.
 
 ```
-supabase init
+supabase start
 ```
 
-Rename `.env.example` to `.env` and configure your variables.
+Rename `.env.example` to `.env` and configure your variables with the credentials generated from the previous step.
 
 ```
 cp .env.example .env
