@@ -40,13 +40,19 @@ idRegistry.on(eventToWatch, async (to, id) => {
 // Make sure we didn't miss any profiles when the indexer was offline
 await upsertAllRegistrations(provider, idRegistry)
 
-// Run job every minute
-cron.schedule('* * * * *', async () => {
-  await indexAllCasts(10_000)
-  await updateAllProfiles()
-})
+/** Cron job to index all casts and profiles, every minute.
+  * Turning it off cuz I don't need to query casts.
+  * Moving profiles to the next cron func, as I don't need instant data.
+  *
+*/
+// Runs job every minute; I don't need it now, so turning it off
+// cron.schedule('* * * * *', async () => {
+//   await indexAllCasts(10_000)
+//   await updateAllProfiles()
+// })
 
 // Run job every hour
 cron.schedule('0 * * * *', async () => {
-  await indexVerifications()
+  await indexVerifications();
+  await updateAllProfiles();
 })

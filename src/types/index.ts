@@ -35,6 +35,10 @@ export interface Profile {
   followerCount: number
   followingCount: number
   referrerUsername?: string
+  followerFids?: number[], // array of fids of ppl who follow this user
+  followerFnames?: string[]
+  followingFids?: number[],
+  followingFnames?: string[]
 }
 
 export interface Cast {

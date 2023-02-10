@@ -65,7 +65,56 @@ async function getAllProfiles(): Promise<Profile[]> {
     if (!profiles) throw new Error('No profiles found')
 
     for (const profile of profiles) {
-      allProfiles.push(profile)
+      const followerFids: number[] = new Array();
+      const followerFnames: string[] = new Array();
+      let followersEndpoint = buildFollowersEndpoint(profile.fid);
+
+      const followingFids: number[] = new Array();
+      const followingFnames: string[] = new Array();
+      let followingEndpoint = buildFollowingEndpoint(profile.fid);
+
+      while (true) {
+        const _followersRes = await got(followersEndpoint, MERKLE_REQUEST_OPTIONS).json();
+        const followersRes = _followersRes as MerkleResponse;
+        const followers = followersRes.result.users;
+
+        const _followingRes = await got(followingEndpoint, MERKLE_REQUEST_OPTIONS).json();
+        const followingRes = _followingRes as MerkleResponse;
+        const following = followingRes.result.users;
+
+        if (!followers) throw new Error('No followers found');
+        for (const follower of followers) {
+          followerFids.push(follower.fid);
+          followerFnames.push(follower.username);
+        }
+
+        if (!following) throw new Error('No follows found');
+        for (const follower of following) {
+          followingFids.push(follower.fid);
+          followingFnames.push(follower.username);
+        }
+
+        // If there are more followers, get the next page.
+        const followersCursor = followersRes.next?.cursor;
+        if (followersCursor) {
+          followersEndpoint = buildFollowersEndpoint(profile.fid, followersCursor);
+        } else break;
+
+        const followingCursor = followingRes.next?.cursor;
+        if (followingCursor) {
+          followingEndpoint = buildFollowingEndpoint(profile.fid, followingCursor);
+        } else break;
+      }
+
+      const extendedProfile: Profile = {
+        ...profile,
+        followerFids,
+        followerFnames,
+        followingFids,
+        followingFnames,
+      }
+
+      allProfiles.push(extendedProfile);
     }
 
     // If there are more profiles, get the next page
@@ -86,6 +135,28 @@ async function getAllProfiles(): Promise<Profile[]> {
  */
 function buildProfileEndpoint(cursor?: string): string {
   return `https://api.farcaster.xyz/v2/recent-users?limit=1000${
+    cursor ? `&cursor=${cursor}` : ''
+  }`
+}
+
+/**
+ * Helper function to build the endpoint that returns a list of users who follow user of this FId.
+ * @param cursor
+ * @param fid
+ */
+function buildFollowersEndpoint(fid: number, cursor?: string): string {
+  return `https://api.farcaster.xyz/v2/followers?fid=${fid}&limit=1000${
+    cursor ? `&cursor=${cursor}` : ''
+  }`
+}
+
+/**
+ * Helper function to build the endpoint that returns a list of users that this FId follows.
+ * @param cursor
+ * @param fid
+ */
+function buildFollowingEndpoint(fid: number, cursor?: string): string {
+  return `https://api.farcaster.xyz/v2/following?fid=${fid}&limit=1000${
     cursor ? `&cursor=${cursor}` : ''
   }`
 }
