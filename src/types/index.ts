@@ -97,6 +97,10 @@ export interface FlattenedProfile {
   referrer?: string | null
   registered_at?: Date
   updated_at?: Date
+  follower_fids?: number[] | null,
+  follower_fnames?: string[] | null,
+  following_fids?: number[] | null,
+  following_fnames?: string[] | null,
 }
 
 export interface FlattenedCast {

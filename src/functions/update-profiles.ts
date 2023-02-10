@@ -24,6 +24,10 @@ export async function updateAllProfiles() {
       bio: p.profile?.bio?.text || null,
       referrer: p?.referrerUsername || null,
       updated_at: new Date(),
+      follower_fids: p?.followerFids || null,
+      follower_fnames: p?.followerFnames || null,
+      following_fids: p?.followingFids || null,
+      following_fnames: p?.followingFnames || null,
     }
   })
 
