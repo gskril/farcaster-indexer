@@ -8,13 +8,13 @@ Soon, both profiles and casts will read from [Farcaster Hubs](https://github.com
 
 Requirements: [Node.js](https://nodejs.org/en/download/), [Yarn](https://classic.yarnpkg.com/en/docs/install/), [Docker](https://docs.docker.com/get-docker/), [Supabase CLI](https://supabase.com/docs/guides/cli)
 
-Create a local Supabase instance. This will create all the tables for you.
+**In the project directory**, create a local Supabase instance. This will create all the tables for you.
 
 ```
 supabase start
 ```
 
-Rename `.env.example` to `.env` and configure your variables with the credentials generated from the previous step.
+Rename `.env.example` to `.env` and configure your variables with the credentials generated from the previous step. Your `SUPABASE_URL` will be the `API URL` from the terminal output. The Studio URL is not necessary, but you may want to use it to view your database tables.
 
 ```
 cp .env.example .env
