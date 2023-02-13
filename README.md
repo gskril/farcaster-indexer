@@ -52,7 +52,8 @@ yarn start
 Create a [Supabase](https://supabase.com/) account and empty project. Connect to the CLI using your Postgres connection string under Project Settings > Database.
 
 ```
-supabase db remote set postgres://postgres:[YOUR-PASSWORD]@db.xxxxxxxxxxxxxxxxxxxx.supabase.co:5432/postgres
+supabase login
+supabase link --project-ref <project-id>
 ```
 
 Push your database schema
