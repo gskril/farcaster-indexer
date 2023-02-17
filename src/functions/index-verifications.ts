@@ -39,7 +39,7 @@ export async function indexVerifications() {
   const verifications: Verification[] = new Array()
 
   for (const profile of profiles) {
-    const url = `https://api.farcaster.xyz/v2/verifications?fid=${profile.id}`
+    const url = `https://api.warpcast.com/v2/verifications?fid=${profile.id}`
     const _res = await got(url, MERKLE_REQUEST_OPTIONS)
       .json()
       .catch((err) => {

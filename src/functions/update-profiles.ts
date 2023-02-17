@@ -85,7 +85,7 @@ async function getAllProfiles(): Promise<Profile[]> {
  * @param cursor
  */
 function buildProfileEndpoint(cursor?: string): string {
-  return `https://api.farcaster.xyz/v2/recent-users?limit=1000${
+  return `https://api.warpcast.com/v2/recent-users?limit=1000${
     cursor ? `&cursor=${cursor}` : ''
   }`
 }

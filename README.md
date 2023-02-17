@@ -1,8 +1,8 @@
 # Farcaster Indexer
 
-Index all profiles and casts on the Farcaster protocol using [Merkle Manufactory APIs](https://api.farcaster.xyz/docs). Powers [Searchcaster](https://searchcaster.xyz/), [Fardrop](https://fardrop.xyz/) and others.
+Index all profiles and casts on the Farcaster protocol using [Warpcast APIs](https://api.warpcast.com/docs). Powers [Searchcaster](https://searchcaster.xyz/), [Fardrop](https://fardrop.xyz/) and others.
 
-Soon, both profiles and casts will read from [Farcaster Hubs](https://github.com/farcasterxyz/hub) instead of client APIs.
+Soon, both profiles and casts will read from [Farcaster Hubs](https://github.com/farcasterxyz/protocol#4-hubs) instead of client APIs.
 
 ## How to run locally
 

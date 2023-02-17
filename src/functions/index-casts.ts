@@ -103,7 +103,7 @@ async function getAllCasts(limit?: number): Promise<Cast[]> {
  * @param cursor
  */
 function buildCastEndpoint(cursor?: string): string {
-  return `https://api.farcaster.xyz/v2/recent-casts?limit=1000${
+  return `https://api.warpcast.com/v2/recent-casts?limit=1000${
     cursor ? `&cursor=${cursor}` : ''
   }`
 }
