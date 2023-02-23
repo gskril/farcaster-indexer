@@ -14,7 +14,7 @@
     "seed:verifications": "tsc && node ./dist/helpers/seed.js --verifications"
   },
   "dependencies": {
-    "@standard-crypto/farcaster-js": "^5.1.0",
+    "@standard-crypto/farcaster-js": "^5.5.2",
     "@supabase/supabase-js": "^2.1.3",
     "dotenv": "^16.0.1",
     "ethers": "^5.7.2",
