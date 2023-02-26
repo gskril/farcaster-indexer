@@ -20,7 +20,7 @@ export async function indexAllCasts(limit?: number) {
       thread_hash: c.threadHash,
       parent_hash: c.parentHash || null,
       author_fid: c.author.fid,
-      author_username: c.author.username,
+      author_username: c.author.username || null,
       author_display_name: c.author.displayName,
       author_pfp_url: c.author.pfp?.url || null,
       author_pfp_verified: c.author.pfp?.verified || false,

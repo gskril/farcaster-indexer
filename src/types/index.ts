@@ -100,7 +100,7 @@ export interface FlattenedCast {
   thread_hash: string
   parent_hash: string | null
   author_fid: number
-  author_username: string
+  author_username: string | null
   author_display_name: string
   author_pfp_url: string | null
   author_pfp_verified: boolean | null
