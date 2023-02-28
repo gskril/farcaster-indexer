@@ -49,7 +49,7 @@ yarn start
 
 ## How to deploy
 
-Create a [Supabase](https://supabase.com/) account and empty project. Connect to the CLI using your Postgres connection string under Project Settings > Database.
+Create an empty [Supabase](https://supabase.com/) project and connect to the CLI. If you get a warning that says "Local config differs from linked project", update the `major_version` in [supabase/config.toml](supabase/config.toml) to `15`.
 
 ```
 supabase login
