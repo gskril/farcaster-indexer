@@ -59,19 +59,22 @@ const getIdRegistryEvents = async ({
 }
 
 /**
- * Upsert the id and owner from all registrations in the IdRegistry contract to Supabase
- * to make sure that we have a complete list of all profiles.
+ * Upsert the id and owner from recent registrations in the IdRegistry contract to Supabase
+ * to make sure that we have an updated list of profiles.
  * @param provider Ethers provider
  * @param contract IdRegistry contract
  */
-export async function upsertAllRegistrations(
+export async function upsertRegistrations(
   provider: Provider,
   contract: BaseContract
 ) {
+  const currentBlock = await provider.getBlockNumber()
+
   // Get all logs from the ID Registry contract since creation
   const allRegistrations = await getIdRegistryEvents({
     provider,
     contract,
+    fromBlock: currentBlock - 100_000, // last ~2 weeks
   })
 
   // Insert to Supabase to make sure we have didn't miss data while the indexer was down

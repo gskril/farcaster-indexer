@@ -15,12 +15,12 @@ export async function updateAllProfiles() {
   const formattedProfiles: FlattenedProfile[] = allProfiles.map((p) => {
     return {
       id: p.fid,
-      username: p.username,
+      username: p.username || null,
       display_name: p.displayName || null,
       avatar_url: p.pfp?.url || null,
       avatar_verified: p.pfp?.verified || false,
-      followers: p.followerCount,
-      following: p.followingCount,
+      followers: p.followerCount || null,
+      following: p.followingCount || null,
       bio: p.profile?.bio?.text || null,
       referrer: p?.referrerUsername || null,
       updated_at: new Date(),
@@ -74,6 +74,16 @@ async function getAllProfiles(): Promise<Profile[]> {
       endpoint = buildProfileEndpoint(cursor)
     } else {
       break
+    }
+  }
+
+  // If there are missing ids (warpcast filtering), insert an empty profile
+  const maxId = allProfiles[0].fid
+  for (let i = 1; i <= maxId; i++) {
+    if (!allProfiles.find((p) => p.fid === i)) {
+      allProfiles.push({
+        fid: i,
+      })
     }
   }
 

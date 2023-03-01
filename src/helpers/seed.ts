@@ -5,7 +5,7 @@ import { indexVerifications } from '../functions/index-verifications.js'
 import { idRegistryAddr, idRegistryAbi } from './../contracts/id-registry.js'
 import { IdRegistry } from './../contracts/types/id-registry.js'
 import { indexAllCasts } from './../functions/index-casts.js'
-import { upsertAllRegistrations } from './../functions/read-logs.js'
+import { upsertRegistrations } from './../functions/read-logs.js'
 import { updateAllProfiles } from './../functions/update-profiles.js'
 
 // Set up the provider
@@ -19,8 +19,8 @@ const idRegistry = new Contract(
   provider
 ) as IdRegistry
 
-console.log('Seeding registrations from contract logs...')
-await upsertAllRegistrations(provider, idRegistry)
+console.log('Seeding recent registrations from contract logs...')
+await upsertRegistrations(provider, idRegistry)
 
 console.log('Seeding profiles from Merkle APIs...')
 await updateAllProfiles()

@@ -6,7 +6,7 @@ import { idRegistryAddr, idRegistryAbi } from './contracts/id-registry.js'
 import { IdRegistry, IdRegistryEvents } from './contracts/types/id-registry.js'
 import { indexAllCasts } from './functions/index-casts.js'
 import { indexVerifications } from './functions/index-verifications.js'
-import { upsertAllRegistrations } from './functions/read-logs.js'
+import { upsertRegistrations } from './functions/read-logs.js'
 import { updateAllProfiles } from './functions/update-profiles.js'
 import supabase from './supabase.js'
 import { FlattenedProfile } from './types/index.js'
@@ -38,7 +38,7 @@ idRegistry.on(eventToWatch, async (to, id) => {
 })
 
 // Make sure we didn't miss any profiles when the indexer was offline
-await upsertAllRegistrations(provider, idRegistry)
+await upsertRegistrations(provider, idRegistry)
 
 // Run job every minute
 cron.schedule('* * * * *', async () => {
