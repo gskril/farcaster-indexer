@@ -39,8 +39,11 @@ export interface Profile {
 
 export interface Cast {
   hash: string
+  _hashV1?: string
   threadHash: string
-  parentHash: string
+  _threadHashV1?: string
+  parentHash: string | null
+  _parentHashV1?: string | null
   author: {
     fid: number
     username: string
