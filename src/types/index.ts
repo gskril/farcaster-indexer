@@ -97,8 +97,11 @@ export interface FlattenedProfile {
 
 export interface FlattenedCast {
   hash: string
+  hash_v1?: string
   thread_hash: string
+  thread_hash_v1?: string
   parent_hash: string | null
+  parent_hash_v1?: string | null
   author_fid: number
   author_username: string | null
   author_display_name: string

@@ -15,7 +15,7 @@ export async function indexAllCasts(limit?: number) {
   const cleanedCasts = cleanCasts(allCasts)
 
   const formattedCasts: FlattenedCast[] = cleanedCasts.map((c) => {
-    return {
+    const cast: FlattenedCast = {
       hash: c.hash,
       thread_hash: c.threadHash,
       parent_hash: c.parentHash || null,
@@ -35,6 +35,15 @@ export async function indexAllCasts(limit?: number) {
       parent_author_username: c.parentAuthor?.username || null,
       deleted: false,
     }
+
+    // Retain v1 hashes for backwards compatibility
+    if (c.hash.length === 66) {
+      cast.hash_v1 = c.hash
+      cast.thread_hash_v1 = c.threadHash
+      cast.parent_hash_v1 = c.parentHash || null
+    }
+
+    return cast
   })
 
   // Break formattedCasts into chunks of 1000
