@@ -20,6 +20,7 @@ export type Profile = {
   username?: string | null
   display_name?: string | null
   bio?: string | null
+  url?: string | null
   avatar_url?: string | null
   registered_at?: Date | null
   updated_at?: Date | null

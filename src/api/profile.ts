@@ -55,6 +55,33 @@ export async function updateProfileOwner(msg: protobufs.IdRegistryEvent) {
  * @param msg Hub event in JSON format
  */
 export async function updateProfile(msg: MergeMessageHubEvent) {
+  const fid = msg.data.fid
+  const type = msg.data.userDataBody!.type
+
   // Handle all types: PFP (1), DISPLAY (2), BIO (3), URL (4), FNAME (5)
-  // TODO: Update in db
+  const map = new Map([
+    [1, 'avatar_url'],
+    [2, 'display_name'],
+    [3, 'bio'],
+    [4, 'url'],
+    [5, 'username'],
+  ])
+
+  const key = map.get(type)
+
+  if (!key) return
+
+  const profile: Profile = {
+    id: fid,
+    [key]: msg.data.userDataBody!.value,
+    updated_at: new Date(),
+  }
+
+  const update = await supabase.from('profile').update(profile).eq('id', fid)
+
+  if (update.error) {
+    console.error('ERROR UPDATING PROFILE', update.error)
+  } else {
+    console.log('PROFILE UPDATED', fid)
+  }
 }

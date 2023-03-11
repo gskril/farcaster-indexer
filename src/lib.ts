@@ -72,11 +72,10 @@ export async function handleEvent(event: FormattedHubEvent) {
   } else if (event.type === 4) {
     const msg = event.message as protobufs.IdRegistryEvent
 
+    // Handle all event: REGISTER (1), TRANSFER (2)
     if (msg.type === 1) {
-      // `Register` contract event
       await insertProfile(msg)
     } else if (msg.type === 2) {
-      // `Transfer` contract event
       await updateProfileOwner(msg)
     }
   } else if (event.type === 5) {
