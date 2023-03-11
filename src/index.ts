@@ -2,7 +2,8 @@ import * as protobufs from '@farcaster/protobufs'
 import 'dotenv/config'
 
 import { sampleCast } from './helpers/heartbeat.js'
-import { client } from './lib.js'
+import { client, formatEvent } from './lib.js'
+import { MergeMessageHubEvent } from './types/index.js'
 
 setTimeout(async () => {
   await sampleCast()
@@ -15,28 +16,30 @@ async function watch() {
     (stream) => {
       console.log('streaming data')
       stream.on('data', (e: protobufs.HubEvent) => {
-        let event: { type: protobufs.HubEventType; message: unknown } = {
-          type: e.type,
-          message: {},
-        }
+        const event = formatEvent(e)
 
-        if (protobufs.isMergeMessageHubEvent(e)) {
-          event.message = protobufs.Message.toJSON(e.mergeMessageBody.message!)
-        } else if (protobufs.isPruneMessageHubEvent(e)) {
-          event.message = protobufs.Message.toJSON(e.pruneMessageBody.message!)
-        } else if (protobufs.isRevokeMessageHubEvent(e)) {
-          event.message = protobufs.Message.toJSON(e.revokeMessageBody.message!)
-        } else if (protobufs.isMergeIdRegistryEventHubEvent(e)) {
-          event.message = protobufs.IdRegistryEvent.toJSON(
-            e.mergeIdRegistryEventBody.idRegistryEvent!
-          )
-        } else if (protobufs.isMergeNameRegistryEventHubEvent(e)) {
-          event.message = protobufs.NameRegistryEvent.toJSON(
-            e.mergeNameRegistryEventBody.nameRegistryEvent!
-          )
-        }
+        // Handle each event type: MERGE_MESSAGE (1), PRUNE_MESSAGE (2), REVOKE_MESSAGE (3), MERGE_ID_REGISTRY_EVENT (4), MERGE_NAME_REGISTRY_EVENT (5)
+        switch (event.type) {
+          case 1:
+            const message = event.message as MergeMessageHubEvent
 
-        console.log(event.message)
+            console.log('MERGE_MESSAGE')
+            break
+          case 2:
+            console.log('PRUNE_MESSAGE')
+            break
+          case 3:
+            console.log('REVOKE_MESSAGE')
+            break
+          case 4:
+            console.log('MERGE_ID_REGISTRY_EVENT')
+            break
+          case 5:
+            console.log('MERGE_NAME_REGISTRY_EVENT')
+            break
+          default:
+            console.log('UNKNOWN EVENT TYPE')
+        }
       })
     },
     (e) => {
