@@ -1,5 +1,12 @@
-import { Client, types } from '@farcaster/js'
+import { Client } from '@farcaster/js'
 import * as protobufs from '@farcaster/protobufs'
+
+import {
+  FormattedHubEvent,
+  MergeMessageHubEvent,
+  PruneMessageHubEvent,
+  RevokeMessageHubEvent,
+} from './types'
 
 export const client = new Client('127.0.0.1:13112')
 
@@ -9,7 +16,7 @@ export const client = new Client('127.0.0.1:13112')
  * @returns Hub event in JSON format
  */
 export function formatEvent(e: protobufs.HubEvent) {
-  let event: { type: protobufs.HubEventType; message: unknown } = {
+  let event: FormattedHubEvent = {
     type: e.type,
     message: {},
   }
@@ -31,4 +38,30 @@ export function formatEvent(e: protobufs.HubEvent) {
   }
 
   return event
+}
+
+/**
+ * Update the database based on the event type
+ * @param event Hub event in JSON format
+ */
+export async function handleEvent(event: FormattedHubEvent) {
+  // Handle each event type: MERGE_MESSAGE (1), PRUNE_MESSAGE (2), REVOKE_MESSAGE (3), MERGE_ID_REGISTRY_EVENT (4), MERGE_NAME_REGISTRY_EVENT (5)
+  if (event.type === 1) {
+    const message = event.message as MergeMessageHubEvent
+    console.log('MERGE_MESSAGE')
+  } else if (event.type === 2) {
+    const message = event.message as PruneMessageHubEvent
+    console.log('PRUNE_MESSAGE')
+  } else if (event.type === 3) {
+    const message = event.message as RevokeMessageHubEvent
+    console.log('REVOKE_MESSAGE')
+  } else if (event.type === 4) {
+    const message = event.message as protobufs.IdRegistryEvent
+    console.log('MERGE_ID_REGISTRY_EVENT')
+  } else if (event.type === 5) {
+    const message = event.message as protobufs.NameRegistryEvent
+    console.log('MERGE_NAME_REGISTRY_EVENT')
+  } else {
+    console.log('UNKNOWN EVENT TYPE')
+  }
 }
