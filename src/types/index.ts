@@ -39,8 +39,11 @@ export interface Profile {
 
 export interface Cast {
   hash: string
+  _hashV1?: string
   threadHash: string
-  parentHash: string
+  _threadHashV1?: string
+  parentHash: string | null
+  _parentHashV1?: string | null
   author: {
     fid: number
     username: string
@@ -97,8 +100,11 @@ export interface FlattenedProfile {
 
 export interface FlattenedCast {
   hash: string
+  hash_v1?: string
   thread_hash: string
+  thread_hash_v1?: string
   parent_hash: string | null
+  parent_hash_v1?: string | null
   author_fid: number
   author_username: string | null
   author_display_name: string
