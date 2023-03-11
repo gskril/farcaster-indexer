@@ -1,12 +1,15 @@
 import { Client } from '@farcaster/js'
 import * as protobufs from '@farcaster/protobufs'
+import { fromFarcasterTime } from '@farcaster/utils'
 
+import supabase from './supabase.js'
 import {
   FormattedHubEvent,
   MergeMessageHubEvent,
   PruneMessageHubEvent,
   RevokeMessageHubEvent,
 } from './types'
+import { Cast } from './types/db.js'
 
 export const client = new Client('127.0.0.1:13112')
 
@@ -47,21 +50,69 @@ export function protobufToJson(e: protobufs.HubEvent) {
 export async function handleEvent(event: FormattedHubEvent) {
   // Handle each event type: MERGE_MESSAGE (1), PRUNE_MESSAGE (2), REVOKE_MESSAGE (3), MERGE_ID_REGISTRY_EVENT (4), MERGE_NAME_REGISTRY_EVENT (5)
   if (event.type === 1) {
-    const message = event.message as MergeMessageHubEvent
-    console.log('MERGE_MESSAGE')
+    const msg = event.message as MergeMessageHubEvent
+
+    if (msg.data.type === 'MESSAGE_TYPE_CAST_ADD') {
+      const hash = formatHash(msg.hash)
+      const parentHash = msg.data.castAddBody!.parentCastId?.hash
+      const timestamp = fromFarcasterTime(msg.data.timestamp)._unsafeUnwrap()
+
+      const cast: Cast = {
+        hash,
+        signature: formatHash(msg.signature),
+        signer: formatHash(msg.signer),
+        text: msg.data.castAddBody!.text,
+        fid: msg.data.fid,
+        mentions: msg.data.castAddBody!.mentions,
+        parent_fid: msg.data.castAddBody!.parentCastId?.fid,
+        parent_hash: parentHash ? formatHash(parentHash) : null,
+        thread_hash: null,
+        published_at: new Date(timestamp),
+      }
+
+      const insert = await supabase.from('casts').insert(cast)
+
+      if (insert.error) {
+        console.log('ERROR INSERTING CAST', insert.error)
+      } else {
+        console.log('CAST INSERTED', hash)
+      }
+    } else if (msg.data.type === 'MESSAGE_TYPE_CAST_REMOVE') {
+      const hash = formatHash(msg.data.castRemoveBody!.targetHash)
+
+      const update = await supabase
+        .from('casts')
+        .update({ deleted: true })
+        .eq('hash', hash)
+
+      if (update.error) {
+        console.log('ERROR UPDATING CAST', update.error)
+      } else {
+        console.log('CAST UPDATED', hash)
+      }
+    }
   } else if (event.type === 2) {
-    const message = event.message as PruneMessageHubEvent
+    const msg = event.message as PruneMessageHubEvent
     console.log('PRUNE_MESSAGE')
   } else if (event.type === 3) {
-    const message = event.message as RevokeMessageHubEvent
+    const msg = event.message as RevokeMessageHubEvent
     console.log('REVOKE_MESSAGE')
   } else if (event.type === 4) {
-    const message = event.message as protobufs.IdRegistryEvent
+    const msg = event.message as protobufs.IdRegistryEvent
     console.log('MERGE_ID_REGISTRY_EVENT')
   } else if (event.type === 5) {
-    const message = event.message as protobufs.NameRegistryEvent
+    const msg = event.message as protobufs.NameRegistryEvent
     console.log('MERGE_NAME_REGISTRY_EVENT')
   } else {
     console.log('UNKNOWN EVENT TYPE')
   }
+}
+
+/**
+ * Convert a base64 hash to hex string
+ * @param hash Base64 hash
+ * @returns Hex string
+ */
+export function formatHash(hash: string) {
+  return '0x' + Buffer.from(hash, 'base64').toString('hex')
 }

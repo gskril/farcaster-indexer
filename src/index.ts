@@ -1,7 +1,7 @@
 import * as protobufs from '@farcaster/protobufs'
 import 'dotenv/config'
 
-import { sampleCast } from './helpers/heartbeat.js'
+import { sampleCast } from './helpers/dummy.js'
 import { client, protobufToJson, handleEvent } from './lib.js'
 
 setTimeout(async () => {

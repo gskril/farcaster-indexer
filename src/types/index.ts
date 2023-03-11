@@ -23,33 +23,33 @@ export type MergeMessageHubEvent = {
     castAddBody?: {
       embeds: string[]
       mentions: number[]
-      parentCastId: {
+      parentCastId?: {
         fid: number
-        hash: Uint8Array
+        hash: string
       }
       text: string
       mentionsPositions: number[]
     }
     castRemoveBody?: {
-      targetHash: Uint8Array
+      targetHash: string
     }
     reactionBody?: {
       type: protobufs.ReactionType
       targetCastId: {
         fid: number
-        hash: Uint8Array
+        hash: string
       }
     }
     verificationAddEthAddressBody?: {
-      address: Uint8Array
-      ethSignature: Uint8Array
-      blockHash: Uint8Array
+      address: string
+      ethSignature: string
+      blockHash: string
     }
     verificationRemoveBody?: {
-      address: Uint8Array
+      address: string
     }
     signerAddBody?: {
-      signer: Uint8Array
+      signer: string
       name: string
     }
     userDataBody?: {
@@ -57,14 +57,14 @@ export type MergeMessageHubEvent = {
       value: string
     }
     signerRemoveBody?: {
-      signer: Uint8Array
+      signer: string
     }
   }
-  hash: Uint8Array
+  hash: string
   hashScheme: protobufs.HashScheme
-  signature: Uint8Array
+  signature: string
   signatureScheme: protobufs.SignatureScheme
-  signer: Uint8Array
+  signer: string
 }
 
 export type PruneMessageHubEvent = MergeMessageHubEvent

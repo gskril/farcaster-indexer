@@ -9,11 +9,17 @@ import * as ed from '@noble/ed25519'
 import { ethers } from 'ethers'
 
 import { client } from '../lib.js'
+import supabase from '../supabase.js'
+import { Profile } from '../types/db.js'
 
 const fid = 981
 
 // Create a new signer
 const ed25519Signer = await createSigner()
+
+// Insert profile to allow for testing (otherwise violates key constraint)
+const profile: Profile = { id: 981, username: 'bot' }
+await supabase.from('profile').upsert(profile)
 
 export async function sampleCast(index?: number) {
   // Create a SignerAdd message that contains the public key of the signer
@@ -63,9 +69,10 @@ export async function createSigner() {
   // Submit the SignerAdd message to the Hub
   const signerAdd = signerAddResult._unsafeUnwrap()
   const result = await client.submitMessage(signerAdd)
-  result.isOk()
-    ? console.log('SignerAdd was published successfully!')
-    : console.log(result.error)
+
+  if (!result.isOk()) {
+    console.log(result.error)
+  }
 
   return ed25519Signer
 }
