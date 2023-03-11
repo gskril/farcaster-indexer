@@ -1,15 +1,18 @@
 import { Client } from '@farcaster/js'
 import * as protobufs from '@farcaster/protobufs'
-import { fromFarcasterTime } from '@farcaster/utils'
 
-import supabase from './supabase.js'
+import {
+  insertCast,
+  deleteCast,
+  insertVerification,
+  deleteVerification,
+} from './api'
 import {
   FormattedHubEvent,
   MergeMessageHubEvent,
   PruneMessageHubEvent,
   RevokeMessageHubEvent,
 } from './types'
-import { Cast, Verification } from './types/db.js'
 
 export const client = new Client('127.0.0.1:13112')
 
@@ -53,80 +56,13 @@ export async function handleEvent(event: FormattedHubEvent) {
     const msg = event.message as MergeMessageHubEvent
 
     if (msg.data.type === 'MESSAGE_TYPE_CAST_ADD') {
-      const hash = formatHash(msg.hash)
-      const parentHash = msg.data.castAddBody!.parentCastId?.hash
-      const timestamp = fromFarcasterTime(msg.data.timestamp)._unsafeUnwrap()
-
-      const cast: Cast = {
-        hash,
-        signature: formatHash(msg.signature),
-        signer: formatHash(msg.signer),
-        text: msg.data.castAddBody!.text,
-        fid: msg.data.fid,
-        mentions: msg.data.castAddBody!.mentions,
-        parent_fid: msg.data.castAddBody!.parentCastId?.fid,
-        parent_hash: parentHash ? formatHash(parentHash) : null,
-        thread_hash: null,
-        published_at: new Date(timestamp),
-      }
-
-      const insert = await supabase.from('casts').insert(cast)
-
-      if (insert.error) {
-        console.log('ERROR INSERTING CAST', insert.error)
-      } else {
-        console.log('CAST INSERTED', hash)
-      }
+      await insertCast(msg)
     } else if (msg.data.type === 'MESSAGE_TYPE_CAST_REMOVE') {
-      const hash = formatHash(msg.data.castRemoveBody!.targetHash)
-
-      const update = await supabase
-        .from('casts')
-        .update({ deleted: true })
-        .eq('hash', hash)
-
-      if (update.error) {
-        console.log('ERROR UPDATING CAST', update.error)
-      } else {
-        console.log('CAST UPDATED', hash)
-      }
+      await deleteCast(msg)
     } else if (msg.data.type === 'MESSAGE_TYPE_VERIFICATION_ADD_ETH_ADDRESS') {
-      const fid = msg.data.fid
-      const address = msg.data.verificationAddEthAddressBody!.address
-      const timestamp = fromFarcasterTime(msg.data.timestamp)._unsafeUnwrap()
-      const signature = formatHash(
-        msg.data.verificationAddEthAddressBody!.ethSignature
-      )
-
-      const verification: Verification = {
-        fid,
-        address,
-        signature,
-        created_at: new Date(timestamp),
-      }
-
-      const insert = await supabase.from('verifications').insert(verification)
-
-      if (insert.error) {
-        console.log('ERROR INSERTING VERIFICATION', insert.error)
-      } else {
-        console.log('VERIFICATION INSERTED', fid, address)
-      }
+      await insertVerification(msg)
     } else if (msg.data.type === 'MESSAGE_TYPE_VERIFICATION_REMOVE') {
-      const fid = msg.data.fid
-      const address = msg.data.verificationRemoveBody!.address
-
-      const drop = await supabase
-        .from('verifications')
-        .delete()
-        .eq('fid', fid)
-        .eq('address', address)
-
-      if (drop.error) {
-        console.log('ERROR DELETING VERIFICATION', drop.error)
-      } else {
-        console.log('VERIFICATION DELETED', fid, address)
-      }
+      await deleteVerification(msg)
     }
   } else if (event.type === 2) {
     const msg = event.message as PruneMessageHubEvent
