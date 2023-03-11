@@ -9,7 +9,7 @@ import {
   PruneMessageHubEvent,
   RevokeMessageHubEvent,
 } from './types'
-import { Cast } from './types/db.js'
+import { Cast, Verification } from './types/db.js'
 
 export const client = new Client('127.0.0.1:13112')
 
@@ -89,6 +89,43 @@ export async function handleEvent(event: FormattedHubEvent) {
         console.log('ERROR UPDATING CAST', update.error)
       } else {
         console.log('CAST UPDATED', hash)
+      }
+    } else if (msg.data.type === 'MESSAGE_TYPE_VERIFICATION_ADD_ETH_ADDRESS') {
+      const fid = msg.data.fid
+      const address = msg.data.verificationAddEthAddressBody!.address
+      const timestamp = fromFarcasterTime(msg.data.timestamp)._unsafeUnwrap()
+      const signature = formatHash(
+        msg.data.verificationAddEthAddressBody!.ethSignature
+      )
+
+      const verification: Verification = {
+        fid,
+        address,
+        signature,
+        created_at: new Date(timestamp),
+      }
+
+      const insert = await supabase.from('verifications').insert(verification)
+
+      if (insert.error) {
+        console.log('ERROR INSERTING VERIFICATION', insert.error)
+      } else {
+        console.log('VERIFICATION INSERTED', fid, address)
+      }
+    } else if (msg.data.type === 'MESSAGE_TYPE_VERIFICATION_REMOVE') {
+      const fid = msg.data.fid
+      const address = msg.data.verificationRemoveBody!.address
+
+      const drop = await supabase
+        .from('verifications')
+        .delete()
+        .eq('fid', fid)
+        .eq('address', address)
+
+      if (drop.error) {
+        console.log('ERROR DELETING VERIFICATION', drop.error)
+      } else {
+        console.log('VERIFICATION DELETED', fid, address)
       }
     }
   } else if (event.type === 2) {

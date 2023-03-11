@@ -21,12 +21,12 @@ export type Profile = {
   display_name?: string | null
   bio?: string | null
   avatar_url?: string | null
-  registered_at?: string | null
+  registered_at?: Date | null
 }
 
 export type Verification = {
   fid: number
   address: string
   signature: string
-  created_at?: string | null
+  created_at?: Date | null
 }
