@@ -22,6 +22,7 @@ export type Profile = {
   bio?: string | null
   avatar_url?: string | null
   registered_at?: Date | null
+  updated_at?: Date | null
 }
 
 export type Verification = {

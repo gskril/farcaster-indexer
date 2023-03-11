@@ -5,6 +5,10 @@ import supabase from '../supabase.js'
 import { MergeMessageHubEvent } from '../types'
 import { Verification } from '../types/db'
 
+/**
+ * Insert a new verification in the database
+ * @param msg Hub event in JSON format
+ */
 export async function insertVerification(msg: MergeMessageHubEvent) {
   const fid = msg.data.fid
   const address = msg.data.verificationAddEthAddressBody!.address
@@ -29,6 +33,10 @@ export async function insertVerification(msg: MergeMessageHubEvent) {
   }
 }
 
+/**
+ * Delete a verification from the database
+ * @param msg Hub event in JSON format
+ */
 export async function deleteVerification(msg: MergeMessageHubEvent) {
   const fid = msg.data.fid
   const address = msg.data.verificationRemoveBody!.address

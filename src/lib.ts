@@ -6,6 +6,9 @@ import {
   deleteCast,
   insertVerification,
   deleteVerification,
+  updateProfile,
+  insertProfile,
+  updateProfileOwner,
 } from './api'
 import {
   FormattedHubEvent,
@@ -63,29 +66,36 @@ export async function handleEvent(event: FormattedHubEvent) {
       await insertVerification(msg)
     } else if (msg.data.type === 'MESSAGE_TYPE_VERIFICATION_REMOVE') {
       await deleteVerification(msg)
+    } else if (msg.data.type === 'MESSAGE_TYPE_USER_DATA_ADD') {
+      await updateProfile(msg)
     }
-  } else if (event.type === 2) {
-    const msg = event.message as PruneMessageHubEvent
-    console.log('PRUNE_MESSAGE')
-  } else if (event.type === 3) {
-    const msg = event.message as RevokeMessageHubEvent
-    console.log('REVOKE_MESSAGE')
   } else if (event.type === 4) {
     const msg = event.message as protobufs.IdRegistryEvent
-    console.log('MERGE_ID_REGISTRY_EVENT')
+
+    if (msg.type === 1) {
+      // `Register` contract event
+      await insertProfile(msg)
+    } else if (msg.type === 2) {
+      // `Transfer` contract event
+      await updateProfileOwner(msg)
+    }
   } else if (event.type === 5) {
     const msg = event.message as protobufs.NameRegistryEvent
-    console.log('MERGE_NAME_REGISTRY_EVENT')
+    console.log('MERGE_NAME_REGISTRY_EVENT', msg.fname)
   } else {
-    console.log('UNKNOWN EVENT TYPE')
+    console.log('UNKNOWN_HUB_EVENT', event)
   }
 }
 
 /**
- * Convert a base64 hash to hex string
- * @param hash Base64 hash
+ * Convert a Base64 or Uint8Array hash to a hex string
+ * @param hash Base64 or Uint8Array hash
  * @returns Hex string
  */
-export function formatHash(hash: string) {
-  return '0x' + Buffer.from(hash, 'base64').toString('hex')
+export function formatHash(hash: string | Uint8Array) {
+  if (typeof hash === 'string') {
+    return '0x' + Buffer.from(hash, 'base64').toString('hex')
+  } else {
+    return '0x' + Buffer.from(hash).toString('hex')
+  }
 }

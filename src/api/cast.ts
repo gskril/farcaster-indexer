@@ -5,6 +5,10 @@ import supabase from '../supabase.js'
 import { MergeMessageHubEvent } from '../types'
 import { Cast } from '../types/db'
 
+/**
+ * Insert a new cast in the database
+ * @param msg Hub event in JSON format
+ */
 export async function insertCast(msg: MergeMessageHubEvent) {
   const hash = formatHash(msg.hash)
   const parentHash = msg.data.castAddBody!.parentCastId?.hash
@@ -32,6 +36,10 @@ export async function insertCast(msg: MergeMessageHubEvent) {
   }
 }
 
+/**
+ * Soft delete a cast from the database
+ * @param msg Hub event in JSON format
+ */
 export async function deleteCast(msg: MergeMessageHubEvent) {
   const hash = formatHash(msg.data.castRemoveBody!.targetHash)
 
