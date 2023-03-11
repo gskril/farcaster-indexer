@@ -2,7 +2,7 @@ import * as protobufs from '@farcaster/protobufs'
 import 'dotenv/config'
 
 import { sampleCast } from './helpers/heartbeat.js'
-import { client, formatEvent, handleEvent } from './lib.js'
+import { client, protobufToJson, handleEvent } from './lib.js'
 
 setTimeout(async () => {
   await sampleCast()
@@ -15,7 +15,7 @@ async function watch() {
     (stream) => {
       console.log('Subscribed to stream')
       stream.on('data', async (e: protobufs.HubEvent) => {
-        const event = formatEvent(e)
+        const event = protobufToJson(e)
         await handleEvent(event).catch((e) => {
           console.log('Error handling event.', e)
         })

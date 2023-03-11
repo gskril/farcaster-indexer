@@ -15,7 +15,7 @@ export const client = new Client('127.0.0.1:13112')
  * @param e HubEvent
  * @returns Hub event in JSON format
  */
-export function formatEvent(e: protobufs.HubEvent) {
+export function protobufToJson(e: protobufs.HubEvent) {
   let event: FormattedHubEvent = {
     type: e.type,
     message: {},
