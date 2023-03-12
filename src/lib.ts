@@ -9,7 +9,7 @@ import {
   updateProfile,
   insertProfile,
   updateProfileOwner,
-} from './api'
+} from './api/index.js'
 import {
   FormattedHubEvent,
   MergeMessageHubEvent,
@@ -57,17 +57,24 @@ export async function handleEvent(event: FormattedHubEvent) {
   // Handle each event type: MERGE_MESSAGE (1), PRUNE_MESSAGE (2), REVOKE_MESSAGE (3), MERGE_ID_REGISTRY_EVENT (4), MERGE_NAME_REGISTRY_EVENT (5)
   if (event.type === 1) {
     const msg = event.message as MergeMessageHubEvent
+    const msgType = msg.data.type
 
-    if (msg.data.type === 'MESSAGE_TYPE_CAST_ADD') {
+    if (msgType === 'MESSAGE_TYPE_CAST_ADD') {
       await insertCast(msg)
-    } else if (msg.data.type === 'MESSAGE_TYPE_CAST_REMOVE') {
+    } else if (msgType === 'MESSAGE_TYPE_CAST_REMOVE') {
       await deleteCast(msg)
-    } else if (msg.data.type === 'MESSAGE_TYPE_VERIFICATION_ADD_ETH_ADDRESS') {
+    } else if (msgType === 'MESSAGE_TYPE_VERIFICATION_ADD_ETH_ADDRESS') {
       await insertVerification(msg)
-    } else if (msg.data.type === 'MESSAGE_TYPE_VERIFICATION_REMOVE') {
+    } else if (msgType === 'MESSAGE_TYPE_VERIFICATION_REMOVE') {
       await deleteVerification(msg)
-    } else if (msg.data.type === 'MESSAGE_TYPE_USER_DATA_ADD') {
+    } else if (msgType === 'MESSAGE_TYPE_USER_DATA_ADD') {
       await updateProfile(msg)
+    } else if (msgType === 'MESSAGE_TYPE_REACTION_ADD') {
+      console.log('MESSAGE_TYPE_REACTION_ADD', "(doesn't index yet)")
+    } else if (msgType === 'MESSAGE_TYPE_REACTION_REMOVE') {
+      console.log('MESSAGE_TYPE_REACTION_REMOVE', "(doesn't index yet)")
+    } else if (msgType === 'MESSAGE_TYPE_SIGNER_ADD') {
+      console.log('MESSAGE_TYPE_SIGNER_ADD', "(doesn't index yet)")
     }
   } else if (event.type === 4) {
     const msg = event.message as protobufs.IdRegistryEvent

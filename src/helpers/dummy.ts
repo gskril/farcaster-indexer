@@ -2,7 +2,11 @@ import {
   Ed25519Signer,
   Eip712Signer,
   makeCastAdd,
+  makeCastRemove,
+  makeReactionAdd,
+  makeReactionRemove,
   makeSignerAdd,
+  makeUserDataAdd,
   types,
 } from '@farcaster/js'
 import * as ed from '@noble/ed25519'
@@ -13,30 +17,127 @@ import supabase from '../supabase.js'
 import { Profile } from '../types/db.js'
 
 const fid = 981
-
-// Create a new signer
+const dataOptions = { fid, network: types.FarcasterNetwork.DEVNET }
 const ed25519Signer = await createSigner()
 
 // Insert profile to allow for testing (otherwise violates key constraint)
 const profile: Profile = { id: 981, username: 'bot' }
 await supabase.from('profile').upsert(profile)
 
-export async function sampleCast(index?: number) {
-  // Create a SignerAdd message that contains the public key of the signer
-  const dataOptions = {
-    fid,
-    network: types.FarcasterNetwork.DEVNET,
-  }
-
+/**
+ * Publish a new cast
+ * @returns Cast hash
+ */
+export async function publishCast() {
   // Make a new cast
   const cast = await makeCastAdd(
-    { text: `cast ${index || ''}` },
+    { text: 'hello world' },
     dataOptions,
     ed25519Signer
   )
-  await client.submitMessage(cast._unsafeUnwrap())
+  const castMessage = await client.submitMessage(cast._unsafeUnwrap())
+
+  if (!castMessage.isOk()) {
+    console.log(castMessage.error)
+    return
+  }
+
+  return castMessage._unsafeUnwrap().hash
 }
 
+/**
+ * Like a cast
+ * @param hash Cast hash
+ */
+export async function likeCast(hash: string) {
+  const reactionLikeBody = {
+    type: types.ReactionType.LIKE,
+    target: { fid, hash },
+  }
+
+  const like = await makeReactionAdd(
+    reactionLikeBody,
+    dataOptions,
+    ed25519Signer
+  )
+
+  const likeMessage = await client.submitMessage(like._unsafeUnwrap())
+
+  if (likeMessage.isErr()) {
+    console.error(likeMessage.error)
+  }
+}
+
+/**
+ * Remove like from a cast
+ * @param hash Cast hash
+ */
+export async function unlikeCast(hash: string) {
+  const reactionLikeBody = {
+    type: types.ReactionType.LIKE,
+    target: { fid, hash },
+  }
+
+  const unlike = await makeReactionRemove(
+    reactionLikeBody,
+    dataOptions,
+    ed25519Signer
+  )
+
+  const unlikeMessage = await client.submitMessage(unlike._unsafeUnwrap())
+
+  if (unlikeMessage.isErr()) {
+    console.error(unlikeMessage.error)
+  }
+}
+
+/**
+ * Delete a cast
+ * @param hash Cast hash
+ */
+export async function deleteCast(hash: string) {
+  const removeBody = { targetHash: hash }
+  const castRemove = await makeCastRemove(
+    removeBody,
+    dataOptions,
+    ed25519Signer
+  )
+
+  const deleteMessage = await client.submitMessage(castRemove._unsafeUnwrap())
+
+  if (deleteMessage.isErr()) {
+    console.error(deleteMessage.error)
+  }
+}
+
+/**
+ * Update profile picture
+ */
+export async function updatePfp() {
+  const userDataPfpBody = {
+    type: types.UserDataType.PFP,
+    value: 'https://i.imgur.com/yed5Zfk.gif',
+  }
+
+  const userDataPfpAdd = await makeUserDataAdd(
+    userDataPfpBody,
+    dataOptions,
+    ed25519Signer
+  )
+
+  const updateMessage = await client.submitMessage(
+    userDataPfpAdd._unsafeUnwrap()
+  )
+
+  if (updateMessage.isErr()) {
+    console.error(updateMessage.error)
+  }
+}
+
+/**
+ * Create a new signer from a private key
+ * @returns Ed25519Signer
+ */
 export async function createSigner() {
   const pkey = process.env.FARCASTER_PRIVATE_KEY
 
@@ -55,11 +156,6 @@ export async function createSigner() {
   const ed25519Signer =
     Ed25519Signer.fromPrivateKey(signerPrivateKey)._unsafeUnwrap()
 
-  // Create a SignerAdd message that contains the public key of the signer
-  const dataOptions = {
-    fid: fid, // Set to the fid of the user
-    network: types.FarcasterNetwork.DEVNET,
-  }
   const signerAddResult = await makeSignerAdd(
     { signer: ed25519Signer.signerKeyHex, name: 'test' },
     dataOptions,
@@ -71,8 +167,19 @@ export async function createSigner() {
   const result = await client.submitMessage(signerAdd)
 
   if (!result.isOk()) {
-    console.log(result.error)
+    console.error(result.error)
   }
 
   return ed25519Signer
+}
+
+/**
+ * Pause for a given number of seconds
+ * @param seconds Number of seconds, default 2
+ * @returns
+ */
+export async function sleep(seconds?: number) {
+  return new Promise((resolve) =>
+    setTimeout(resolve, seconds ? seconds * 1000 : 2000)
+  )
 }

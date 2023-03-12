@@ -1,12 +1,33 @@
 import * as protobufs from '@farcaster/protobufs'
 import 'dotenv/config'
 
-import { sampleCast } from './helpers/dummy.js'
+import {
+  deleteCast,
+  likeCast,
+  publishCast,
+  sleep,
+  unlikeCast,
+  updatePfp,
+} from './helpers/dummy.js'
 import { client, protobufToJson, handleEvent } from './lib.js'
 
-setTimeout(async () => {
-  await sampleCast()
-}, 1000)
+async function sendTestMessages() {
+  await sleep()
+  const cast = await publishCast()
+  if (!cast) return
+
+  await sleep()
+  await likeCast(cast)
+
+  await sleep()
+  await unlikeCast(cast)
+
+  await sleep()
+  await updatePfp()
+
+  await sleep()
+  await deleteCast(cast)
+}
 
 async function watch() {
   const result = await client.subscribe()
@@ -28,3 +49,4 @@ async function watch() {
 }
 
 await watch()
+await sendTestMessages()

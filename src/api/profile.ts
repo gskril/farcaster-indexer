@@ -1,5 +1,4 @@
 import * as protobufs from '@farcaster/protobufs'
-import { fromFarcasterTime } from '@farcaster/utils'
 
 import { formatHash } from '../lib.js'
 import supabase from '../supabase.js'
@@ -60,16 +59,19 @@ export async function updateProfile(msg: MergeMessageHubEvent) {
 
   // Handle all types: PFP (1), DISPLAY (2), BIO (3), URL (4), FNAME (5)
   const map = new Map([
-    [1, 'avatar_url'],
-    [2, 'display_name'],
-    [3, 'bio'],
-    [4, 'url'],
-    [5, 'username'],
+    ['USER_DATA_TYPE_PFP', 'avatar_url'],
+    ['USER_DATA_TYPE_DISPLAY', 'display_name'],
+    ['USER_DATA_TYPE_BIO', 'bio'],
+    ['USER_DATA_TYPE_URL', 'url'],
+    ['USER_DATA_TYPE_FNAME', 'username'],
   ])
 
-  const key = map.get(type)
+  const key = map.get(type.toString())
 
-  if (!key) return
+  if (!key) {
+    console.error('UNKNOWN_USER_DATA_TYPE', type)
+    return
+  }
 
   const profile: Profile = {
     id: fid,
