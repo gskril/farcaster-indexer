@@ -32,3 +32,11 @@ export type Verification = {
   signature: string
   created_at?: Date | null
 }
+
+export type Reaction = {
+  fid: number
+  target_cast: string
+  target_fid: number
+  type: string
+  created_at?: Date | null
+}

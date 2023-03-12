@@ -9,6 +9,8 @@ import {
   updateProfile,
   insertProfile,
   updateProfileOwner,
+  insertReaction,
+  deleteReaction,
 } from './api/index.js'
 import { FormattedHubEvent, MergeMessageHubEvent } from './types'
 
@@ -65,9 +67,9 @@ export async function handleEvent(event: FormattedHubEvent) {
     } else if (msgType === 'MESSAGE_TYPE_USER_DATA_ADD') {
       await updateProfile(msg)
     } else if (msgType === 'MESSAGE_TYPE_REACTION_ADD') {
-      console.log('MESSAGE_TYPE_REACTION_ADD', "(doesn't index yet)")
+      await insertReaction(msg)
     } else if (msgType === 'MESSAGE_TYPE_REACTION_REMOVE') {
-      console.log('MESSAGE_TYPE_REACTION_REMOVE', "(doesn't index yet)")
+      await deleteReaction(msg)
     } else if (msgType === 'MESSAGE_TYPE_SIGNER_ADD') {
       console.log('MESSAGE_TYPE_SIGNER_ADD', "(doesn't index yet)")
     }
