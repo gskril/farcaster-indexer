@@ -11,6 +11,8 @@ import {
   updateProfileOwner,
   insertReaction,
   deleteReaction,
+  insertSigner,
+  deleteSigner,
 } from './api/index.js'
 import { FormattedHubEvent, MergeMessageHubEvent } from './types'
 
@@ -71,7 +73,9 @@ export async function handleEvent(event: FormattedHubEvent) {
     } else if (msgType === 'MESSAGE_TYPE_REACTION_REMOVE') {
       await deleteReaction(msg)
     } else if (msgType === 'MESSAGE_TYPE_SIGNER_ADD') {
-      console.log('MESSAGE_TYPE_SIGNER_ADD', "(doesn't index yet)")
+      await insertSigner(msg)
+    } else if (msgType === 'MESSAGE_TYPE_SIGNER_REMOVE') {
+      await deleteSigner(msg)
     }
   } else if (event.type === 4) {
     const msg = event.message as protobufs.IdRegistryEvent

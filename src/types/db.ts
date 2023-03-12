@@ -40,3 +40,10 @@ export type Reaction = {
   type: string
   created_at?: Date | null
 }
+
+export type Signer = {
+  fid: number
+  signer: string
+  name: string
+  created_at?: Date | null
+}

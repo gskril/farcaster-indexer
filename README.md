@@ -11,6 +11,4 @@ It listens for messages from a Hub and updates a Postgres database with the late
 
 ## To do
 
-- Index reactions
-- Index signers
 - Backfill process

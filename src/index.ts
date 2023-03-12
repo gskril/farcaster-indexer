@@ -1,7 +1,9 @@
 import 'dotenv/config'
 
 import {
+  createSigner,
   deleteCast,
+  deleteSigner,
   likeCast,
   publishCast,
   sleep,
@@ -12,20 +14,26 @@ import { watch } from './lib.js'
 
 async function sendTestMessages() {
   await sleep()
-  const cast = await publishCast()
+  const signer = await createSigner()
+
+  await sleep()
+  const cast = await publishCast(signer)
   if (!cast) return
 
   await sleep()
-  await likeCast(cast)
+  await likeCast(cast, signer)
 
   await sleep()
-  await unlikeCast(cast)
+  await updatePfp(signer)
 
   await sleep()
-  await updatePfp()
+  await unlikeCast(cast, signer)
 
   await sleep()
-  await deleteCast(cast)
+  await deleteCast(cast, signer)
+
+  await sleep()
+  await deleteSigner(signer)
 }
 
 await watch()
