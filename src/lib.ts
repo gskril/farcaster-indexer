@@ -10,12 +10,7 @@ import {
   insertProfile,
   updateProfileOwner,
 } from './api/index.js'
-import {
-  FormattedHubEvent,
-  MergeMessageHubEvent,
-  PruneMessageHubEvent,
-  RevokeMessageHubEvent,
-} from './types'
+import { FormattedHubEvent, MergeMessageHubEvent } from './types'
 
 export const client = new Client('127.0.0.1:13112')
 
@@ -104,4 +99,26 @@ export function formatHash(hash: string | Uint8Array) {
   } else {
     return '0x' + Buffer.from(hash).toString('hex')
   }
+}
+
+/**
+ * Listen for new events from a Hub
+ */
+export async function watch() {
+  const result = await client.subscribe()
+
+  result.match(
+    (stream) => {
+      console.log('Subscribed to stream')
+      stream.on('data', async (e: protobufs.HubEvent) => {
+        const event = protobufToJson(e)
+        await handleEvent(event).catch((e) => {
+          console.log('Error handling event.', e)
+        })
+      })
+    },
+    (e) => {
+      console.log('Error streaming data.', e)
+    }
+  )
 }
