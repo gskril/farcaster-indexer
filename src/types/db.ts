@@ -44,6 +44,6 @@ export type Reaction = {
 export type Signer = {
   fid: number
   signer: string
-  name: string
+  name?: string | null
   created_at?: Date | null
 }
