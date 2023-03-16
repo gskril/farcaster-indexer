@@ -21,8 +21,12 @@ const fid = 981
 const dataOptions = { fid, network: types.FarcasterNetwork.DEVNET }
 
 // Insert profile to allow for testing (otherwise violates key constraint)
-const profile: Profile = { id: 981, username: 'bot' }
+const profile: Profile = { id: fid, username: 'bot' }
 await supabase.from('profile').upsert(profile)
+
+const pkey = process.env.FARCASTER_PRIVATE_KEY
+if (!pkey) throw new Error('FARCASTER_PRIVATE_KEY is not set')
+const wallet = new ethers.Wallet(pkey)
 
 /**
  * Publish a new cast
@@ -139,13 +143,6 @@ export async function updatePfp(ed25519Signer: Ed25519Signer) {
  * @returns Ed25519Signer
  */
 export async function createSigner() {
-  const pkey = process.env.FARCASTER_PRIVATE_KEY
-
-  if (!pkey) {
-    throw new Error('FARCASTER_PRIVATE_KEY is not set')
-  }
-
-  const wallet = new ethers.Wallet(pkey)
   const eip712Signer = Eip712Signer.fromSigner(
     wallet,
     wallet.address
@@ -181,13 +178,6 @@ export async function deleteSigner(ed25519Signer: Ed25519Signer) {
     signer: ed25519Signer.signerKeyHex,
   }
 
-  const pkey = process.env.FARCASTER_PRIVATE_KEY
-
-  if (!pkey) {
-    throw new Error('FARCASTER_PRIVATE_KEY is not set')
-  }
-
-  const wallet = new ethers.Wallet(pkey)
   const eip712Signer = Eip712Signer.fromSigner(
     wallet,
     wallet.address
