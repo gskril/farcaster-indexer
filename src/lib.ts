@@ -16,7 +16,7 @@ import {
 } from './api/index.js'
 import { FormattedHubEvent, MergeMessageHubEvent } from './types'
 
-export const client = new Client('127.0.0.1:13112')
+export const client = new Client('127.0.0.1:2283')
 
 /**
  * Convert a HubEvent (protobufs) to a more readable format (JSON)
