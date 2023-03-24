@@ -54,7 +54,7 @@ export function protobufToJson(e: protobufs.HubEvent) {
  */
 export async function handleEvent(event: FormattedHubEvent) {
   // Handle each event type: MERGE_MESSAGE (1), PRUNE_MESSAGE (2), REVOKE_MESSAGE (3), MERGE_ID_REGISTRY_EVENT (4), MERGE_NAME_REGISTRY_EVENT (5)
-  if (event.type === 1) {
+  if (event.type === 1 || event.type === 3) {
     const msg = event.message as MergeMessageHubEvent
     const msgType = msg.data.type
 
@@ -88,7 +88,10 @@ export async function handleEvent(event: FormattedHubEvent) {
     }
   } else if (event.type === 5) {
     const msg = event.message as protobufs.NameRegistryEvent
-    console.log('MERGE_NAME_REGISTRY_EVENT', msg.fname)
+
+    // Uint8Array to string
+    const fname = Buffer.from(msg.fname).toString('utf8')
+    console.log('MERGE_NAME_REGISTRY_EVENT', fname)
   } else {
     console.log('UNKNOWN_HUB_EVENT', event)
   }
