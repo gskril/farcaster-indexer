@@ -131,23 +131,3 @@ export async function watch() {
     }
   )
 }
-
-/**
- * Index all messages from a profile
- * @param fid Farcaster ID
- */
-export async function getFullProfileFromHub(_fid: number) {
-  const fid = protobufs.FidRequest.create({ fid: _fid })
-
-  const _casts = await client.getCastsByFid(fid)
-  const _signers = await client.getSignersByFid(fid)
-  const _userData = await client.getUserDataByFid(fid)
-  const _reactions = await client.getReactionsByFid(fid)
-  const _verifications = await client.getVerificationsByFid(fid)
-
-  const casts = _casts._unsafeUnwrap().messages.map((m) => {
-    return protobufs.Message.toJSON(m as protobufs.Message)
-  })
-
-  console.log(casts)
-}
