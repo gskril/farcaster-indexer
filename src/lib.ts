@@ -1,4 +1,4 @@
-import { Client } from '@farcaster/js'
+import { getHubRpcClient } from '@farcaster/hub-nodejs'
 import * as protobufs from '@farcaster/protobufs'
 
 import {
@@ -16,7 +16,7 @@ import {
 } from './api/index.js'
 import { FormattedHubEvent, MergeMessageHubEvent } from './types'
 
-export const client = new Client('127.0.0.1:2283')
+export const client = await getHubRpcClient('127.0.0.1:2283')
 
 /**
  * Convert a HubEvent (protobufs) to a more readable format (JSON)
@@ -114,7 +114,7 @@ export function formatHash(hash: string | Uint8Array) {
  * Listen for new events from a Hub
  */
 export async function watch() {
-  const result = await client.subscribe()
+  const result = await client.subscribe({ eventTypes: [0, 1, 2, 3, 4, 5] })
 
   result.match(
     (stream) => {
@@ -130,4 +130,24 @@ export async function watch() {
       console.log('Error streaming data.', e)
     }
   )
+}
+
+/**
+ * Index all messages from a profile
+ * @param fid Farcaster ID
+ */
+export async function getFullProfileFromHub(_fid: number) {
+  const fid = protobufs.FidRequest.create({ fid: _fid })
+
+  const _casts = await client.getCastsByFid(fid)
+  const _signers = await client.getSignersByFid(fid)
+  const _userData = await client.getUserDataByFid(fid)
+  const _reactions = await client.getReactionsByFid(fid)
+  const _verifications = await client.getVerificationsByFid(fid)
+
+  const casts = _casts._unsafeUnwrap().messages.map((m) => {
+    return protobufs.Message.toJSON(m as protobufs.Message)
+  })
+
+  console.log(casts)
 }

@@ -1,6 +1,7 @@
 import {
   Ed25519Signer,
   Eip712Signer,
+  EthersEip712Signer,
   makeCastAdd,
   makeCastRemove,
   makeReactionAdd,
@@ -8,17 +9,18 @@ import {
   makeSignerAdd,
   makeSignerRemove,
   makeUserDataAdd,
-  types,
-} from '@farcaster/js'
+  NobleEd25519Signer,
+} from '@farcaster/hub-nodejs'
+import * as protobufs from '@farcaster/protobufs'
 import * as ed from '@noble/ed25519'
-import { ethers } from 'ethers'
+import { Wallet } from 'ethers'
 
 import { client } from '../lib.js'
 import supabase from '../supabase.js'
 import { Profile } from '../types/db.js'
 
 const fid = 981
-const dataOptions = { fid, network: types.FarcasterNetwork.DEVNET }
+const dataOptions = { fid, network: protobufs.FarcasterNetwork.DEVNET }
 
 // Insert profile to allow for testing (otherwise violates key constraint)
 const profile: Profile = { id: fid, username: 'bot' }
@@ -26,7 +28,7 @@ await supabase.from('profile').upsert(profile)
 
 const pkey = process.env.FARCASTER_PRIVATE_KEY
 if (!pkey) throw new Error('FARCASTER_PRIVATE_KEY is not set')
-const wallet = new ethers.Wallet(pkey)
+const wallet = new Wallet(pkey)
 
 /**
  * Publish a new cast
@@ -35,7 +37,7 @@ const wallet = new ethers.Wallet(pkey)
 export async function publishCast(ed25519Signer: Ed25519Signer) {
   // Make a new cast
   const cast = await makeCastAdd(
-    { text: 'hello world' },
+    protobufs.CastAddBody.create({ text: 'hello world' }),
     dataOptions,
     ed25519Signer
   )
@@ -55,7 +57,7 @@ export async function publishCast(ed25519Signer: Ed25519Signer) {
  */
 export async function likeCast(hash: string, ed25519Signer: Ed25519Signer) {
   const reactionLikeBody = {
-    type: types.ReactionType.LIKE,
+    type: protobufs.ReactionType.LIKE,
     target: { fid, hash },
   }
 
@@ -78,7 +80,7 @@ export async function likeCast(hash: string, ed25519Signer: Ed25519Signer) {
  */
 export async function unlikeCast(hash: string, ed25519Signer: Ed25519Signer) {
   const reactionLikeBody = {
-    type: types.ReactionType.LIKE,
+    type: protobufs.ReactionType.LIKE,
     target: { fid, hash },
   }
 
@@ -99,10 +101,12 @@ export async function unlikeCast(hash: string, ed25519Signer: Ed25519Signer) {
  * Delete a cast
  * @param hash Cast hash
  */
-export async function deleteCast(hash: string, ed25519Signer: Ed25519Signer) {
-  const removeBody = { targetHash: hash }
+export async function deleteCast(
+  hash: Uint8Array,
+  ed25519Signer: Ed25519Signer
+) {
   const castRemove = await makeCastRemove(
-    removeBody,
+    protobufs.CastRemoveBody.create({ targetHash: hash }),
     dataOptions,
     ed25519Signer
   )
@@ -119,7 +123,7 @@ export async function deleteCast(hash: string, ed25519Signer: Ed25519Signer) {
  */
 export async function updatePfp(ed25519Signer: Ed25519Signer) {
   const userDataPfpBody = {
-    type: types.UserDataType.PFP,
+    type: protobufs.UserDataType.PFP,
     value: 'https://i.imgur.com/yed5Zfk.gif',
   }
 
@@ -143,18 +147,23 @@ export async function updatePfp(ed25519Signer: Ed25519Signer) {
  * @returns Ed25519Signer
  */
 export async function createSigner() {
-  const eip712Signer = Eip712Signer.fromSigner(
-    wallet,
-    wallet.address
-  )._unsafeUnwrap()
+  const eip712Signer = new EthersEip712Signer(wallet)
 
   // Generate a new Ed25519 key pair which will become the Signer and store the private key securely
   const signerPrivateKey = ed.utils.randomPrivateKey()
-  const ed25519Signer =
-    Ed25519Signer.fromPrivateKey(signerPrivateKey)._unsafeUnwrap()
+  const ed25519Signer = new NobleEd25519Signer(signerPrivateKey)
+
+  // Create a SignerAdd message that contains the public key of the signer
+  const dataOptions = {
+    fid,
+    network: protobufs.FarcasterNetwork.TESTNET,
+  }
 
   const signerAddResult = await makeSignerAdd(
-    { signer: ed25519Signer.signerKeyHex, name: 'test' },
+    {
+      signer: (await ed25519Signer.getSignerKey())._unsafeUnwrap(),
+      name: 'test signer',
+    },
     dataOptions,
     eip712Signer
   )
@@ -174,28 +183,28 @@ export async function createSigner() {
  * Delete a signer
  */
 export async function deleteSigner(ed25519Signer: Ed25519Signer) {
-  const body: types.SignerRemoveBody = {
-    signer: ed25519Signer.signerKeyHex,
+  const body: protobufs.SignerRemoveBody = {
+    signer: (await ed25519Signer.getSignerKey())._unsafeUnwrap(),
   }
 
-  const eip712Signer = Eip712Signer.fromSigner(
-    wallet,
-    wallet.address
-  )._unsafeUnwrap()
+  // const eip712Signer = Eip712Signer.fromSigner(
+  //   wallet,
+  //   wallet.address
+  // )._unsafeUnwrap()
 
-  const signerRemoveResult = await makeSignerRemove(
-    body,
-    dataOptions,
-    eip712Signer
-  )
+  // const signerRemoveResult = await makeSignerRemove(
+  //   body,
+  //   dataOptions,
+  //   eip712Signer
+  // )
 
   // Submit the SignerRemove message to the Hub
-  const signerRemove = signerRemoveResult._unsafeUnwrap()
-  const result = await client.submitMessage(signerRemove)
+  // const signerRemove = signerRemoveResult._unsafeUnwrap()
+  // const result = await client.submitMessage(signerRemove)
 
-  if (result.isErr()) {
-    console.error(result.error)
-  }
+  // if (result.isErr()) {
+  //   console.error(result.error)
+  // }
 }
 
 /**
