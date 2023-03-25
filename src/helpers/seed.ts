@@ -26,7 +26,7 @@ export async function seed() {
 
     allCasts.push(...profile.casts)
     allReactions.push(...profile.reactions)
-    // allUserData.push(...profile.userData)
+    allUserData.push(...profile.userData)
     // allVerifications.push(...profile.verifications)
     // allSigners.push(...profile.signers)
   }
@@ -37,7 +37,7 @@ export async function seed() {
   })
 
   if (castError) {
-    console.log('ERROR UPSERTING CASTS', castError)
+    console.error('ERROR UPSERTING CASTS', castError)
   }
 
   const { error: reactionError } = await supabase
@@ -47,7 +47,17 @@ export async function seed() {
     })
 
   if (reactionError) {
-    console.log('ERROR UPSERTING REACTIONS', reactionError)
+    console.error('ERROR UPSERTING REACTIONS', reactionError)
+  }
+
+  const { error: userDataError } = await supabase
+    .from('profile')
+    .upsert(allUserData, {
+      onConflict: 'id',
+    })
+
+  if (userDataError) {
+    console.error('ERROR UPSERTING USER DATA', userDataError)
   }
 
   console.log('Done seeding')
@@ -82,7 +92,6 @@ async function getFullProfileFromHub(_fid: number) {
 
   const formattedCasts: Cast[] = casts.map((cast) => {
     const timestamp = fromFarcasterTime(cast.data.timestamp)._unsafeUnwrap()
-
     return {
       hash: cast.hash,
       signature: cast.signature,
@@ -100,7 +109,6 @@ async function getFullProfileFromHub(_fid: number) {
 
   const formattedReactions: Reaction[] = reactions.map((reaction) => {
     const timestamp = fromFarcasterTime(reaction.data.timestamp)._unsafeUnwrap()
-
     return {
       fid: reaction.data.fid,
       target_cast: formatHash(reaction.data.reactionBody!.targetCastId.hash),
@@ -110,10 +118,25 @@ async function getFullProfileFromHub(_fid: number) {
     }
   })
 
+  // TODO: figure out how `userDataBody` works with enums
+  const formattedUserData: Profile[] = userData.map((user) => {
+    const timestamp = fromFarcasterTime(user.data.timestamp)._unsafeUnwrap()
+    return {
+      id: user.data.fid,
+      // username: '',
+      // display_name: '',
+      // bio: '',
+      // url: '',
+      // avatar_url: '',
+      registered_at: new Date(timestamp),
+      updated_at: new Date(),
+    }
+  })
+
   return {
     casts: formattedCasts,
     reactions: formattedReactions,
-    userData,
+    userData: formattedUserData,
     verifications,
     signers,
   }
