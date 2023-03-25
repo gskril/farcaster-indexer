@@ -1,21 +1,56 @@
-import { HubResult } from '@farcaster/hub-nodejs'
+import { fromFarcasterTime, HubResult } from '@farcaster/hub-nodejs'
 import * as protobufs from '@farcaster/protobufs'
 
-import { client } from '../lib.js'
+import { client, formatHash } from '../lib.js'
+import supabase from '../supabase.js'
+import { Cast, Profile, Reaction, Signer, Verification } from '../types/db.js'
+import { MergeMessageHubEvent } from '../types/index.js'
+import { account } from './dummy.js'
 
 /**
  * Seed the database with data from the hub
  */
 export async function seed() {
-  const fids = await getAllFids()
+  const allFids = await getAllFids()
+  const allCasts: Cast[] = []
+  const allReactions: Reaction[] = []
+  const allUserData: Profile[] = []
+  const allVerifications: Verification[] = []
+  const allSigners: Signer[] = []
 
-  for (const fid of fids) {
-    // @bot account for testing
-    if (fid !== 981) break
+  for (const fid of allFids) {
+    // TODO: remove following line after testing
+    if (fid !== account.fid) continue
 
-    const profile = await getFullProfileFromHub(3)
-    console.log(profile)
+    const profile = await getFullProfileFromHub(fid)
+
+    allCasts.push(...profile.casts)
+    allReactions.push(...profile.reactions)
+    // allUserData.push(...profile.userData)
+    // allVerifications.push(...profile.verifications)
+    // allSigners.push(...profile.signers)
   }
+
+  // TODO: upsert everything after indexing a few hundred names to not have a massive queue at the end
+  const { error: castError } = await supabase.from('casts').upsert(allCasts, {
+    onConflict: 'hash',
+  })
+
+  if (castError) {
+    console.log('ERROR UPSERTING CASTS', castError)
+  }
+
+  const { error: reactionError } = await supabase
+    .from('reaction')
+    .upsert(allReactions, {
+      onConflict: 'fid,target_cast',
+    })
+
+  if (reactionError) {
+    console.log('ERROR UPSERTING REACTIONS', reactionError)
+  }
+
+  console.log('Done seeding')
 }
 
 /**
@@ -35,13 +70,73 @@ async function getFullProfileFromHub(_fid: number) {
   )._unsafeUnwrap()
   const signersResponse = (await client.getSignersByFid(fid))._unsafeUnwrap()
 
+  const casts = hubMessageToJSON(_casts.messages) as MergeMessageHubEvent[]
+  // prettier-ignore
+  const reactions = hubMessageToJSON(_reactions.messages) as MergeMessageHubEvent[]
+  // prettier-ignore
+  const userData = hubMessageToJSON(_userData.messages) as MergeMessageHubEvent[]
+  // prettier-ignore
+  const verifications = hubMessageToJSON(_verifications.messages) as MergeMessageHubEvent[]
+  // prettier-ignore
+  const signers = hubMessageToJSON(signersResponse.messages) as MergeMessageHubEvent[]
+
+  const formattedCasts: Cast[] = casts.map((cast) => {
+    const timestamp = fromFarcasterTime(cast.data.timestamp)._unsafeUnwrap()
+
+    return {
+      hash: cast.hash,
+      signature: cast.signature,
+      signer: cast.signer,
+      text: cast.data.castAddBody!.text,
+      fid: _fid,
+      mentions: cast.data.castAddBody!.mentions,
+      parent_fid: cast.data.castAddBody!.parentCastId?.fid,
+      parent_hash: cast.data.castAddBody!.parentCastId?.hash,
+      thread_hash: null,
+      deleted: false,
+      published_at: new Date(timestamp),
+    }
+  })
+
+  const formattedReactions: Reaction[] = reactions.map((reaction) => {
+    const timestamp = fromFarcasterTime(reaction.data.timestamp)._unsafeUnwrap()
+
+    return {
+      fid: reaction.data.fid,
+      target_cast: formatHash(reaction.data.reactionBody!.targetCastId.hash),
+      target_fid: reaction.data.reactionBody!.targetCastId.fid,
+      type: reaction.data.reactionBody!.type.toString(),
+      created_at: new Date(timestamp),
+    }
+  })
+
   return {
-    casts: _casts.messages,
-    reactions: _reactions.messages,
-    userData: _userData.messages,
-    verifications: _verifications.messages,
-    signers: signersResponse.messages,
+    casts: formattedCasts,
+    reactions: formattedReactions,
+    userData,
+    verifications,
+    signers,
   }
+}
+
+/**
+ * Convert Hub messages from protobufs to JSON
+ * @param messages List of Hub messages as protobufs
+ * @returns List of Hub messages as JSON
+ */
+function hubMessageToJSON(messages: protobufs.Message[]) {
+  return messages.map((message) => {
+    const json = protobufs.Message.toJSON(message) as MergeMessageHubEvent
+
+    return {
+      data: json.data,
+      hash: formatHash(json.hash),
+      hashScheme: json.hashScheme,
+      signature: formatHash(json.signature),
+      signatureScheme: json.signatureScheme,
+      signer: formatHash(json.signer),
+    }
+  })
 }
 
 /**

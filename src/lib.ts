@@ -89,8 +89,8 @@ export async function handleEvent(event: FormattedHubEvent) {
   } else if (event.type === 5) {
     const msg = event.message as protobufs.NameRegistryEvent
 
-    // Uint8Array to string
-    const fname = Buffer.from(msg.fname).toString('utf8')
+    // Base64 encode msg.fname
+    const fname = Buffer.from(msg.fname).toString('base64')
     console.log('MERGE_NAME_REGISTRY_EVENT', fname)
   } else {
     console.log('UNKNOWN_HUB_EVENT', event)
