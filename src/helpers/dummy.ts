@@ -18,11 +18,16 @@ import { client } from '../lib.js'
 import supabase from '../supabase.js'
 import { Profile } from '../types/db.js'
 
-const fid = 981
-const dataOptions = { fid, network: protobufs.FarcasterNetwork.DEVNET }
+// test account that matches the FARCASTER_PRIVATE_KEY in your .env file
+export const account = { fid: 981, username: 'bot' }
+
+const dataOptions = {
+  fid: account.fid,
+  network: protobufs.FarcasterNetwork.DEVNET,
+}
 
 // Insert profile to allow for testing (otherwise violates key constraint)
-const profile: Profile = { id: fid, username: 'bot' }
+const profile: Profile = { id: account.fid, username: account.username }
 await supabase.from('profile').upsert(profile)
 
 const pkey = process.env.FARCASTER_PRIVATE_KEY
@@ -57,7 +62,7 @@ async function publishCast(ed25519Signer: Ed25519Signer) {
 async function likeCast(hash: Uint8Array, ed25519Signer: Ed25519Signer) {
   const reactionLikeBody = {
     type: protobufs.ReactionType.LIKE,
-    targetCastId: { fid, hash },
+    targetCastId: { fid: account.fid, hash },
   }
 
   const like = await makeReactionAdd(
@@ -80,7 +85,7 @@ async function likeCast(hash: Uint8Array, ed25519Signer: Ed25519Signer) {
 async function unlikeCast(hash: Uint8Array, ed25519Signer: Ed25519Signer) {
   const reactionLikeBody = {
     type: protobufs.ReactionType.LIKE,
-    targetCastId: { fid, hash },
+    targetCastId: { fid: account.fid, hash },
   }
 
   const unlike = await makeReactionRemove(
