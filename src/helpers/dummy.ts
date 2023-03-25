@@ -183,28 +183,21 @@ export async function createSigner() {
  * Delete a signer
  */
 export async function deleteSigner(ed25519Signer: Ed25519Signer) {
-  const body: protobufs.SignerRemoveBody = {
-    signer: (await ed25519Signer.getSignerKey())._unsafeUnwrap(),
-  }
+  const eip712Signer = new EthersEip712Signer(wallet)
 
-  // const eip712Signer = Eip712Signer.fromSigner(
-  //   wallet,
-  //   wallet.address
-  // )._unsafeUnwrap()
-
-  // const signerRemoveResult = await makeSignerRemove(
-  //   body,
-  //   dataOptions,
-  //   eip712Signer
-  // )
+  const signerRemoveResult = await makeSignerRemove(
+    { signer: (await ed25519Signer.getSignerKey())._unsafeUnwrap() },
+    dataOptions,
+    eip712Signer
+  )
 
   // Submit the SignerRemove message to the Hub
-  // const signerRemove = signerRemoveResult._unsafeUnwrap()
-  // const result = await client.submitMessage(signerRemove)
+  const signerRemove = signerRemoveResult._unsafeUnwrap()
+  const result = await client.submitMessage(signerRemove)
 
-  // if (result.isErr()) {
-  //   console.error(result.error)
-  // }
+  if (result.isErr()) {
+    console.error(result.error)
+  }
 }
 
 /**
