@@ -1,6 +1,5 @@
 import {
   Ed25519Signer,
-  Eip712Signer,
   EthersEip712Signer,
   makeCastAdd,
   makeCastRemove,
@@ -34,7 +33,7 @@ const wallet = new Wallet(pkey)
  * Publish a new cast
  * @returns Cast hash
  */
-export async function publishCast(ed25519Signer: Ed25519Signer) {
+async function publishCast(ed25519Signer: Ed25519Signer) {
   // Make a new cast
   const cast = await makeCastAdd(
     protobufs.CastAddBody.create({ text: 'hello world' }),
@@ -55,7 +54,7 @@ export async function publishCast(ed25519Signer: Ed25519Signer) {
  * Like a cast
  * @param hash Cast hash
  */
-export async function likeCast(hash: Uint8Array, ed25519Signer: Ed25519Signer) {
+async function likeCast(hash: Uint8Array, ed25519Signer: Ed25519Signer) {
   const reactionLikeBody = {
     type: protobufs.ReactionType.LIKE,
     targetCastId: { fid, hash },
@@ -78,10 +77,7 @@ export async function likeCast(hash: Uint8Array, ed25519Signer: Ed25519Signer) {
  * Remove like from a cast
  * @param hash Cast hash
  */
-export async function unlikeCast(
-  hash: Uint8Array,
-  ed25519Signer: Ed25519Signer
-) {
+async function unlikeCast(hash: Uint8Array, ed25519Signer: Ed25519Signer) {
   const reactionLikeBody = {
     type: protobufs.ReactionType.LIKE,
     targetCastId: { fid, hash },
@@ -104,10 +100,7 @@ export async function unlikeCast(
  * Delete a cast
  * @param hash Cast hash
  */
-export async function deleteCast(
-  hash: Uint8Array,
-  ed25519Signer: Ed25519Signer
-) {
+async function deleteCast(hash: Uint8Array, ed25519Signer: Ed25519Signer) {
   const castRemove = await makeCastRemove(
     protobufs.CastRemoveBody.create({ targetHash: hash }),
     dataOptions,
@@ -124,7 +117,7 @@ export async function deleteCast(
 /**
  * Update profile picture
  */
-export async function updatePfp(ed25519Signer: Ed25519Signer) {
+async function updatePfp(ed25519Signer: Ed25519Signer) {
   const userDataPfpBody = {
     type: protobufs.UserDataType.PFP,
     value: 'https://i.imgur.com/yed5Zfk.gif',
@@ -149,7 +142,7 @@ export async function updatePfp(ed25519Signer: Ed25519Signer) {
  * Create a new signer from a private key
  * @returns Ed25519Signer
  */
-export async function createSigner() {
+async function createSigner() {
   const eip712Signer = new EthersEip712Signer(wallet)
 
   // Generate a new Ed25519 key pair which will become the Signer and store the private key securely
@@ -179,7 +172,7 @@ export async function createSigner() {
 /**
  * Delete a signer
  */
-export async function deleteSigner(ed25519Signer: Ed25519Signer) {
+async function deleteSigner(ed25519Signer: Ed25519Signer) {
   const eip712Signer = new EthersEip712Signer(wallet)
 
   const signerRemoveResult = await makeSignerRemove(
@@ -202,8 +195,35 @@ export async function deleteSigner(ed25519Signer: Ed25519Signer) {
  * @param seconds Number of seconds, default 2
  * @returns
  */
-export async function sleep(seconds?: number) {
+async function sleep(seconds?: number) {
   return new Promise((resolve) =>
     setTimeout(resolve, seconds ? seconds * 1000 : 2000)
   )
+}
+
+/**
+ * Send a series of test messages to the Hub
+ */
+export async function sendTestMessages() {
+  await sleep()
+  const signer = await createSigner()
+
+  await sleep()
+  const cast = await publishCast(signer)
+  if (!cast) return
+
+  await sleep()
+  await likeCast(cast, signer)
+
+  await sleep()
+  await updatePfp(signer)
+
+  await sleep()
+  await unlikeCast(cast, signer)
+
+  await sleep()
+  await deleteCast(cast, signer)
+
+  await sleep()
+  await deleteSigner(signer)
 }
