@@ -55,10 +55,10 @@ export async function publishCast(ed25519Signer: Ed25519Signer) {
  * Like a cast
  * @param hash Cast hash
  */
-export async function likeCast(hash: string, ed25519Signer: Ed25519Signer) {
+export async function likeCast(hash: Uint8Array, ed25519Signer: Ed25519Signer) {
   const reactionLikeBody = {
     type: protobufs.ReactionType.LIKE,
-    target: { fid, hash },
+    targetCastId: { fid, hash },
   }
 
   const like = await makeReactionAdd(
@@ -78,10 +78,13 @@ export async function likeCast(hash: string, ed25519Signer: Ed25519Signer) {
  * Remove like from a cast
  * @param hash Cast hash
  */
-export async function unlikeCast(hash: string, ed25519Signer: Ed25519Signer) {
+export async function unlikeCast(
+  hash: Uint8Array,
+  ed25519Signer: Ed25519Signer
+) {
   const reactionLikeBody = {
     type: protobufs.ReactionType.LIKE,
-    target: { fid, hash },
+    targetCastId: { fid, hash },
   }
 
   const unlike = await makeReactionRemove(
@@ -152,12 +155,6 @@ export async function createSigner() {
   // Generate a new Ed25519 key pair which will become the Signer and store the private key securely
   const signerPrivateKey = ed.utils.randomPrivateKey()
   const ed25519Signer = new NobleEd25519Signer(signerPrivateKey)
-
-  // Create a SignerAdd message that contains the public key of the signer
-  const dataOptions = {
-    fid,
-    network: protobufs.FarcasterNetwork.TESTNET,
-  }
 
   const signerAddResult = await makeSignerAdd(
     {

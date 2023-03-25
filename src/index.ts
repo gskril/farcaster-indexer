@@ -21,13 +21,13 @@ async function sendTestMessages() {
   if (!cast) return
 
   await sleep()
-  await likeCast(cast.toString(), signer)
+  await likeCast(cast, signer)
 
   await sleep()
   await updatePfp(signer)
 
   await sleep()
-  await unlikeCast(cast.toString(), signer)
+  await unlikeCast(cast, signer)
 
   await sleep()
   await deleteCast(cast, signer)
