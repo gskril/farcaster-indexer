@@ -27,7 +27,7 @@ export async function seed() {
     allCasts.push(...profile.casts)
     allReactions.push(...profile.reactions)
     allUserData.push(...profile.userData)
-    // allVerifications.push(...profile.verifications)
+    allVerifications.push(...profile.verifications)
     // allSigners.push(...profile.signers)
   }
 
@@ -133,11 +133,25 @@ async function getFullProfileFromHub(_fid: number) {
     }
   })
 
+  const formattedVerifications: Verification[] = verifications.map(
+    (verification) => {
+      const timestamp = fromFarcasterTime(
+        verification.data.timestamp
+      )._unsafeUnwrap()
+      return {
+        fid: verification.data.fid,
+        address: verification.data.verificationAddEthAddressBody!.address,
+        signature: verification.signature,
+        created_at: new Date(timestamp),
+      }
+    }
+  )
+
   return {
     casts: formattedCasts,
     reactions: formattedReactions,
     userData: formattedUserData,
-    verifications,
+    verifications: formattedVerifications,
     signers,
   }
 }

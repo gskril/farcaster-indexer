@@ -11,7 +11,7 @@ import { Verification } from '../types/db'
  */
 export async function insertVerification(msg: MergeMessageHubEvent) {
   const fid = msg.data.fid
-  const address = msg.data.verificationAddEthAddressBody!.address
+  const address = formatHash(msg.data.verificationAddEthAddressBody!.address)
   const timestamp = fromFarcasterTime(msg.data.timestamp)._unsafeUnwrap()
   const signature = formatHash(
     msg.data.verificationAddEthAddressBody!.ethSignature
@@ -24,10 +24,10 @@ export async function insertVerification(msg: MergeMessageHubEvent) {
     created_at: new Date(timestamp),
   }
 
-  const insert = await supabase.from('verifications').insert(verification)
+  const { error } = await supabase.from('verification').insert(verification)
 
-  if (insert.error) {
-    console.log('ERROR INSERTING VERIFICATION', insert.error)
+  if (error) {
+    console.log('ERROR INSERTING VERIFICATION', error)
   } else {
     console.log('VERIFICATION INSERTED', fid, address)
   }
@@ -39,10 +39,10 @@ export async function insertVerification(msg: MergeMessageHubEvent) {
  */
 export async function deleteVerification(msg: MergeMessageHubEvent) {
   const fid = msg.data.fid
-  const address = msg.data.verificationRemoveBody!.address
+  const address = formatHash(msg.data.verificationRemoveBody!.address)
 
   const drop = await supabase
-    .from('verifications')
+    .from('verification')
     .delete()
     .eq('fid', fid)
     .eq('address', address)
