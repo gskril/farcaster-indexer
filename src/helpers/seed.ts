@@ -28,7 +28,7 @@ export async function seed() {
     allReactions.push(...profile.reactions)
     allUserData.push(...profile.userData)
     allVerifications.push(...profile.verifications)
-    // allSigners.push(...profile.signers)
+    allSigners.push(...profile.signers)
   }
 
   // TODO: upsert everything after indexing a few hundred names to not have a massive queue at the end
@@ -58,6 +58,26 @@ export async function seed() {
 
   if (userDataError) {
     console.error('ERROR UPSERTING USER DATA', userDataError)
+  }
+
+  const { error: verificationError } = await supabase
+    .from('verification')
+    .upsert(allVerifications, {
+      onConflict: 'fid,address',
+    })
+
+  if (verificationError) {
+    console.error('ERROR UPSERTING VERIFICATIONS', verificationError)
+  }
+
+  const { error: signerError } = await supabase
+    .from('signer')
+    .upsert(allSigners, {
+      onConflict: 'fid,signer',
+    })
+
+  if (signerError) {
+    console.error('ERROR UPSERTING SIGNERS', signerError)
   }
 
   console.log('Done seeding')
@@ -147,12 +167,22 @@ async function getFullProfileFromHub(_fid: number) {
     }
   )
 
+  const formattedSigners: Signer[] = signers.map((signer) => {
+    const timestamp = fromFarcasterTime(signer.data.timestamp)._unsafeUnwrap()
+    return {
+      fid: signer.data.fid,
+      signer: formatHash(signer.data.signerAddBody!.signer),
+      name: signer.data.signerAddBody!.name,
+      created_at: new Date(timestamp),
+    }
+  })
+
   return {
     casts: formattedCasts,
     reactions: formattedReactions,
     userData: formattedUserData,
     verifications: formattedVerifications,
-    signers,
+    signers: formattedSigners,
   }
 }
 
