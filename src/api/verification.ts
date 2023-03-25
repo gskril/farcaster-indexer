@@ -27,9 +27,25 @@ export async function insertVerification(msg: MergeMessageHubEvent) {
   const { error } = await supabase.from('verification').insert(verification)
 
   if (error) {
-    console.log('ERROR INSERTING VERIFICATION', error)
+    console.error('ERROR INSERTING VERIFICATION', error)
   } else {
     console.log('VERIFICATION INSERTED', fid, address)
+  }
+}
+
+/**
+ * Upsert a list of verifications in the database
+ * @param verifications List of verifications
+ */
+export async function upsertVerifications(verifications: Verification[]) {
+  const { error } = await supabase.from('verification').upsert(verifications, {
+    onConflict: 'fid,address',
+  })
+
+  if (error) {
+    console.error('ERROR UPSERTING VERIFICATIONS', error)
+  } else {
+    console.log('VERIFICATIONS UPSERTED', verifications.length)
   }
 }
 
@@ -48,7 +64,7 @@ export async function deleteVerification(msg: MergeMessageHubEvent) {
     .eq('address', address)
 
   if (drop.error) {
-    console.log('ERROR DELETING VERIFICATION', drop.error)
+    console.error('ERROR DELETING VERIFICATION', drop.error)
   } else {
     console.log('VERIFICATION DELETED', fid, address)
   }

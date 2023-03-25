@@ -27,6 +27,22 @@ export async function insertProfile(msg: protobufs.IdRegistryEvent) {
 }
 
 /**
+ * Upsert a list of profiles in the database
+ * @param profiles List of profiles
+ */
+export async function upsertProfiles(profiles: Profile[]) {
+  const { error } = await supabase.from('profile').upsert(profiles, {
+    onConflict: 'id',
+  })
+
+  if (error) {
+    console.error('ERROR UPSERTING USER DATA', error)
+  } else {
+    console.log('USER DATA UPSERTED', profiles.length)
+  }
+}
+
+/**
  * Update a profile owner in the database
  * @param msg ID Registry `Transfer` contract event
  */

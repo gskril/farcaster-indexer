@@ -19,9 +19,25 @@ export async function insertSigner(msg: MergeMessageHubEvent) {
   const insert = await supabase.from('signer').insert(signer)
 
   if (insert.error) {
-    console.log('ERROR INSERTING SIGNER', insert.error)
+    console.error('ERROR INSERTING SIGNER', insert.error)
   } else {
     console.log('SIGNER INSERTED', fid)
+  }
+}
+
+/**
+ * Upsert a list of signers in the database
+ * @param signers List of signers
+ */
+export async function upsertSigners(signers: Signer[]) {
+  const { error } = await supabase.from('signer').upsert(signers, {
+    onConflict: 'fid,signer',
+  })
+
+  if (error) {
+    console.error('ERROR UPSERTING SIGNERS', error)
+  } else {
+    console.log('SIGNERS UPSERTED', signers.length)
   }
 }
 
@@ -39,7 +55,7 @@ export async function deleteSigner(msg: MergeMessageHubEvent) {
     .eq('signer', formatHash(msg.data.signerRemoveBody!.signer))
 
   if (drop.error) {
-    console.log('ERROR DELETING SIGNER', drop.error)
+    console.error('ERROR DELETING SIGNER', drop.error)
   } else {
     console.log('SIGNER DELETED', fid)
   }

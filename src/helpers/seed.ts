@@ -1,6 +1,13 @@
 import { fromFarcasterTime, HubResult } from '@farcaster/hub-nodejs'
 import * as protobufs from '@farcaster/protobufs'
 
+import {
+  upsertCasts,
+  upsertProfiles,
+  upsertReactions,
+  upsertSigners,
+  upsertVerifications,
+} from '../api/index.js'
 import { client, formatHash } from '../lib.js'
 import supabase from '../supabase.js'
 import { Cast, Profile, Reaction, Signer, Verification } from '../types/db.js'
@@ -29,56 +36,15 @@ export async function seed() {
     allUserData.push(...profile.userData)
     allVerifications.push(...profile.verifications)
     allSigners.push(...profile.signers)
+
+    // TODO: upsert data ever few hundred names to not have a massive queue at the end
   }
 
-  // TODO: upsert everything after indexing a few hundred names to not have a massive queue at the end
-  const { error: castError } = await supabase.from('casts').upsert(allCasts, {
-    onConflict: 'hash',
-  })
-
-  if (castError) {
-    console.error('ERROR UPSERTING CASTS', castError)
-  }
-
-  const { error: reactionError } = await supabase
-    .from('reaction')
-    .upsert(allReactions, {
-      onConflict: 'fid,target_cast',
-    })
-
-  if (reactionError) {
-    console.error('ERROR UPSERTING REACTIONS', reactionError)
-  }
-
-  const { error: userDataError } = await supabase
-    .from('profile')
-    .upsert(allUserData, {
-      onConflict: 'id',
-    })
-
-  if (userDataError) {
-    console.error('ERROR UPSERTING USER DATA', userDataError)
-  }
-
-  const { error: verificationError } = await supabase
-    .from('verification')
-    .upsert(allVerifications, {
-      onConflict: 'fid,address',
-    })
-
-  if (verificationError) {
-    console.error('ERROR UPSERTING VERIFICATIONS', verificationError)
-  }
-
-  const { error: signerError } = await supabase
-    .from('signer')
-    .upsert(allSigners, {
-      onConflict: 'fid,signer',
-    })
-
-  if (signerError) {
-    console.error('ERROR UPSERTING SIGNERS', signerError)
-  }
+  await upsertCasts(allCasts)
+  await upsertReactions(allReactions)
+  await upsertProfiles(allUserData)
+  await upsertVerifications(allVerifications)
+  await upsertSigners(allSigners)
 
   console.log('Done seeding')
 }

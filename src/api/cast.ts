@@ -30,9 +30,25 @@ export async function insertCast(msg: MergeMessageHubEvent) {
   const insert = await supabase.from('casts').insert(cast)
 
   if (insert.error) {
-    console.log('ERROR INSERTING CAST', insert.error)
+    console.error('ERROR INSERTING CAST', insert.error)
   } else {
     console.log('CAST INSERTED', hash)
+  }
+}
+
+/**
+ * Upsert a list of casts in the database
+ * @param casts List of casts
+ */
+export async function upsertCasts(casts: Cast[]) {
+  const { error } = await supabase.from('casts').upsert(casts, {
+    onConflict: 'hash',
+  })
+
+  if (error) {
+    console.error('ERROR UPSERTING CASTS', error)
+  } else {
+    console.log('CASTS UPSERTED', casts.length)
   }
 }
 
@@ -49,7 +65,7 @@ export async function deleteCast(msg: MergeMessageHubEvent) {
     .eq('hash', hash)
 
   if (update.error) {
-    console.log('ERROR UPDATING CAST', update.error)
+    console.error('ERROR UPDATING CAST', update.error)
   } else {
     console.log('CAST UPDATED', hash)
   }

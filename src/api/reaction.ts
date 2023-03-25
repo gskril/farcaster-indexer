@@ -20,9 +20,25 @@ export async function insertReaction(msg: MergeMessageHubEvent) {
   const insert = await supabase.from('reaction').insert(reaction)
 
   if (insert.error) {
-    console.log('ERROR INSERTING REACTION', insert.error)
+    console.error('ERROR INSERTING REACTION', insert.error)
   } else {
     console.log('REACTION INSERTED', fid)
+  }
+}
+
+/**
+ * Upsert a list of reactions in the database
+ * @param reactions List of reactions
+ */
+export async function upsertReactions(reactions: Reaction[]) {
+  const { error } = await supabase.from('reaction').upsert(reactions, {
+    onConflict: 'fid,target_cast',
+  })
+
+  if (error) {
+    console.error('ERROR UPSERTING REACTIONS', error)
+  } else {
+    console.log('REACTIONS UPSERTED', reactions.length)
   }
 }
 
@@ -40,7 +56,7 @@ export async function deleteReaction(msg: MergeMessageHubEvent) {
     .eq('target_cast', formatHash(msg.data.reactionBody!.targetCastId.hash))
 
   if (drop.error) {
-    console.log('ERROR DELETING REACTION', drop.error)
+    console.error('ERROR DELETING REACTION', drop.error)
   } else {
     console.log('REACTION DELETED', fid)
   }

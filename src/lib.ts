@@ -122,12 +122,12 @@ export async function watch() {
       stream.on('data', async (e: protobufs.HubEvent) => {
         const event = protobufToJson(e)
         await handleEvent(event).catch((e) => {
-          console.log('Error handling event.', e)
+          console.error('Error handling event.', e)
         })
       })
     },
     (e) => {
-      console.log('Error streaming data.', e)
+      console.error('Error streaming data.', e)
     }
   )
 }
