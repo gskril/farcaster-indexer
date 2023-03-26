@@ -21,8 +21,6 @@ await seed()
  */
 export async function seed() {
   const allFids = await getAllFids()
-  const allCasts: Cast[] = []
-  const allReactions: Reaction[] = []
   const allUserData: Profile[] = []
   const allVerifications: Verification[] = []
   const allSigners: Signer[] = []
