@@ -65,6 +65,15 @@ export async function updateProfileOwner(msg: protobufs.IdRegistryEvent) {
   }
 }
 
+// Handle all types: PFP (1), DISPLAY (2), BIO (3), URL (4), FNAME (5)
+const profileTypes = new Map([
+  ['USER_DATA_TYPE_PFP', 'avatar_url'],
+  ['USER_DATA_TYPE_DISPLAY', 'display_name'],
+  ['USER_DATA_TYPE_BIO', 'bio'],
+  ['USER_DATA_TYPE_URL', 'url'],
+  ['USER_DATA_TYPE_FNAME', 'username'],
+])
+
 /**
  * Update a profile in the database
  * @param msg Hub event in JSON format
@@ -73,16 +82,7 @@ export async function updateProfile(msg: MergeMessageHubEvent) {
   const fid = msg.data.fid
   const type = msg.data.userDataBody!.type
 
-  // Handle all types: PFP (1), DISPLAY (2), BIO (3), URL (4), FNAME (5)
-  const map = new Map([
-    ['USER_DATA_TYPE_PFP', 'avatar_url'],
-    ['USER_DATA_TYPE_DISPLAY', 'display_name'],
-    ['USER_DATA_TYPE_BIO', 'bio'],
-    ['USER_DATA_TYPE_URL', 'url'],
-    ['USER_DATA_TYPE_FNAME', 'username'],
-  ])
-
-  const key = map.get(type.toString())
+  const key = profileTypes.get(type.toString())
 
   if (!key) {
     console.error('UNKNOWN_USER_DATA_TYPE', type)
@@ -101,5 +101,36 @@ export async function updateProfile(msg: MergeMessageHubEvent) {
     console.error('ERROR UPDATING PROFILE', update.error)
   } else {
     console.log('PROFILE UPDATED', fid)
+  }
+}
+
+/**
+ * Delete part of a profile in the database upon revoking the signer that created it
+ * @param msg Hub event in JSON format
+ */
+export async function deletePartOfProfile(msg: MergeMessageHubEvent) {
+  const type = msg.data.userDataBody!.type
+  const key = profileTypes.get(type.toString())
+
+  if (!key) {
+    console.error('UNKNOWN_USER_DATA_TYPE', type)
+    return
+  }
+
+  const profile: Profile = {
+    id: msg.data.fid,
+    [key]: null,
+    updated_at: new Date(),
+  }
+
+  const update = await supabase
+    .from('profile')
+    .update(profile)
+    .eq('id', msg.data.fid)
+
+  if (update.error) {
+    console.error('ERROR UPDATING PROFILE', update.error)
+  } else {
+    console.log('PROFILE UPDATED FROM REVOKED SIGNER', msg.data.fid, type)
   }
 }
