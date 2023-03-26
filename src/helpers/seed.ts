@@ -1,5 +1,6 @@
 import { fromFarcasterTime, HubResult } from '@farcaster/hub-nodejs'
 import * as protobufs from '@farcaster/protobufs'
+import 'dotenv/config'
 
 import {
   upsertCasts,
@@ -9,10 +10,11 @@ import {
   upsertVerifications,
 } from '../api/index.js'
 import { client, formatHash } from '../lib.js'
-import supabase from '../supabase.js'
 import { Cast, Profile, Reaction, Signer, Verification } from '../types/db.js'
 import { MergeMessageHubEvent } from '../types/index.js'
 import { account } from './dummy.js'
+
+await seed()
 
 /**
  * Seed the database with data from the hub
