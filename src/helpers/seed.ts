@@ -33,17 +33,27 @@ export async function seed() {
 
     const profile = await getFullProfileFromHub(fid)
 
-    allCasts.push(...profile.casts)
-    allReactions.push(...profile.reactions)
     allUserData.push(...profile.userData)
     allVerifications.push(...profile.verifications)
     allSigners.push(...profile.signers)
 
-    // TODO: upsert data ever few hundred names to not have a massive queue at the end
+    // Upsert high volume data for each profile
+    await upsertCasts(profile.casts)
+    await upsertReactions(profile.reactions)
+
+    // Upsert low volume data for 100 profiles at a time
+    if (fid % 100 === 0) {
+      await upsertProfiles(allUserData)
+      await upsertVerifications(allVerifications)
+      await upsertSigners(allSigners)
+
+      allUserData.length = 0
+      allVerifications.length = 0
+      allSigners.length = 0
+    }
   }
 
-  await upsertCasts(allCasts)
-  await upsertReactions(allReactions)
+  // Upsert remaining data
   await upsertProfiles(allUserData)
   await upsertVerifications(allVerifications)
   await upsertSigners(allSigners)
