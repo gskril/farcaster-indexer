@@ -29,6 +29,7 @@ export type Profile = {
 export type Verification = {
   fid: number
   address: string
+  signer: string
   signature: string
   created_at?: Date | null
 }
@@ -38,6 +39,7 @@ export type Reaction = {
   target_cast: string
   target_fid: number
   type: string
+  signer: string
   created_at?: Date | null
 }
 

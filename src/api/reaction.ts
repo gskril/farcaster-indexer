@@ -15,6 +15,7 @@ export async function insertReaction(msg: MergeMessageHubEvent) {
     target_cast: formatHash(msg.data.reactionBody!.targetCastId.hash),
     target_fid: msg.data.reactionBody!.targetCastId.fid,
     type: msg.data.reactionBody!.type.toString(),
+    signer: formatHash(msg.signer),
   }
 
   const insert = await supabase.from('reaction').insert(reaction)

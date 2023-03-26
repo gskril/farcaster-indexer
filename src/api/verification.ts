@@ -13,14 +13,12 @@ export async function insertVerification(msg: MergeMessageHubEvent) {
   const fid = msg.data.fid
   const address = formatHash(msg.data.verificationAddEthAddressBody!.address)
   const timestamp = fromFarcasterTime(msg.data.timestamp)._unsafeUnwrap()
-  const signature = formatHash(
-    msg.data.verificationAddEthAddressBody!.ethSignature
-  )
 
   const verification: Verification = {
     fid,
     address,
-    signature,
+    signature: formatHash(msg.data.verificationAddEthAddressBody!.ethSignature),
+    signer: formatHash(msg.signer),
     created_at: new Date(timestamp),
   }
 
