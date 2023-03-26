@@ -60,3 +60,48 @@ export async function deleteSigner(msg: MergeMessageHubEvent) {
     console.log('SIGNER DELETED', fid)
   }
 }
+
+/**
+ * Delete all messages from a signer from the database
+ * @param signer Signer to delete messages from
+ */
+export async function deleteMessagesFromSigner(signer: string) {
+  const dropCasts = await supabase
+    .from('casts')
+    .update({ deleted: true })
+    .eq('signer', signer)
+
+  if (dropCasts.error) {
+    console.error('ERROR DELETING CASTS WITH REVOKED SIGNER', dropCasts.error)
+  } else {
+    console.log('CASTS FROM REVOKED SIGNER DELETED', signer)
+  }
+
+  const dropReactions = await supabase
+    .from('reaction')
+    .delete()
+    .eq('signer', signer)
+
+  if (dropReactions.error) {
+    console.error(
+      'ERROR DELETING REACTIONS WITH REVOKED SIGNER',
+      dropReactions.error
+    )
+  } else {
+    console.log('REACTIONS FROM REVOKED SIGNER DELETED', signer)
+  }
+
+  const dropVerifications = await supabase
+    .from('verification')
+    .delete()
+    .eq('signer', signer)
+
+  if (dropVerifications.error) {
+    console.error(
+      'ERROR DELETING VERIFICATIONS WITH REVOKED SIGNER',
+      dropVerifications.error
+    )
+  } else {
+    console.log('VERIFICATIONS FROM REVOKED SIGNER DELETED', signer)
+  }
+}

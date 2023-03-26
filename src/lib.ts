@@ -13,6 +13,7 @@ import {
   deleteReaction,
   insertSigner,
   deleteSigner,
+  deleteMessagesFromSigner,
 } from './api/index.js'
 import { FormattedHubEvent, MergeMessageHubEvent } from './types'
 
@@ -75,7 +76,11 @@ export async function handleEvent(event: FormattedHubEvent) {
     } else if (msgType === 'MESSAGE_TYPE_SIGNER_ADD') {
       await insertSigner(msg)
     } else if (msgType === 'MESSAGE_TYPE_SIGNER_REMOVE') {
+      // TODO: refactor profiles so that a single record can be removed at a time (each needs a signer)
       await deleteSigner(msg)
+      await deleteMessagesFromSigner(
+        formatHash(msg.data.signerRemoveBody!.signer)
+      )
     }
   } else if (event.type === 3) {
     // Events are emitted when a signer that was used to create a message is removed
