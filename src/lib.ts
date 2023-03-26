@@ -54,7 +54,7 @@ export function protobufToJson(e: protobufs.HubEvent) {
  */
 export async function handleEvent(event: FormattedHubEvent) {
   // Handle each event type: MERGE_MESSAGE (1), PRUNE_MESSAGE (2), REVOKE_MESSAGE (3), MERGE_ID_REGISTRY_EVENT (4), MERGE_NAME_REGISTRY_EVENT (5)
-  if (event.type === 1 || event.type === 3) {
+  if (event.type === 1) {
     const msg = event.message as MergeMessageHubEvent
     const msgType = msg.data.type
 
@@ -77,6 +77,9 @@ export async function handleEvent(event: FormattedHubEvent) {
     } else if (msgType === 'MESSAGE_TYPE_SIGNER_REMOVE') {
       await deleteSigner(msg)
     }
+  } else if (event.type === 3) {
+    // Events are emitted when a signer that was used to create a message is removed
+    // We take care of this within the `MESSAGE_TYPE_SIGNER_REMOVE` message
   } else if (event.type === 4) {
     const msg = event.message as protobufs.IdRegistryEvent
 
@@ -89,9 +92,8 @@ export async function handleEvent(event: FormattedHubEvent) {
   } else if (event.type === 5) {
     const msg = event.message as protobufs.NameRegistryEvent
 
-    // Base64 encode msg.fname
-    const fname = Buffer.from(msg.fname).toString('base64')
-    console.log('MERGE_NAME_REGISTRY_EVENT', fname)
+    // TODO: decode msg.fname
+    console.log('MERGE_NAME_REGISTRY_EVENT', msg.fname)
   } else {
     console.log('UNKNOWN_HUB_EVENT', event)
   }
@@ -121,9 +123,7 @@ export async function watch() {
       console.log('Subscribed to stream')
       stream.on('data', async (e: protobufs.HubEvent) => {
         const event = protobufToJson(e)
-        await handleEvent(event).catch((e) => {
-          console.error('Error handling event.', e)
-        })
+        await handleEvent(event)
       })
     },
     (e) => {

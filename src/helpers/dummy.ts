@@ -250,7 +250,7 @@ async function createSigner() {
 }
 
 /**
- * Delete a signer
+ * Delete a signer. This will also revoke all messages made by the signer
  * @param ed25519Signer Signer
  */
 async function deleteSigner(ed25519Signer: Ed25519Signer) {
@@ -297,19 +297,15 @@ export async function sendTestMessages() {
   await likeCast(cast, signer)
 
   await sleep()
-  // TODO: figure out why this is sending twice, once in the right place and once at the end of `sendTestMessages()`
   await addVerification(signer)
 
   await sleep()
-  // TODO: figure out why this is sending twice, once in the right place and once at the end of `sendTestMessages()`
   await updatePfp(signer)
 
   await sleep()
-  // TODO: figure out why this is sending twice, once in the right place and once at the end of `sendTestMessages()`
   await unlikeCast(cast, signer)
 
   await sleep()
-  // TODO: figure out why this is sending twice, once in the right place and once at the end of `sendTestMessages()`
   await deleteCast(cast, signer)
 
   await sleep()
