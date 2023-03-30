@@ -1,14 +1,10 @@
 # Farcaster Indexer (wip)
 
-This is an indexer that runs alongside [Hubble](https://github.com/farcasterxyz/hubble), a Typescript implementation of a [Farcaster Hub](https://github.com/farcasterxyz/protocol#4-hubs).
-
-It listens for messages from a Hub and updates a Postgres database with the latest state of the network.
+This is an indexer that listens for messages from a [Farcaster Hub](https://github.com/farcasterxyz/protocol#4-hubs) and inserts all relevant data into a postgres databse.
 
 ## Notes
 
-- Hubs don't sync with each other yet, so the only way to test this with real data is to send messages to a local Hubble instance. This is what I do in [dummy.ts](src/helpers/dummy.ts).
+- Farcaster Hubs are current running on testnet.
+  - There are some messages broadcasted by others, but the only way to test all message types is to send your own.
+  - If you want to send test messages, you'll need to edit the `account` constant in in [dummy.ts](src/helpers/dummy.ts) and set your `FARCASTER_PRIVATE_KEY` in `.env` to be your own Farcaster account.
 - I'm using Supabase as a database provider right now (follow the instructions in README.md on `main` to set that up locally), but plan to switch to a more generalized Postgres ORM soon.
-
-## To do
-
-- Backfill process
