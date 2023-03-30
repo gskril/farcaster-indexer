@@ -36,6 +36,8 @@ export async function insertVerification(msg: MergeMessageHubEvent) {
  * @param verifications List of verifications
  */
 export async function upsertVerifications(verifications: Verification[]) {
+  if (verifications.length === 0) return
+
   const { error } = await supabase.from('verification').upsert(verifications, {
     onConflict: 'fid,address',
   })

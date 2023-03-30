@@ -30,6 +30,8 @@ export async function insertSigner(msg: MergeMessageHubEvent) {
  * @param signers List of signers
  */
 export async function upsertSigners(signers: Signer[]) {
+  if (signers.length === 0) return
+
   const { error } = await supabase.from('signer').upsert(signers, {
     onConflict: 'fid,signer',
   })

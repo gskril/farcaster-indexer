@@ -32,6 +32,8 @@ export async function insertReaction(msg: MergeMessageHubEvent) {
  * @param reactions List of reactions
  */
 export async function upsertReactions(reactions: Reaction[]) {
+  if (reactions.length === 0) return
+
   const { error } = await supabase.from('reaction').upsert(reactions, {
     onConflict: 'fid,target_cast',
   })

@@ -53,7 +53,7 @@ export type MergeMessageHubEvent = {
       name: string
     }
     userDataBody?: {
-      type: protobufs.UserDataType
+      type: string
       value: string
     }
     signerRemoveBody?: {

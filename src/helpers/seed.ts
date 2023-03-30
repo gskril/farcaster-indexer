@@ -12,47 +12,36 @@ import {
 import { client, formatHash } from '../lib.js'
 import { Cast, Profile, Reaction, Signer, Verification } from '../types/db.js'
 import { MergeMessageHubEvent } from '../types/index.js'
-import { account } from './dummy.js'
-
-await seed()
 
 /**
  * Seed the database with data from the hub
  */
 export async function seed() {
   const allFids = await getAllFids()
-  const allUserData: Profile[] = []
   const allVerifications: Verification[] = []
   const allSigners: Signer[] = []
 
   for (const fid of allFids) {
-    // TODO: remove following line after testing
-    if (fid !== account.fid) continue
-
     const profile = await getFullProfileFromHub(fid)
 
-    allUserData.push(...profile.userData)
     allVerifications.push(...profile.verifications)
     allSigners.push(...profile.signers)
 
-    // Upsert high volume data for each profile
+    await upsertProfiles(profile.userData)
     await upsertCasts(profile.casts)
     await upsertReactions(profile.reactions)
 
     // Upsert low volume data for 100 profiles at a time
     if (fid % 100 === 0) {
-      await upsertProfiles(allUserData)
       await upsertVerifications(allVerifications)
       await upsertSigners(allSigners)
 
-      allUserData.length = 0
       allVerifications.length = 0
       allSigners.length = 0
     }
   }
 
   // Upsert remaining data
-  await upsertProfiles(allUserData)
   await upsertVerifications(allVerifications)
   await upsertSigners(allSigners)
 
@@ -115,20 +104,26 @@ async function getFullProfileFromHub(_fid: number) {
     }
   })
 
-  // TODO: figure out how `userDataBody` works with enums
-  const formattedUserData: Profile[] = userData.map((user) => {
-    const timestamp = fromFarcasterTime(user.data.timestamp)._unsafeUnwrap()
-    return {
-      id: user.data.fid,
-      // username: '',
-      // display_name: '',
-      // bio: '',
-      // url: '',
-      // avatar_url: '',
-      registered_at: new Date(timestamp),
-      updated_at: new Date(),
-    }
-  })
+  // Each aspect of a profile has it's own message, so we have to match the types according to data.userDataBody.type
+  const formattedUserData: Profile = {
+    id: _fid,
+    avatar_url: userData.find(
+      (user) => user.data.userDataBody!.type === 'USER_DATA_TYPE_PFP'
+    )?.data.userDataBody?.value,
+    display_name: userData.find(
+      (user) => user.data.userDataBody!.type === 'USER_DATA_TYPE_DISPLAY'
+    )?.data.userDataBody?.value,
+    bio: userData.find(
+      (user) => user.data.userDataBody!.type === 'USER_DATA_TYPE_BIO'
+    )?.data.userDataBody?.value,
+    url: userData.find(
+      (user) => user.data.userDataBody!.type === 'USER_DATA_TYPE_URL'
+    )?.data.userDataBody?.value,
+    username: userData.find(
+      (user) => user.data.userDataBody!.type === 'USER_DATA_TYPE_FNAME'
+    )?.data.userDataBody?.value,
+    updated_at: new Date(),
+  }
 
   const formattedVerifications: Verification[] = verifications.map(
     (verification) => {
@@ -150,7 +145,7 @@ async function getFullProfileFromHub(_fid: number) {
     return {
       fid: signer.data.fid,
       signer: formatHash(signer.data.signerAddBody!.signer),
-      name: signer.data.signerAddBody!.name,
+      name: signer.data.signerAddBody!.name || null,
       created_at: new Date(timestamp),
     }
   })

@@ -41,6 +41,8 @@ export async function insertCast(msg: MergeMessageHubEvent) {
  * @param casts List of casts
  */
 export async function upsertCasts(casts: Cast[]) {
+  if (casts.length === 0) return
+
   const { error } = await supabase.from('casts').upsert(casts, {
     onConflict: 'hash',
   })
