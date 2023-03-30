@@ -9,10 +9,11 @@ import { Reaction } from '../types/db'
  */
 export async function insertReaction(msg: MergeMessageHubEvent) {
   const fid = msg.data.fid
+  const target_cast = formatHash(msg.data.reactionBody!.targetCastId.hash)
 
   const reaction: Reaction = {
     fid,
-    target_cast: formatHash(msg.data.reactionBody!.targetCastId.hash),
+    target_cast,
     target_fid: msg.data.reactionBody!.targetCastId.fid,
     type: msg.data.reactionBody!.type.toString(),
     signer: formatHash(msg.signer),
@@ -23,7 +24,7 @@ export async function insertReaction(msg: MergeMessageHubEvent) {
   if (insert.error) {
     console.error('ERROR INSERTING REACTION', insert.error)
   } else {
-    console.log('REACTION INSERTED', fid)
+    console.log(`REACTION INSERTED -- ${fid} to ${target_cast}`)
   }
 }
 
@@ -51,16 +52,17 @@ export async function upsertReactions(reactions: Reaction[]) {
  */
 export async function deleteReaction(msg: MergeMessageHubEvent) {
   const fid = msg.data.fid
+  const targetCastHash = formatHash(msg.data.reactionBody!.targetCastId.hash)
 
   const drop = await supabase
     .from('reaction')
     .delete()
     .eq('fid', fid)
-    .eq('target_cast', formatHash(msg.data.reactionBody!.targetCastId.hash))
+    .eq('target_cast', targetCastHash)
 
   if (drop.error) {
     console.error('ERROR DELETING REACTION', drop.error)
   } else {
-    console.log('REACTION DELETED', fid)
+    console.log(`REACTION DELETED -- ${fid} to ${targetCastHash}`)
   }
 }

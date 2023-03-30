@@ -27,7 +27,7 @@ export async function insertVerification(msg: MergeMessageHubEvent) {
   if (error) {
     console.error('ERROR INSERTING VERIFICATION', error)
   } else {
-    console.log('VERIFICATION INSERTED', fid, address)
+    console.log(`VERIFICATION INSERTED -- ${address} by ${fid}`)
   }
 }
 

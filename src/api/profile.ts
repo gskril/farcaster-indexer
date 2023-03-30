@@ -22,7 +22,7 @@ export async function insertProfile(msg: protobufs.IdRegistryEvent) {
   if (insert.error) {
     console.error('ERROR INSERTING PROFILE', insert.error)
   } else {
-    console.log('PROFILE INSERTED', msg.fid)
+    console.log(`PROFILE INSERTED -- ${msg.fid}`)
   }
 }
 
@@ -104,7 +104,7 @@ export async function updateProfile(msg: MergeMessageHubEvent) {
   if (update.error) {
     console.error('ERROR UPDATING PROFILE', update.error)
   } else {
-    console.log('PROFILE UPDATED', fid)
+    console.log(`PROFILE UPDATED -- ${fid}`)
   }
 }
 
@@ -135,6 +135,8 @@ export async function deletePartOfProfile(msg: MergeMessageHubEvent) {
   if (update.error) {
     console.error('ERROR UPDATING PROFILE', update.error)
   } else {
-    console.log('PROFILE UPDATED FROM REVOKED SIGNER', msg.data.fid, type)
+    console.log(
+      `PROFILE UPDATED FROM REVOKED SIGNER -- ${msg.data.fid} revoked ${type}`
+    )
   }
 }

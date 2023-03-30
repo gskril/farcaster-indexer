@@ -9,11 +9,12 @@ import { Signer } from '../types/db'
  */
 export async function insertSigner(msg: MergeMessageHubEvent) {
   const fid = msg.data.fid
+  const name = msg.data.signerAddBody!.name
 
   const signer: Signer = {
     fid,
     signer: formatHash(msg.data.signerAddBody!.signer),
-    name: msg.data.signerAddBody!.name,
+    name,
   }
 
   const insert = await supabase.from('signer').insert(signer)
@@ -21,7 +22,7 @@ export async function insertSigner(msg: MergeMessageHubEvent) {
   if (insert.error) {
     console.error('ERROR INSERTING SIGNER', insert.error)
   } else {
-    console.log('SIGNER INSERTED', fid)
+    console.log(`SIGNER INSERTED -- "${name || 'untitled'}" by ${fid}`)
   }
 }
 
@@ -59,7 +60,7 @@ export async function deleteSigner(msg: MergeMessageHubEvent) {
   if (drop.error) {
     console.error('ERROR DELETING SIGNER', drop.error)
   } else {
-    console.log('SIGNER DELETED', fid)
+    console.log(`SIGNER DELETED -- by ${fid}`)
   }
 }
 
@@ -76,7 +77,7 @@ export async function deleteMessagesFromSigner(signer: string) {
   if (dropCasts.error) {
     console.error('ERROR DELETING CASTS WITH REVOKED SIGNER', dropCasts.error)
   } else {
-    console.log('CASTS FROM REVOKED SIGNER DELETED', signer)
+    console.log(`CASTS FROM REVOKED SIGNER DELETED -- ${signer}`)
   }
 
   const dropReactions = await supabase
@@ -90,7 +91,7 @@ export async function deleteMessagesFromSigner(signer: string) {
       dropReactions.error
     )
   } else {
-    console.log('REACTIONS FROM REVOKED SIGNER DELETED', signer)
+    console.log(`REACTIONS FROM REVOKED SIGNER DELETED -- ${signer}`)
   }
 
   const dropVerifications = await supabase
@@ -104,6 +105,6 @@ export async function deleteMessagesFromSigner(signer: string) {
       dropVerifications.error
     )
   } else {
-    console.log('VERIFICATIONS FROM REVOKED SIGNER DELETED', signer)
+    console.log(`VERIFICATIONS FROM REVOKED SIGNER DELETED -- ${signer}`)
   }
 }

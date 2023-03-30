@@ -32,7 +32,7 @@ export async function insertCast(msg: MergeMessageHubEvent) {
   if (insert.error) {
     console.error('ERROR INSERTING CAST', insert.error)
   } else {
-    console.log('CAST INSERTED', hash)
+    console.log(`CAST INSERTED -- ${hash} by ${msg.data.fid}`)
   }
 }
 
