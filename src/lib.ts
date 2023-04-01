@@ -16,6 +16,7 @@ import {
   deleteMessagesFromSigner,
   deletePartOfProfile,
   insertEvent,
+  getLatestEvent,
 } from './api/index.js'
 import { FormattedHubEvent, MergeMessageHubEvent } from './types'
 
@@ -129,11 +130,26 @@ export function formatHash(hash: string | Uint8Array) {
  * Listen for new events from a Hub
  */
 export async function watch() {
-  const result = await client.subscribe({ eventTypes: [0, 1, 2, 3, 4, 5] })
+  // Check the latest hub event we processed, if any
+  const latestEventIdFromDb = await getLatestEvent()
+
+  const result = await client.subscribe({
+    eventTypes: [0, 1, 2, 3, 4, 5],
+    fromId: latestEventIdFromDb,
+  })
+
+  if (result.isErr()) {
+    console.error('Error starting stream', result.error)
+    return
+  }
 
   result.match(
     (stream) => {
-      console.log('Subscribed to stream')
+      console.log(
+        `Subscribed to stream ${
+          latestEventIdFromDb ? `from event ${latestEventIdFromDb}` : ''
+        }`
+      )
       stream.on('data', async (e: protobufs.HubEvent) => {
         // Keep track of latest event so we can pick up where we left off if the stream is interrupted
         latestEventId = e.id
