@@ -1,6 +1,5 @@
 import { getHubRpcClient } from '@farcaster/hub-nodejs'
 import * as protobufs from '@farcaster/protobufs'
-import NodeCache from 'node-cache'
 
 import {
   insertCast,
@@ -20,7 +19,7 @@ import {
 } from './api/index.js'
 import { FormattedHubEvent, MergeMessageHubEvent } from './types'
 
-const myCache = new NodeCache()
+let latestEventId: number
 export const client = await getHubRpcClient('127.0.0.1:2283')
 
 /**
@@ -137,7 +136,7 @@ export async function watch() {
       console.log('Subscribed to stream')
       stream.on('data', async (e: protobufs.HubEvent) => {
         // Keep track of latest event so we can pick up where we left off if the stream is interrupted
-        myCache.set('latestEventId', e.id)
+        latestEventId = e.id
 
         const event = protobufToJson(e)
         await handleEvent(event)
@@ -152,11 +151,10 @@ export async function watch() {
 // Handle graceful shutdown and log the latest event ID
 async function handleShutdownSignal(signalName: string) {
   console.log(`${signalName} received`)
-  const latestEventId = myCache.get<number>('latestEventId')
 
   if (latestEventId) {
-    await insertEvent(latestEventId)
     console.log('Latest event ID:', latestEventId)
+    await insertEvent(latestEventId)
   } else {
     console.log('No hub event in cache')
   }

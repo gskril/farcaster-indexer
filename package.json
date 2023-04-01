@@ -18,7 +18,6 @@
     "dotenv": "^16.0.1",
     "ethers": "^6.2.1",
     "got": "^11.8.2",
-    "node-cache": "^5.1.2",
     "node-cron": "3.0.0"
   },
   "devDependencies": {
