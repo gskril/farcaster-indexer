@@ -9,14 +9,20 @@ import {
   upsertSigners,
   upsertVerifications,
 } from '../api/index.js'
-import { client, formatHash } from '../lib.js'
+import { client, formatHash, watch } from '../lib.js'
 import { Cast, Profile, Reaction, Signer, Verification } from '../types/db.js'
 import { MergeMessageHubEvent } from '../types/index.js'
 
+await seed()
+
 /**
- * Seed the database with data from the hub
+ * Seed the database with data from a hub. This may take a while.
+ * We'll also start watching for new messages at the same time so we don't miss anything.
+ * Errors relating to inserting live events are expected and can be ignored.
  */
 export async function seed() {
+  watch()
+  const startTime = new Date().getTime()
   const allFids = await getAllFids()
   const allVerifications: Verification[] = []
   const allSigners: Signer[] = []
@@ -45,7 +51,10 @@ export async function seed() {
   await upsertVerifications(allVerifications)
   await upsertSigners(allSigners)
 
-  console.log('Done seeding')
+  const endTime = new Date().getTime()
+  const elapsedMilliseconds = endTime - startTime
+  const elapsedMinutes = elapsedMilliseconds / 60000
+  console.log(`Done seeding in ${elapsedMinutes} minutes`)
 }
 
 /**
