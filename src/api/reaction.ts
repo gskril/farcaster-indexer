@@ -35,6 +35,7 @@ export async function insertReaction(msg: MergeMessageHubEvent) {
 export async function upsertReactions(reactions: Reaction[]) {
   if (reactions.length === 0) return
 
+  // TODO: fix common error here: "ON CONFLICT DO UPDATE command cannot affect row a second time"
   const { error } = await supabase.from('reaction').upsert(reactions, {
     onConflict: 'fid,target_cast',
   })

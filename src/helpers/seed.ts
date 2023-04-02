@@ -86,17 +86,17 @@ async function getFullProfileFromHub(_fid: number) {
 
   const formattedCasts: Cast[] = casts.map((cast) => {
     const timestamp = fromFarcasterTime(cast.data.timestamp)._unsafeUnwrap()
+    const parentHash = cast.data.castAddBody!.parentCastId?.hash
     return {
       hash: cast.hash,
       signature: cast.signature,
       signer: cast.signer,
       text: cast.data.castAddBody!.text,
       fid: _fid,
-      mentions: cast.data.castAddBody!.mentions,
-      parent_fid: cast.data.castAddBody!.parentCastId?.fid,
-      parent_hash: cast.data.castAddBody!.parentCastId?.hash,
+      mentions: cast.data.castAddBody!.mentions || null,
+      parent_fid: cast.data.castAddBody!.parentCastId?.fid || null,
+      parent_hash: parentHash ? formatHash(parentHash) : null,
       thread_hash: null,
-      deleted: false,
       published_at: new Date(timestamp),
     }
   })

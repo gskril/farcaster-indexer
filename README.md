@@ -11,8 +11,6 @@ This is an indexer that listens for messages from a [Farcaster Hub](https://gith
 
 ## Todo
 
-- Add `pruned` (boolean) column to every table
-- Rethink foreign key strategy (and how pruned messages affect this)
 - Check `pageToken` when indexing casts and reactions to see if there are more messages
 - Figure out how to decode fname from `MERGE_NAME_REGISTRY_EVENT` (just for logging so this isn't critical)
 - Move away from Supabase dependency to a more generic Postgres ORM

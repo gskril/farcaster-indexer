@@ -11,6 +11,7 @@ export type Cast = {
   parent_hash?: string | null
   thread_hash?: string | null
   deleted?: boolean | null
+  pruned?: boolean | null
   published_at: Date
 }
 
@@ -31,6 +32,7 @@ export type Verification = {
   address: string
   signer: string
   signature: string
+  pruned?: boolean | null
   created_at?: Date | null
 }
 
@@ -40,6 +42,7 @@ export type Reaction = {
   target_fid: number
   type: string
   signer: string
+  pruned?: boolean | null
   created_at?: Date | null
 }
 
@@ -47,5 +50,6 @@ export type Signer = {
   fid: number
   signer: string
   name?: string | null
+  pruned?: boolean | null
   created_at?: Date | null
 }
