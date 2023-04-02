@@ -66,3 +66,28 @@ export async function deleteReaction(msg: MergeMessageHubEvent) {
     console.log(`REACTION DELETED -- ${fid} to ${targetCastHash}`)
   }
 }
+
+/**
+ * Update a reaction in the database
+ * @param msg Hub event in JSON format
+ * @param change Object with the fields to update
+ */
+export async function updateReaction(
+  msg: MergeMessageHubEvent,
+  change: { pruned: boolean }
+) {
+  const fid = msg.data.fid
+  const targetCastHash = formatHash(msg.data.reactionBody!.targetCastId.hash)
+
+  const update = await supabase
+    .from('reaction')
+    .update(change)
+    .eq('fid', fid)
+    .eq('target_cast', targetCastHash)
+
+  if (update.error) {
+    console.error('ERROR UPDATING REACTION', update.error)
+  } else {
+    console.log(`REACTION UPDATED -- ${fid} to ${targetCastHash}`)
+  }
+}

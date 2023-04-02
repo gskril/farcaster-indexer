@@ -55,16 +55,16 @@ export async function upsertCasts(casts: Cast[]) {
 }
 
 /**
- * Soft delete a cast from the database
- * @param msg Hub event in JSON format
+ * Update a cast in the database
+ * @param hash Hash of the cast
+ * @param change Object with the fields to update
  */
-export async function deleteCast(msg: MergeMessageHubEvent) {
-  const hash = formatHash(msg.data.castRemoveBody!.targetHash)
-
-  const update = await supabase
-    .from('casts')
-    .update({ deleted: true })
-    .eq('hash', hash)
+export async function updateCast(
+  _hash: string,
+  change: { deleted?: boolean; pruned?: boolean }
+) {
+  const hash = formatHash(_hash)
+  const update = await supabase.from('casts').update(change).eq('hash', hash)
 
   if (update.error) {
     console.error('ERROR UPDATING CAST', update.error)

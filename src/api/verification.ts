@@ -69,3 +69,28 @@ export async function deleteVerification(msg: MergeMessageHubEvent) {
     console.log('VERIFICATION DELETED', fid, address)
   }
 }
+
+/**
+ * Update a verification in the database
+ * @param msg Hub event in JSON format
+ * @param change Object with the fields to update
+ */
+export async function updateVerification(
+  msg: MergeMessageHubEvent,
+  change: { pruned: boolean }
+) {
+  const fid = msg.data.fid
+  const address = formatHash(msg.data.verificationAddEthAddressBody!.address)
+
+  const update = await supabase
+    .from('verification')
+    .update(change)
+    .eq('fid', fid)
+    .eq('address', address)
+
+  if (update.error) {
+    console.error('ERROR UPDATING VERIFICATION', update.error)
+  } else {
+    console.log(`VERIFICATION UPDATED -- $${address}`)
+  }
+}

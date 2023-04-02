@@ -108,3 +108,28 @@ export async function deleteMessagesFromSigner(signer: string) {
     console.log(`VERIFICATIONS FROM REVOKED SIGNER DELETED -- ${signer}`)
   }
 }
+
+/**
+ * Update a signer in the database
+ * @param msg Hub event in JSON format
+ * @param change Object with the fields to update
+ */
+export async function updateSigner(
+  msg: MergeMessageHubEvent,
+  change: { pruned: boolean }
+) {
+  const fid = msg.data.fid
+  const signer = formatHash(msg.data.signerAddBody!.signer)
+
+  const update = await supabase
+    .from('signer')
+    .update(change)
+    .eq('fid', fid)
+    .eq('signer', signer)
+
+  if (update.error) {
+    console.error('ERROR UPDATING SIGNER', update.error)
+  } else {
+    console.log(`SIGNER UPDATED -- $${signer} by ${fid}`)
+  }
+}

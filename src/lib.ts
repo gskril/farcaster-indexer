@@ -2,21 +2,24 @@ import { getHubRpcClient } from '@farcaster/hub-nodejs'
 import * as protobufs from '@farcaster/protobufs'
 
 import {
-  insertCast,
-  deleteCast,
-  insertVerification,
-  deleteVerification,
-  updateProfile,
-  insertProfile,
-  updateProfileOwner,
-  insertReaction,
-  deleteReaction,
-  insertSigner,
-  deleteSigner,
   deleteMessagesFromSigner,
   deletePartOfProfile,
-  insertEvent,
+  deleteReaction,
+  deleteSigner,
+  deleteVerification,
   getLatestEvent,
+  insertCast,
+  insertEvent,
+  insertProfile,
+  insertReaction,
+  insertSigner,
+  insertVerification,
+  updateCast,
+  updateProfile,
+  updateProfileOwner,
+  updateReaction,
+  updateSigner,
+  updateVerification,
 } from './api/index.js'
 import { FormattedHubEvent, MergeMessageHubEvent } from './types'
 
@@ -66,7 +69,7 @@ export async function handleEvent(event: FormattedHubEvent) {
     if (msgType === 'MESSAGE_TYPE_CAST_ADD') {
       await insertCast(msg)
     } else if (msgType === 'MESSAGE_TYPE_CAST_REMOVE') {
-      await deleteCast(msg)
+      await updateCast(msg.data.castRemoveBody!.targetHash, { deleted: true })
     } else if (msgType === 'MESSAGE_TYPE_VERIFICATION_ADD_ETH_ADDRESS') {
       await insertVerification(msg)
     } else if (msgType === 'MESSAGE_TYPE_VERIFICATION_REMOVE') {
@@ -84,6 +87,20 @@ export async function handleEvent(event: FormattedHubEvent) {
       await deleteMessagesFromSigner(
         formatHash(msg.data.signerRemoveBody!.signer)
       )
+    }
+  } else if (event.type === 2) {
+    // Mark the relevant row as `pruned` in the db but don't delete it
+    const msg = event.message as MergeMessageHubEvent
+    const msgType = msg.data.type
+
+    if (msgType === 'MESSAGE_TYPE_CAST_ADD') {
+      await updateCast(msg.hash, { pruned: true })
+    } else if (msgType === 'MESSAGE_TYPE_VERIFICATION_ADD_ETH_ADDRESS') {
+      await updateVerification(msg, { pruned: true })
+    } else if (msgType === 'MESSAGE_TYPE_REACTION_ADD') {
+      await updateReaction(msg, { pruned: true })
+    } else if (msgType === 'MESSAGE_TYPE_SIGNER_ADD') {
+      await updateSigner(msg, { pruned: true })
     }
   } else if (event.type === 3) {
     // Events are emitted when a signer that was used to create a message is removed
