@@ -108,7 +108,7 @@ async function getFullProfileFromHub(_fid: number) {
       target_cast: formatHash(reaction.data.reactionBody!.targetCastId.hash),
       target_fid: reaction.data.reactionBody!.targetCastId.fid,
       type: reaction.data.reactionBody!.type.toString(),
-      signer: formatHash(reaction.signer),
+      signer: reaction.signer,
       created_at: new Date(timestamp),
     }
   })
@@ -141,9 +141,11 @@ async function getFullProfileFromHub(_fid: number) {
       )._unsafeUnwrap()
       return {
         fid: verification.data.fid,
-        address: verification.data.verificationAddEthAddressBody!.address,
+        address: formatHash(
+          verification.data.verificationAddEthAddressBody!.address
+        ),
         signature: verification.signature,
-        signer: formatHash(verification.signer),
+        signer: verification.signer,
         created_at: new Date(timestamp),
       }
     }

@@ -31,6 +31,8 @@ export async function insertProfile(msg: protobufs.IdRegistryEvent) {
  * @param profiles List of profiles
  */
 export async function upsertProfiles(profiles: Profile | Profile[]) {
+  if (!profiles) return
+
   const { error } = await supabase.from('profile').upsert(profiles, {
     onConflict: 'id',
   })
