@@ -1,6 +1,7 @@
 import 'dotenv/config'
 import { providers, Contract } from 'ethers'
 
+import { updateAllFollowers } from '../functions/index-users-followers.js'
 import { indexVerifications } from '../functions/index-verifications.js'
 import { idRegistryAddr, idRegistryAbi } from './../contracts/id-registry.js'
 import { IdRegistry } from './../contracts/types/id-registry.js'
@@ -22,15 +23,20 @@ const idRegistry = new Contract(
 console.log('Seeding recent registrations from contract logs...')
 await upsertRegistrations(provider, idRegistry)
 
-console.log('Seeding profiles from Merkle APIs...')
-await updateAllProfiles()
+// console.log('Seeding profiles from Merkle APIs...')
+// await updateAllProfiles()
 
-console.log('Seeding casts from Merkle APIs...')
-await indexAllCasts()
+// console.log('Seeding casts from Merkle APIs...')
+// await indexAllCasts()
 
-if (process.argv.includes('--verifications')) {
-  console.log('Seeding verifications from Merkle APIs...')
-  await indexVerifications()
+// if (process.argv.includes('--verifications')) {
+//   console.log('Seeding verifications from Merkle APIs...')
+//   await indexVerifications()
+// }
+
+if (process.argv.includes('--followers')) {
+  console.log('Seeding followers from Merkle APIs...')
+  await updateAllFollowers()
 }
 
 console.log('Seeding complete!')

@@ -11,7 +11,8 @@
     "auth": "tsc && node ./dist/helpers/auth.js",
     "migrate": "tsc && node ./dist/helpers/migrate-profiles.js",
     "seed": "tsc && node ./dist/helpers/seed.js",
-    "seed:verifications": "tsc && node ./dist/helpers/seed.js --verifications"
+    "seed:verifications": "tsc && node ./dist/helpers/seed.js --verifications",
+    "seed:followers": "tsc && node ./dist/helpers/seed.js --followers"
   },
   "dependencies": {
     "@standard-crypto/farcaster-js": "^5.5.2",

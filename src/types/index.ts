@@ -98,6 +98,12 @@ export interface FlattenedProfile {
   updated_at?: Date
 }
 
+export interface FlattenedFollower {
+  id: number
+  username?: string | null
+  followers: Array<number>
+}
+
 export interface FlattenedCast {
   hash: string
   hash_v1?: string
@@ -126,4 +132,8 @@ export interface FlattenedVerification {
   fid: number
   address: string
   created_at: Date
+}
+
+export type FollowerObject = {
+  [key: number]: any[]
 }

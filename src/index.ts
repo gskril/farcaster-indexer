@@ -5,6 +5,7 @@ import cron from 'node-cron'
 import { idRegistryAddr, idRegistryAbi } from './contracts/id-registry.js'
 import { IdRegistry, IdRegistryEvents } from './contracts/types/id-registry.js'
 import { indexAllCasts } from './functions/index-casts.js'
+import { updateAllFollowers } from './functions/index-users-followers.js'
 import { indexVerifications } from './functions/index-verifications.js'
 import { upsertRegistrations } from './functions/read-logs.js'
 import { updateAllProfiles } from './functions/update-profiles.js'
@@ -40,13 +41,14 @@ idRegistry.on(eventToWatch, async (to, id) => {
 // Make sure we didn't miss any profiles when the indexer was offline
 await upsertRegistrations(provider, idRegistry)
 
-// Run job every minute
-cron.schedule('* * * * *', async () => {
+// Run job every hour
+cron.schedule('0 * * * *', async () => {
   await indexAllCasts(10_000)
   await updateAllProfiles()
 })
 
-// Run job every hour
-cron.schedule('0 * * * *', async () => {
+// Run job every day
+cron.schedule('0 0 * * *', async () => {
   await indexVerifications()
+  await updateAllFollowers
 })
