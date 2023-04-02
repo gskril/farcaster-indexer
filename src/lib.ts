@@ -109,7 +109,7 @@ export async function handleEvent(event: FormattedHubEvent) {
     // TODO: decode msg.fname
     console.log('MERGE_NAME_REGISTRY_EVENT', msg.fname)
   } else {
-    console.log('UNKNOWN_HUB_EVENT', event)
+    console.log('UNHANDLED_HUB_EVENT', event)
   }
 }
 
