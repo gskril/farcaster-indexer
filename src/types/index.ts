@@ -71,6 +71,7 @@ export type PruneMessageHubEvent = MergeMessageHubEvent
 export type RevokeMessageHubEvent = MergeMessageHubEvent
 
 export type FormattedHubEvent = {
+  id: number
   type: protobufs.HubEventType
   message: unknown
 }

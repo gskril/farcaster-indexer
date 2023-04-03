@@ -33,6 +33,7 @@ export const client = await getHubRpcClient('127.0.0.1:2283')
  */
 export function protobufToJson(e: protobufs.HubEvent) {
   let event: FormattedHubEvent = {
+    id: e.id,
     type: e.type,
     message: {},
   }
