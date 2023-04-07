@@ -35,6 +35,7 @@ export async function upsertProfiles(profiles: Profile | Profile[]) {
 
   const { error } = await supabase.from('profile').upsert(profiles, {
     onConflict: 'id',
+    ignoreDuplicates: true,
   })
 
   if (error) {

@@ -45,6 +45,7 @@ export async function upsertCasts(casts: Cast[]) {
 
   const { error } = await supabase.from('casts').upsert(casts, {
     onConflict: 'hash',
+    ignoreDuplicates: true,
   })
 
   if (error) {

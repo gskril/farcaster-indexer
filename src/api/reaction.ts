@@ -38,6 +38,7 @@ export async function upsertReactions(reactions: Reaction[]) {
   // TODO: fix rare error here: "ON CONFLICT DO UPDATE command cannot affect row a second time"
   const { error } = await supabase.from('reaction').upsert(reactions, {
     onConflict: 'fid,target_cast,type',
+    ignoreDuplicates: true,
   })
 
   if (error) {

@@ -40,6 +40,7 @@ export async function upsertVerifications(verifications: Verification[]) {
 
   const { error } = await supabase.from('verification').upsert(verifications, {
     onConflict: 'fid,address',
+    ignoreDuplicates: true,
   })
 
   if (error) {

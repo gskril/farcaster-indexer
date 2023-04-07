@@ -35,6 +35,7 @@ export async function upsertSigners(signers: Signer[]) {
 
   const { error } = await supabase.from('signer').upsert(signers, {
     onConflict: 'fid,signer',
+    ignoreDuplicates: true,
   })
 
   if (error) {
