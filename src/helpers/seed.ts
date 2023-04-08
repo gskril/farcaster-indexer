@@ -12,6 +12,13 @@ import {
 import { client, formatHash, watch } from '../lib.js'
 import { Cast, Profile, Reaction, Signer, Verification } from '../types/db.js'
 import { MergeMessageHubEvent } from '../types/index.js'
+import {
+  formatCasts,
+  formatReactions,
+  formatSigners,
+  formatUserData,
+  formatVerifications,
+} from '../utils.js'
 
 await seed()
 
@@ -22,18 +29,25 @@ await seed()
  */
 export async function seed() {
   watch()
+  console.log('Seeding database...')
   const startTime = new Date().getTime()
   const allFids = await getAllFids()
   const allVerifications: Verification[] = []
   const allSigners: Signer[] = []
+  const allProfiles: Profile[] = []
 
   for (const fid of allFids) {
-    const profile = await getFullProfileFromHub(fid)
+    const profile = await getFullProfileFromHub(fid).catch((err) => {
+      console.error(`Error getting profile for FID ${fid}`, err)
+      return null
+    })
+
+    if (!profile) continue
 
     allVerifications.push(...profile.verifications)
     allSigners.push(...profile.signers)
+    allProfiles.push(profile.userData)
 
-    await upsertProfiles(profile.userData)
     await upsertCasts(profile.casts)
     await upsertReactions(profile.reactions)
 
@@ -41,6 +55,7 @@ export async function seed() {
     if (fid % 100 === 0) {
       await upsertVerifications(allVerifications)
       await upsertSigners(allSigners)
+      await upsertProfiles(allProfiles)
 
       allVerifications.length = 0
       allSigners.length = 0
@@ -50,6 +65,7 @@ export async function seed() {
   // Upsert remaining data
   await upsertVerifications(allVerifications)
   await upsertSigners(allSigners)
+  await upsertProfiles(allProfiles)
 
   const endTime = new Date().getTime()
   const elapsedMilliseconds = endTime - startTime
@@ -84,82 +100,12 @@ async function getFullProfileFromHub(_fid: number) {
   // prettier-ignore
   const signers = hubMessageToJSON(signersResponse.messages) as MergeMessageHubEvent[]
 
-  const formattedCasts: Cast[] = casts.map((cast) => {
-    const timestamp = fromFarcasterTime(cast.data.timestamp)._unsafeUnwrap()
-    const parentHash = cast.data.castAddBody!.parentCastId?.hash
-    return {
-      hash: cast.hash,
-      signature: cast.signature,
-      signer: cast.signer,
-      text: cast.data.castAddBody!.text,
-      fid: _fid,
-      mentions: cast.data.castAddBody!.mentions || null,
-      parent_fid: cast.data.castAddBody!.parentCastId?.fid || null,
-      parent_hash: parentHash ? formatHash(parentHash) : null,
-      thread_hash: null,
-      published_at: new Date(timestamp),
-    }
-  })
-
-  const formattedReactions: Reaction[] = reactions.map((reaction) => {
-    const timestamp = fromFarcasterTime(reaction.data.timestamp)._unsafeUnwrap()
-    return {
-      fid: reaction.data.fid,
-      target_cast: formatHash(reaction.data.reactionBody!.targetCastId.hash),
-      target_fid: reaction.data.reactionBody!.targetCastId.fid,
-      type: reaction.data.reactionBody!.type.toString(),
-      signer: reaction.signer,
-      created_at: new Date(timestamp),
-    }
-  })
-
-  // Each aspect of a profile has it's own message, so we have to match the types according to data.userDataBody.type
-  const formattedUserData: Profile = {
-    id: _fid,
-    avatar_url: userData.find(
-      (user) => user.data.userDataBody!.type === 'USER_DATA_TYPE_PFP'
-    )?.data.userDataBody?.value,
-    display_name: userData.find(
-      (user) => user.data.userDataBody!.type === 'USER_DATA_TYPE_DISPLAY'
-    )?.data.userDataBody?.value,
-    bio: userData.find(
-      (user) => user.data.userDataBody!.type === 'USER_DATA_TYPE_BIO'
-    )?.data.userDataBody?.value,
-    url: userData.find(
-      (user) => user.data.userDataBody!.type === 'USER_DATA_TYPE_URL'
-    )?.data.userDataBody?.value,
-    username: userData.find(
-      (user) => user.data.userDataBody!.type === 'USER_DATA_TYPE_FNAME'
-    )?.data.userDataBody?.value,
-    updated_at: new Date(),
-  }
-
-  const formattedVerifications: Verification[] = verifications.map(
-    (verification) => {
-      const timestamp = fromFarcasterTime(
-        verification.data.timestamp
-      )._unsafeUnwrap()
-      return {
-        fid: verification.data.fid,
-        address: formatHash(
-          verification.data.verificationAddEthAddressBody!.address
-        ),
-        signature: verification.signature,
-        signer: verification.signer,
-        created_at: new Date(timestamp),
-      }
-    }
-  )
-
-  const formattedSigners: Signer[] = signers.map((signer) => {
-    const timestamp = fromFarcasterTime(signer.data.timestamp)._unsafeUnwrap()
-    return {
-      fid: signer.data.fid,
-      signer: formatHash(signer.data.signerAddBody!.signer),
-      name: signer.data.signerAddBody!.name || null,
-      created_at: new Date(timestamp),
-    }
-  })
+  const formattedCasts: Cast[] = formatCasts(casts)
+  const formattedReactions: Reaction[] = formatReactions(reactions)
+  const formattedUserData: Profile = formatUserData(userData, _fid)
+  const formattedSigners: Signer[] = formatSigners(signers)
+  const formattedVerifications: Verification[] =
+    formatVerifications(verifications)
 
   return {
     casts: formattedCasts,

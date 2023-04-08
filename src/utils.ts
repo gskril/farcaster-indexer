@@ -1,0 +1,89 @@
+import { fromFarcasterTime } from '@farcaster/hub-nodejs'
+
+import { formatHash } from './lib.js'
+import { MergeMessageHubEvent } from './types'
+
+export function formatCasts(events: MergeMessageHubEvent[]) {
+  return events.map((cast) => {
+    const timestamp = fromFarcasterTime(cast.data.timestamp)._unsafeUnwrap()
+    const parentHash = cast.data.castAddBody!.parentCastId?.hash
+    return {
+      hash: cast.hash,
+      signature: cast.signature,
+      signer: cast.signer,
+      text: cast.data.castAddBody!.text,
+      fid: cast.data.fid,
+      mentions: cast.data.castAddBody!.mentions || null,
+      parent_fid: cast.data.castAddBody!.parentCastId?.fid || null,
+      parent_hash: parentHash ? formatHash(parentHash) : null,
+      thread_hash: null,
+      published_at: new Date(timestamp),
+    }
+  })
+}
+
+export function formatReactions(events: MergeMessageHubEvent[]) {
+  return events.map((reaction) => {
+    const timestamp = fromFarcasterTime(reaction.data.timestamp)._unsafeUnwrap()
+    return {
+      fid: reaction.data.fid,
+      target_cast: formatHash(reaction.data.reactionBody!.targetCastId.hash),
+      target_fid: reaction.data.reactionBody!.targetCastId.fid,
+      type: reaction.data.reactionBody!.type.toString(),
+      signer: reaction.signer,
+      created_at: new Date(timestamp),
+    }
+  })
+}
+
+export function formatUserData(events: MergeMessageHubEvent[], fid: number) {
+  // Each aspect of a profile has it's own message, so we have to match the types according to data.userDataBody.type
+  return {
+    id: fid,
+    avatar_url: events.find(
+      (user) => user.data.userDataBody!.type === 'USER_DATA_TYPE_PFP'
+    )?.data.userDataBody?.value,
+    display_name: events.find(
+      (user) => user.data.userDataBody!.type === 'USER_DATA_TYPE_DISPLAY'
+    )?.data.userDataBody?.value,
+    bio: events.find(
+      (user) => user.data.userDataBody!.type === 'USER_DATA_TYPE_BIO'
+    )?.data.userDataBody?.value,
+    url: events.find(
+      (user) => user.data.userDataBody!.type === 'USER_DATA_TYPE_URL'
+    )?.data.userDataBody?.value,
+    username: events.find(
+      (user) => user.data.userDataBody!.type === 'USER_DATA_TYPE_FNAME'
+    )?.data.userDataBody?.value,
+    updated_at: new Date(),
+  }
+}
+
+export function formatVerifications(events: MergeMessageHubEvent[]) {
+  return events.map((verification) => {
+    const timestamp = fromFarcasterTime(
+      verification.data.timestamp
+    )._unsafeUnwrap()
+    return {
+      fid: verification.data.fid,
+      address: formatHash(
+        verification.data.verificationAddEthAddressBody!.address
+      ),
+      signature: verification.signature,
+      signer: verification.signer,
+      created_at: new Date(timestamp),
+    }
+  })
+}
+
+export function formatSigners(events: MergeMessageHubEvent[]) {
+  return events.map((signer) => {
+    const timestamp = fromFarcasterTime(signer.data.timestamp)._unsafeUnwrap()
+    return {
+      fid: signer.data.fid,
+      signer: formatHash(signer.data.signerAddBody!.signer),
+      name: signer.data.signerAddBody!.name || null,
+      created_at: new Date(timestamp),
+    }
+  })
+}
