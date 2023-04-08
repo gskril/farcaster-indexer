@@ -40,21 +40,26 @@ export function formatUserData(events: MergeMessageHubEvent[], fid: number) {
   // Each aspect of a profile has it's own message, so we have to match the types according to data.userDataBody.type
   return {
     id: fid,
-    avatar_url: events.find(
-      (user) => user.data.userDataBody!.type === 'USER_DATA_TYPE_PFP'
-    )?.data.userDataBody?.value,
-    display_name: events.find(
-      (user) => user.data.userDataBody!.type === 'USER_DATA_TYPE_DISPLAY'
-    )?.data.userDataBody?.value,
-    bio: events.find(
-      (user) => user.data.userDataBody!.type === 'USER_DATA_TYPE_BIO'
-    )?.data.userDataBody?.value,
-    url: events.find(
-      (user) => user.data.userDataBody!.type === 'USER_DATA_TYPE_URL'
-    )?.data.userDataBody?.value,
-    username: events.find(
-      (user) => user.data.userDataBody!.type === 'USER_DATA_TYPE_FNAME'
-    )?.data.userDataBody?.value,
+    avatar_url:
+      events.find(
+        (user) => user.data.userDataBody!.type === 'USER_DATA_TYPE_PFP'
+      )?.data.userDataBody?.value || null,
+    display_name:
+      events.find(
+        (user) => user.data.userDataBody!.type === 'USER_DATA_TYPE_DISPLAY'
+      )?.data.userDataBody?.value || null,
+    bio:
+      events.find(
+        (user) => user.data.userDataBody!.type === 'USER_DATA_TYPE_BIO'
+      )?.data.userDataBody?.value || null,
+    url:
+      events.find(
+        (user) => user.data.userDataBody!.type === 'USER_DATA_TYPE_URL'
+      )?.data.userDataBody?.value || null,
+    username:
+      events.find(
+        (user) => user.data.userDataBody!.type === 'USER_DATA_TYPE_FNAME'
+      )?.data.userDataBody?.value || null,
     updated_at: new Date(),
   }
 }
