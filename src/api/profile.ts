@@ -1,7 +1,7 @@
 import * as protobufs from '@farcaster/protobufs'
 
+import { db } from '../db.js'
 import { formatHash } from '../lib.js'
-import supabase from '../supabase.js'
 import { MergeMessageHubEvent } from '../types'
 import { Profile } from '../types/db'
 
@@ -17,12 +17,15 @@ export async function insertProfile(msg: protobufs.IdRegistryEvent) {
     updated_at: new Date(),
   }
 
-  const insert = await supabase.from('profile').insert(profile)
-
-  if (insert.error) {
-    console.error('ERROR INSERTING PROFILE', insert.error)
-  } else {
+  try {
+    await db
+      .insertInto('profile')
+      .values(profile)
+      .onConflict((oc) => oc.column('id').doNothing())
+      .executeTakeFirstOrThrow()
     console.log(`PROFILE INSERTED -- ${msg.fid}`)
+  } catch (error) {
+    console.error('ERROR INSERTING PROFILE', error)
   }
 }
 
@@ -33,19 +36,20 @@ export async function insertProfile(msg: protobufs.IdRegistryEvent) {
 export async function upsertProfiles(profiles: Profile | Profile[]) {
   if (!profiles) return
 
-  const { error } = await supabase.from('profile').upsert(profiles, {
-    onConflict: 'id',
-    ignoreDuplicates: true,
-  })
+  try {
+    await db
+      .insertInto('profile')
+      .values(profiles)
+      .onConflict((oc) => oc.column('id').doNothing())
+      .executeTakeFirstOrThrow()
 
-  if (error) {
-    console.error('ERROR UPSERTING USER DATA', error)
-  } else {
     console.log(
       Array.isArray(profiles)
         ? `${profiles.length} USERS DATA UPSERTED`
         : `USER DATA UPSERTED ${profiles.id}`
     )
+  } catch (error) {
+    console.error('ERROR UPSERTING USER DATA', error)
   }
 }
 
@@ -60,15 +64,16 @@ export async function updateProfileOwner(msg: protobufs.IdRegistryEvent) {
     updated_at: new Date(),
   }
 
-  const update = await supabase
-    .from('profile')
-    .update(profile)
-    .eq('id', msg.fid)
+  try {
+    await db
+      .updateTable('profile')
+      .set(profile)
+      .where('id', '=', msg.fid)
+      .executeTakeFirstOrThrow()
 
-  if (update.error) {
-    console.error('ERROR UPDATING FID OWNER', update.error)
-  } else {
     console.log('FID OWNER UPDATED', msg.fid)
+  } catch (error) {
+    console.error('ERROR UPDATING FID OWNER', error)
   }
 }
 
@@ -102,12 +107,16 @@ export async function updateProfile(msg: MergeMessageHubEvent) {
     updated_at: new Date(),
   }
 
-  const update = await supabase.from('profile').update(profile).eq('id', fid)
+  try {
+    await db
+      .updateTable('profile')
+      .set(profile)
+      .where('id', '=', fid)
+      .executeTakeFirstOrThrow()
 
-  if (update.error) {
-    console.error('ERROR UPDATING PROFILE', update.error)
-  } else {
     console.log(`PROFILE UPDATED -- ${fid}`)
+  } catch (error) {
+    console.error('ERROR UPDATING PROFILE', error)
   }
 }
 
@@ -130,16 +139,17 @@ export async function deletePartOfProfile(msg: MergeMessageHubEvent) {
     updated_at: new Date(),
   }
 
-  const update = await supabase
-    .from('profile')
-    .update(profile)
-    .eq('id', msg.data.fid)
+  try {
+    await db
+      .updateTable('profile')
+      .set(profile)
+      .where('id', '=', msg.data.fid)
+      .executeTakeFirstOrThrow()
 
-  if (update.error) {
-    console.error('ERROR UPDATING PROFILE', update.error)
-  } else {
     console.log(
       `PROFILE UPDATED FROM REVOKED SIGNER -- ${msg.data.fid} revoked ${type}`
     )
+  } catch (error) {
+    console.error('ERROR UPDATING PROFILE', error)
   }
 }

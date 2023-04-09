@@ -15,12 +15,12 @@ interface CastTable {
   thread_hash: string | null
   deleted: boolean | null
   pruned: boolean | null
-  published_at: Date
+  published_at: Date | null
 }
 
 interface EventTable {
   id: number
-  created_at: Date
+  created_at: Date | null
 }
 
 interface ProfileTable {

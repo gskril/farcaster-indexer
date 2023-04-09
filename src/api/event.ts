@@ -1,16 +1,19 @@
-import supabase from '../supabase.js'
+import { db } from '../db.js'
 
 /**
  * Insert an event ID in the database
  * @param eventId Hub event ID
  */
 export async function insertEvent(eventId: number) {
-  const { error } = await supabase.from('event').insert({ id: eventId })
-
-  if (error) {
-    console.error('ERROR INSERTING EVENT', error)
-  } else {
+  try {
+    await db
+      .insertInto('event')
+      .values({ id: eventId })
+      .onConflict((oc) => oc.column('id').doNothing())
+      .executeTakeFirstOrThrow()
     console.log(`EVENT INSERTED -- ${eventId}`)
+  } catch (error) {
+    console.error('ERROR INSERTING EVENT', error)
   }
 }
 
@@ -19,15 +22,16 @@ export async function insertEvent(eventId: number) {
  * @returns Latest event ID
  */
 export async function getLatestEvent(): Promise<number | undefined> {
-  const { data, error } = await supabase
-    .from('event')
-    .select('id')
-    .limit(1)
-    .order('id', { ascending: false })
+  try {
+    const event = await db
+      .selectFrom('event')
+      .selectAll()
+      .orderBy('id', 'desc')
+      .limit(1)
+      .executeTakeFirst()
 
-  if (error) {
+    return event?.id
+  } catch (error) {
     console.error('ERROR GETTING LATEST EVENT', error)
   }
-
-  return data?.[0]?.id
 }

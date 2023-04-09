@@ -1,9 +1,10 @@
 import { fromFarcasterTime } from '@farcaster/utils'
 
+import { db } from '../db.js'
 import { formatHash } from '../lib.js'
-import supabase from '../supabase.js'
 import { MergeMessageHubEvent } from '../types'
 import { Cast } from '../types/db'
+import { formatCasts } from '../utils.js'
 
 /**
  * Insert a new cast in the database
@@ -11,28 +12,17 @@ import { Cast } from '../types/db'
  */
 export async function insertCast(msg: MergeMessageHubEvent) {
   const hash = formatHash(msg.hash)
-  const parentHash = msg.data.castAddBody!.parentCastId?.hash
-  const timestamp = fromFarcasterTime(msg.data.timestamp)._unsafeUnwrap()
+  const casts = formatCasts([msg])
 
-  const cast: Cast = {
-    hash,
-    signature: formatHash(msg.signature),
-    signer: formatHash(msg.signer),
-    text: msg.data.castAddBody!.text,
-    fid: msg.data.fid,
-    mentions: msg.data.castAddBody!.mentions,
-    parent_fid: msg.data.castAddBody!.parentCastId?.fid,
-    parent_hash: parentHash ? formatHash(parentHash) : null,
-    thread_hash: null,
-    published_at: new Date(timestamp),
-  }
-
-  const insert = await supabase.from('casts').insert(cast)
-
-  if (insert.error) {
-    console.error('ERROR INSERTING CAST', insert.error)
-  } else {
+  try {
+    await db
+      .insertInto('casts')
+      .values(casts)
+      .onConflict((oc) => oc.column('hash').doNothing())
+      .executeTakeFirstOrThrow()
     console.log(`CAST INSERTED -- ${hash} by ${msg.data.fid}`)
+  } catch (error) {
+    console.error('ERROR INSERTING CAST', error)
   }
 }
 
@@ -43,15 +33,15 @@ export async function insertCast(msg: MergeMessageHubEvent) {
 export async function upsertCasts(casts: Cast[]) {
   if (casts.length === 0) return
 
-  const { error } = await supabase.from('casts').upsert(casts, {
-    onConflict: 'hash',
-    ignoreDuplicates: true,
-  })
-
-  if (error) {
-    console.error('ERROR UPSERTING CASTS', error)
-  } else {
+  try {
+    await db
+      .insertInto('casts')
+      .values(casts)
+      .onConflict((oc) => oc.column('hash').doNothing())
+      .executeTakeFirstOrThrow()
     console.log('CASTS UPSERTED', casts.length)
+  } catch (error) {
+    console.error('ERROR UPSERTING CASTS', error)
   }
 }
 
@@ -65,11 +55,15 @@ export async function updateCast(
   change: { deleted?: boolean; pruned?: boolean }
 ) {
   const hash = formatHash(_hash)
-  const update = await supabase.from('casts').update(change).eq('hash', hash)
 
-  if (update.error) {
-    console.error('ERROR UPDATING CAST', update.error)
-  } else {
+  try {
+    await db
+      .updateTable('casts')
+      .set(change)
+      .where('hash', '=', hash)
+      .executeTakeFirstOrThrow()
     console.log('CAST UPDATED', hash)
+  } catch (error) {
+    console.error('ERROR UPDATING CAST', error)
   }
 }
