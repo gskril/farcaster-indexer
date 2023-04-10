@@ -1,5 +1,3 @@
-import { fromFarcasterTime } from '@farcaster/utils'
-
 import { db } from '../db.js'
 import { formatHash } from '../lib.js'
 import { MergeMessageHubEvent } from '../types'

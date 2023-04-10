@@ -1,4 +1,4 @@
-import { fromFarcasterTime, HubResult } from '@farcaster/hub-nodejs'
+import { HubResult } from '@farcaster/hub-nodejs'
 import * as protobufs from '@farcaster/protobufs'
 import 'dotenv/config'
 
@@ -9,7 +9,7 @@ import {
   upsertSigners,
   upsertVerifications,
 } from '../api/index.js'
-import { client, formatHash, watch } from '../lib.js'
+import { client, watch } from '../lib.js'
 import { Cast, Profile, Reaction, Signer, Verification } from '../types/db.js'
 import { MergeMessageHubEvent } from '../types/index.js'
 import {
@@ -89,7 +89,6 @@ export async function seed() {
  */
 async function getFullProfileFromHub(_fid: number) {
   const fid = protobufs.FidRequest.create({ fid: _fid })
-  protobufs.Metadata
 
   // TODO: add pagination for all of these (mainly casts and reactions)
   const _casts = (await client.getCastsByFid(fid))._unsafeUnwrap()
