@@ -21,7 +21,8 @@ import {
   formatVerifications,
 } from '../utils.js'
 
-await seed()
+seed()
+watch()
 
 /**
  * Seed the database with data from a hub. This may take a while.
@@ -29,7 +30,6 @@ await seed()
  * Errors relating to inserting live events are expected and can be ignored.
  */
 export async function seed() {
-  watch()
   console.log('Seeding database...')
   const startTime = new Date().getTime()
   const allFids = await getAllFids()
