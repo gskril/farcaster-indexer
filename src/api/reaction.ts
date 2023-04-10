@@ -1,5 +1,5 @@
+import { db } from '../db.js'
 import { formatHash } from '../lib.js'
-import supabase from '../supabase.js'
 import { MergeMessageHubEvent } from '../types'
 import { Reaction } from '../types/db'
 
@@ -19,12 +19,17 @@ export async function insertReaction(msg: MergeMessageHubEvent) {
     signer: formatHash(msg.signer),
   }
 
-  const insert = await supabase.from('reaction').insert(reaction)
-
-  if (insert.error) {
-    console.error('ERROR INSERTING REACTION', insert.error)
-  } else {
+  try {
+    await db
+      .insertInto('reaction')
+      .values(reaction)
+      .onConflict((oc) =>
+        oc.columns(['fid', 'target_cast', 'type']).doNothing()
+      )
+      .executeTakeFirstOrThrow()
     console.log(`REACTION INSERTED -- ${fid} to ${target_cast}`)
+  } catch (error) {
+    console.error('ERROR INSERTING REACTION', error)
   }
 }
 
@@ -35,16 +40,18 @@ export async function insertReaction(msg: MergeMessageHubEvent) {
 export async function upsertReactions(reactions: Reaction[]) {
   if (reactions.length === 0) return
 
-  // TODO: fix rare error here: "ON CONFLICT DO UPDATE command cannot affect row a second time"
-  const { error } = await supabase.from('reaction').upsert(reactions, {
-    onConflict: 'fid,target_cast,type',
-    ignoreDuplicates: true,
-  })
+  try {
+    await db
+      .insertInto('reaction')
+      .values(reactions)
+      .onConflict((oc) =>
+        oc.columns(['fid', 'target_cast', 'type']).doNothing()
+      )
+      .executeTakeFirstOrThrow()
 
-  if (error) {
-    console.error('ERROR UPSERTING REACTIONS', error)
-  } else {
     console.log('REACTIONS UPSERTED', reactions.length)
+  } catch (error) {
+    console.error('ERROR UPSERTING REACTIONS', error)
   }
 }
 
@@ -56,16 +63,16 @@ export async function deleteReaction(msg: MergeMessageHubEvent) {
   const fid = msg.data.fid
   const targetCastHash = formatHash(msg.data.reactionBody!.targetCastId.hash)
 
-  const drop = await supabase
-    .from('reaction')
-    .delete()
-    .eq('fid', fid)
-    .eq('target_cast', targetCastHash)
+  try {
+    await db
+      .deleteFrom('reaction')
+      .where('fid', '=', fid)
+      .where('target_cast', '=', targetCastHash)
+      .executeTakeFirstOrThrow()
 
-  if (drop.error) {
-    console.error('ERROR DELETING REACTION', drop.error)
-  } else {
     console.log(`REACTION DELETED -- ${fid} to ${targetCastHash}`)
+  } catch (error) {
+    console.error('ERROR DELETING REACTION', error)
   }
 }
 
@@ -81,15 +88,16 @@ export async function updateReaction(
   const fid = msg.data.fid
   const targetCastHash = formatHash(msg.data.reactionBody!.targetCastId.hash)
 
-  const update = await supabase
-    .from('reaction')
-    .update(change)
-    .eq('fid', fid)
-    .eq('target_cast', targetCastHash)
+  try {
+    await db
+      .updateTable('reaction')
+      .set(change)
+      .where('fid', '=', fid)
+      .where('target_cast', '=', targetCastHash)
+      .executeTakeFirstOrThrow()
 
-  if (update.error) {
-    console.error('ERROR UPDATING REACTION', update.error)
-  } else {
     console.log(`REACTION UPDATED -- ${fid} to ${targetCastHash}`)
+  } catch (error) {
+    console.error('ERROR UPDATING REACTION', error)
   }
 }

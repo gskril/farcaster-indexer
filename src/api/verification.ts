@@ -1,7 +1,7 @@
 import { fromFarcasterTime } from '@farcaster/utils'
 
+import { db } from '../db.js'
 import { formatHash } from '../lib.js'
-import supabase from '../supabase.js'
 import { MergeMessageHubEvent } from '../types'
 import { Verification } from '../types/db'
 
@@ -22,12 +22,16 @@ export async function insertVerification(msg: MergeMessageHubEvent) {
     created_at: new Date(timestamp),
   }
 
-  const { error } = await supabase.from('verification').insert(verification)
+  try {
+    await db
+      .insertInto('verification')
+      .values(verification)
+      .onConflict((oc) => oc.columns(['fid', 'address']).doNothing())
+      .executeTakeFirstOrThrow()
 
-  if (error) {
-    console.error('ERROR INSERTING VERIFICATION', error)
-  } else {
     console.log(`VERIFICATION INSERTED -- ${address} by ${fid}`)
+  } catch (error) {
+    console.error('ERROR INSERTING VERIFICATION', error)
   }
 }
 
@@ -38,15 +42,16 @@ export async function insertVerification(msg: MergeMessageHubEvent) {
 export async function upsertVerifications(verifications: Verification[]) {
   if (verifications.length === 0) return
 
-  const { error } = await supabase.from('verification').upsert(verifications, {
-    onConflict: 'fid,address',
-    ignoreDuplicates: true,
-  })
+  try {
+    await db
+      .insertInto('verification')
+      .values(verifications)
+      .onConflict((oc) => oc.columns(['fid', 'address']).doNothing())
+      .executeTakeFirstOrThrow()
 
-  if (error) {
-    console.error('ERROR UPSERTING VERIFICATIONS', error)
-  } else {
     console.log('VERIFICATIONS UPSERTED', verifications.length)
+  } catch (error) {
+    console.error('ERROR UPSERTING VERIFICATIONS', error)
   }
 }
 
@@ -58,16 +63,16 @@ export async function deleteVerification(msg: MergeMessageHubEvent) {
   const fid = msg.data.fid
   const address = formatHash(msg.data.verificationRemoveBody!.address)
 
-  const drop = await supabase
-    .from('verification')
-    .delete()
-    .eq('fid', fid)
-    .eq('address', address)
+  try {
+    await db
+      .deleteFrom('verification')
+      .where('fid', '=', fid)
+      .where('address', '=', address)
+      .executeTakeFirstOrThrow()
 
-  if (drop.error) {
-    console.error('ERROR DELETING VERIFICATION', drop.error)
-  } else {
     console.log('VERIFICATION DELETED', fid, address)
+  } catch (error) {
+    console.error('ERROR DELETING VERIFICATION', error)
   }
 }
 
@@ -83,15 +88,16 @@ export async function updateVerification(
   const fid = msg.data.fid
   const address = formatHash(msg.data.verificationAddEthAddressBody!.address)
 
-  const update = await supabase
-    .from('verification')
-    .update(change)
-    .eq('fid', fid)
-    .eq('address', address)
+  try {
+    await db
+      .updateTable('verification')
+      .set(change)
+      .where('fid', '=', fid)
+      .where('address', '=', address)
+      .executeTakeFirstOrThrow()
 
-  if (update.error) {
-    console.error('ERROR UPDATING VERIFICATION', update.error)
-  } else {
     console.log(`VERIFICATION UPDATED -- $${address}`)
+  } catch (error) {
+    console.error('ERROR UPDATING VERIFICATION', error)
   }
 }
