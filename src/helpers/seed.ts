@@ -1,4 +1,4 @@
-import { fromFarcasterTime, HubResult } from '@farcaster/hub-nodejs'
+import { HubResult } from '@farcaster/hub-nodejs'
 import * as protobufs from '@farcaster/protobufs'
 import 'dotenv/config'
 
@@ -9,10 +9,11 @@ import {
   upsertSigners,
   upsertVerifications,
 } from '../api/index.js'
-import { client, formatHash, watch } from '../lib.js'
+import { client, watch } from '../lib.js'
 import { Cast, Profile, Reaction, Signer, Verification } from '../types/db.js'
 import { MergeMessageHubEvent } from '../types/index.js'
 import {
+  breakIntoChunks,
   formatCasts,
   formatReactions,
   formatSigners,
@@ -48,8 +49,16 @@ export async function seed() {
     allSigners.push(...profile.signers)
     allProfiles.push(profile.userData)
 
-    await upsertCasts(profile.casts)
-    await upsertReactions(profile.reactions)
+    // Upsert high volume data at 1000 messages at a time
+    const chunksOfCasts = breakIntoChunks(profile.casts, 1000)
+    for (const chunk of chunksOfCasts) {
+      await upsertCasts(chunk)
+    }
+
+    const chunksOfReactions = breakIntoChunks(profile.reactions, 1000)
+    for (const chunk of chunksOfReactions) {
+      await upsertReactions(chunk)
+    }
 
     // Upsert low volume data for 100 profiles at a time
     if (fid % 100 === 0) {
@@ -59,6 +68,7 @@ export async function seed() {
 
       allVerifications.length = 0
       allSigners.length = 0
+      allProfiles.length = 0
     }
   }
 
@@ -79,7 +89,6 @@ export async function seed() {
  */
 async function getFullProfileFromHub(_fid: number) {
   const fid = protobufs.FidRequest.create({ fid: _fid })
-  protobufs.Metadata
 
   // TODO: add pagination for all of these (mainly casts and reactions)
   const _casts = (await client.getCastsByFid(fid))._unsafeUnwrap()
@@ -127,11 +136,11 @@ function hubMessageToJSON(messages: protobufs.Message[]) {
 
     return {
       data: json.data,
-      hash: formatHash(json.hash),
+      hash: json.hash,
       hashScheme: json.hashScheme,
-      signature: formatHash(json.signature),
+      signature: json.signature,
       signatureScheme: json.signatureScheme,
-      signer: formatHash(json.signer),
+      signer: json.signer,
     }
   })
 }

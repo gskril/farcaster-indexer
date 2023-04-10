@@ -17,9 +17,8 @@ import * as protobufs from '@farcaster/protobufs'
 import * as ed from '@noble/ed25519'
 import { Wallet } from 'ethers'
 
+import { db } from '../db.js'
 import { client } from '../lib.js'
-import supabase from '../supabase.js'
-import { Profile } from '../types/db.js'
 
 // test account that matches the FARCASTER_PRIVATE_KEY in your .env file
 export const account = { fid: 981, username: 'bot' }
@@ -29,9 +28,12 @@ const dataOptions = {
   network: protobufs.FarcasterNetwork.DEVNET,
 }
 
-// Insert profile to allow for testing (otherwise violates key constraint)
-const profile: Profile = { id: account.fid, username: account.username }
-await supabase.from('profile').upsert(profile)
+// Insert profile to allow for testing
+await db
+  .insertInto('profile')
+  .values({ id: account.fid, username: account.username })
+  .onConflict((oc) => oc.column('id').doNothing())
+  .execute()
 
 const pkey = process.env.FARCASTER_PRIVATE_KEY
 if (!pkey) throw new Error('FARCASTER_PRIVATE_KEY is not set')

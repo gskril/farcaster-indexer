@@ -8,12 +8,12 @@ export function formatCasts(events: MergeMessageHubEvent[]) {
     const timestamp = fromFarcasterTime(cast.data.timestamp)._unsafeUnwrap()
     const parentHash = cast.data.castAddBody!.parentCastId?.hash
     return {
-      hash: cast.hash,
-      signature: cast.signature,
-      signer: cast.signer,
+      hash: formatHash(cast.hash),
+      signature: formatHash(cast.signature),
+      signer: formatHash(cast.signer),
       text: cast.data.castAddBody!.text,
       fid: cast.data.fid,
-      mentions: cast.data.castAddBody!.mentions || null,
+      mentions: JSON.stringify(cast.data.castAddBody!.mentions),
       parent_fid: cast.data.castAddBody!.parentCastId?.fid || null,
       parent_hash: parentHash ? formatHash(parentHash) : null,
       thread_hash: null,
@@ -30,7 +30,7 @@ export function formatReactions(events: MergeMessageHubEvent[]) {
       target_cast: formatHash(reaction.data.reactionBody!.targetCastId.hash),
       target_fid: reaction.data.reactionBody!.targetCastId.fid,
       type: reaction.data.reactionBody!.type.toString(),
-      signer: reaction.signer,
+      signer: formatHash(reaction.signer),
       created_at: new Date(timestamp),
     }
   })
@@ -74,8 +74,8 @@ export function formatVerifications(events: MergeMessageHubEvent[]) {
       address: formatHash(
         verification.data.verificationAddEthAddressBody!.address
       ),
-      signature: verification.signature,
-      signer: verification.signer,
+      signature: formatHash(verification.signature),
+      signer: formatHash(verification.signer),
       created_at: new Date(timestamp),
     }
   })
@@ -91,4 +91,12 @@ export function formatSigners(events: MergeMessageHubEvent[]) {
       created_at: new Date(timestamp),
     }
   })
+}
+
+export function breakIntoChunks(array: any[], size: number) {
+  const chunks = []
+  for (let i = 0; i < array.length; i += size) {
+    chunks.push(array.slice(i, i + size))
+  }
+  return chunks
 }

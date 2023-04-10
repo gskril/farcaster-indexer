@@ -1,5 +1,5 @@
+import { db } from '../db.js'
 import { formatHash } from '../lib.js'
-import supabase from '../supabase.js'
 import { MergeMessageHubEvent } from '../types'
 import { Signer } from '../types/db'
 
@@ -17,12 +17,16 @@ export async function insertSigner(msg: MergeMessageHubEvent) {
     name,
   }
 
-  const insert = await supabase.from('signer').insert(signer)
+  try {
+    await db
+      .insertInto('signer')
+      .values(signer)
+      .onConflict((oc) => oc.columns(['fid', 'signer']).doNothing())
+      .executeTakeFirstOrThrow()
 
-  if (insert.error) {
-    console.error('ERROR INSERTING SIGNER', insert.error)
-  } else {
     console.log(`SIGNER INSERTED -- "${name || 'untitled'}" by ${fid}`)
+  } catch (error) {
+    console.error('ERROR INSERTING SIGNER', error)
   }
 }
 
@@ -33,15 +37,16 @@ export async function insertSigner(msg: MergeMessageHubEvent) {
 export async function upsertSigners(signers: Signer[]) {
   if (signers.length === 0) return
 
-  const { error } = await supabase.from('signer').upsert(signers, {
-    onConflict: 'fid,signer',
-    ignoreDuplicates: true,
-  })
+  try {
+    await db
+      .insertInto('signer')
+      .values(signers)
+      .onConflict((oc) => oc.columns(['fid', 'signer']).doNothing())
+      .executeTakeFirstOrThrow()
 
-  if (error) {
-    console.error('ERROR UPSERTING SIGNERS', error)
-  } else {
     console.log('SIGNERS UPSERTED', signers.length)
+  } catch (error) {
+    console.error('ERROR UPSERTING SIGNERS', error)
   }
 }
 
@@ -52,16 +57,16 @@ export async function upsertSigners(signers: Signer[]) {
 export async function deleteSigner(msg: MergeMessageHubEvent) {
   const fid = msg.data.fid
 
-  const drop = await supabase
-    .from('signer')
-    .delete()
-    .eq('fid', fid)
-    .eq('signer', formatHash(msg.data.signerRemoveBody!.signer))
+  try {
+    await db
+      .deleteFrom('signer')
+      .where('fid', '=', fid)
+      .where('signer', '=', formatHash(msg.data.signerRemoveBody!.signer))
+      .executeTakeFirstOrThrow()
 
-  if (drop.error) {
-    console.error('ERROR DELETING SIGNER', drop.error)
-  } else {
     console.log(`SIGNER DELETED -- by ${fid}`)
+  } catch (error) {
+    console.error('ERROR DELETING SIGNER', error)
   }
 }
 
@@ -70,43 +75,40 @@ export async function deleteSigner(msg: MergeMessageHubEvent) {
  * @param signer Signer to delete messages from
  */
 export async function deleteMessagesFromSigner(signer: string) {
-  const dropCasts = await supabase
-    .from('casts')
-    .update({ deleted: true })
-    .eq('signer', signer)
+  // Delete casts
+  try {
+    await db
+      .deleteFrom('casts')
+      .where('signer', '=', signer)
+      .executeTakeFirstOrThrow()
 
-  if (dropCasts.error) {
-    console.error('ERROR DELETING CASTS WITH REVOKED SIGNER', dropCasts.error)
-  } else {
     console.log(`CASTS FROM REVOKED SIGNER DELETED -- ${signer}`)
+  } catch (error) {
+    console.error('ERROR DELETING CASTS WITH REVOKED SIGNER', error)
   }
 
-  const dropReactions = await supabase
-    .from('reaction')
-    .delete()
-    .eq('signer', signer)
+  // Delete reactions
+  try {
+    await db
+      .deleteFrom('reaction')
+      .where('signer', '=', signer)
+      .executeTakeFirstOrThrow()
 
-  if (dropReactions.error) {
-    console.error(
-      'ERROR DELETING REACTIONS WITH REVOKED SIGNER',
-      dropReactions.error
-    )
-  } else {
     console.log(`REACTIONS FROM REVOKED SIGNER DELETED -- ${signer}`)
+  } catch (error) {
+    console.error('ERROR DELETING REACTIONS WITH REVOKED SIGNER', error)
   }
 
-  const dropVerifications = await supabase
-    .from('verification')
-    .delete()
-    .eq('signer', signer)
+  // Delete verifications
+  try {
+    await db
+      .deleteFrom('verification')
+      .where('signer', '=', signer)
+      .executeTakeFirstOrThrow()
 
-  if (dropVerifications.error) {
-    console.error(
-      'ERROR DELETING VERIFICATIONS WITH REVOKED SIGNER',
-      dropVerifications.error
-    )
-  } else {
     console.log(`VERIFICATIONS FROM REVOKED SIGNER DELETED -- ${signer}`)
+  } catch (error) {
+    console.error('ERROR DELETING VERIFICATIONS WITH REVOKED SIGNER', error)
   }
 }
 
@@ -122,15 +124,16 @@ export async function updateSigner(
   const fid = msg.data.fid
   const signer = formatHash(msg.data.signerAddBody!.signer)
 
-  const update = await supabase
-    .from('signer')
-    .update(change)
-    .eq('fid', fid)
-    .eq('signer', signer)
+  try {
+    await db
+      .updateTable('signer')
+      .set(change)
+      .where('fid', '=', fid)
+      .where('signer', '=', signer)
+      .executeTakeFirstOrThrow()
 
-  if (update.error) {
-    console.error('ERROR UPDATING SIGNER', update.error)
-  } else {
     console.log(`SIGNER UPDATED -- $${signer} by ${fid}`)
+  } catch (error) {
+    console.error('ERROR UPDATING SIGNER', error)
   }
 }
