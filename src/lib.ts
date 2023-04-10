@@ -1,4 +1,4 @@
-import { getHubRpcClient } from '@farcaster/hub-nodejs'
+import { getSSLHubRpcClient } from '@farcaster/hub-nodejs'
 import * as protobufs from '@farcaster/protobufs'
 
 import {
@@ -23,8 +23,14 @@ import {
 } from './api/index.js'
 import { FormattedHubEvent, MergeMessageHubEvent } from './types'
 
+const HUB_RPC = process.env.HUB_RPC
+
+if (!HUB_RPC) {
+  throw new Error('HUB_RPC env variable is not set')
+}
+
 let latestEventId: number
-export const client = await getHubRpcClient('127.0.0.1:2283')
+export const client = getSSLHubRpcClient(HUB_RPC)
 
 /**
  * Convert a HubEvent (protobufs) to a more readable format (JSON)
