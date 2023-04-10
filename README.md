@@ -13,4 +13,3 @@ This is an indexer that listens for messages from a [Farcaster Hub](https://gith
 
 - Batch insert events every 10 seconds or so to protect against a DDOS attack
 - Figure out how to decode fname from `MERGE_NAME_REGISTRY_EVENT` for logging (lesser priority)
-- Move away from Supabase dependency to a more generic Postgres ORM (lesser priority)
