@@ -47,6 +47,39 @@ Run the indexer
 yarn start
 ```
 
+### Note
+Postgres full text search is a lot more performant and robust than pattern matching, especially when querying the `casts` table. It's a powerful search engine that can:
+- stem words (e.g. "run" matches "runs", "running", and "ran")
+- ignore stop words (e.g. "the" and "a")
+- weight and rank results 
+
+Modify the table schema to take advantage of full text search. 
+```sql
+-- tokenize the cast text into lexemes 
+-- store them in a new column `fts` so that they don't need to be computed on every query 
+ALTER TABLE casts
+ADD COLUMN
+fts tsvector generated always AS (to_tsvector('english', text)) stored;
+
+-- generate a Generalized Inverted Index on the column to improve performance
+CREATE INDEX casts_fts ON casts USING GIN (fts);
+```
+
+The data can be queried with SQL or the Supabase client.
+```sql
+SELECT * 
+FROM casts
+WHERE fts @@ to_tsquery('english', '(farcaster & warpcast) | (activitypub & mastodon)')
+```
+
+```js
+supabase
+    .from("casts")
+    .select()
+    .textSearch("fts", "(farcaster & warpcast) | (activitypub & mastodon)")
+```
+See [full text search](https://supabase.com/docs/guides/database/full-text-search#creating-indexes) on Supabase for more details.
+
 ## How to deploy
 
 Create an empty [Supabase](https://supabase.com/) project and connect to the CLI. If you get a warning that says "Local config differs from linked project", update the `major_version` in [supabase/config.toml](supabase/config.toml) to `15`.
