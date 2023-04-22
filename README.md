@@ -65,7 +65,7 @@ fts tsvector generated always AS (to_tsvector('english', text)) stored;
 CREATE INDEX casts_fts ON casts USING GIN (fts);
 ```
 
-The data can be queried with SQL or the Supabase client.
+The data can be queried with SQL or the Supabase client. For example, the following code will match casts that contain either "farcaster" and "warpast" OR "activitypub" and "mastodon".
 ```sql
 SELECT * 
 FROM casts
