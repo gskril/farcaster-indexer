@@ -9,7 +9,7 @@ import {
   upsertSigners,
   upsertVerifications,
 } from '../api/index.js'
-import { client, watch } from '../lib.js'
+import { client } from '../lib.js'
 import { Cast, Profile, Reaction, Signer, Verification } from '../types/db.js'
 import { MergeMessageHubEvent } from '../types/index.js'
 import {
@@ -21,13 +21,10 @@ import {
   formatVerifications,
 } from '../utils.js'
 
-seed()
-watch()
+await seed()
 
 /**
  * Seed the database with data from a hub. This may take a while.
- * We'll also start watching for new messages at the same time so we don't miss anything.
- * Errors relating to inserting live events are expected and can be ignored.
  */
 export async function seed() {
   console.log('Seeding database...')
