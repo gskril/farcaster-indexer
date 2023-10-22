@@ -2,8 +2,11 @@ import 'dotenv/config'
 import { providers, Contract } from 'ethers'
 import cron from 'node-cron'
 
-import { idRegistryAddr, idRegistryAbi } from './contracts/id-registry.js'
-import { IdRegistry, IdRegistryEvents } from './contracts/types/id-registry.js'
+import {
+  idRegistryAddr,
+  idRegistryAbi,
+  IdRegistryEvents,
+} from './contracts/id-registry.js'
 import { indexAllCasts } from './functions/index-casts.js'
 import { indexVerifications } from './functions/index-verifications.js'
 import { upsertRegistrations } from './functions/read-logs.js'
@@ -13,14 +16,10 @@ import { FlattenedProfile } from './types/index.js'
 
 // Set up the provider
 const ALCHEMY_SECRET = process.env.ALCHEMY_SECRET
-const provider = new providers.AlchemyProvider('goerli', ALCHEMY_SECRET)
+const provider = new providers.AlchemyProvider('optimism', ALCHEMY_SECRET)
 
 // Create ID Registry contract interface
-const idRegistry = new Contract(
-  idRegistryAddr,
-  idRegistryAbi,
-  provider
-) as IdRegistry
+const idRegistry = new Contract(idRegistryAddr, idRegistryAbi, provider)
 
 // Listen for new events on the ID Registry
 const eventToWatch: IdRegistryEvents = 'Register'
@@ -43,10 +42,14 @@ await upsertRegistrations(provider, idRegistry)
 // Run job every minute
 cron.schedule('* * * * *', async () => {
   await indexAllCasts(10_000)
+})
+
+// Run job every 10 minutes
+cron.schedule('*/10 * * * *', async () => {
   await updateAllProfiles()
 })
 
-// Run job every hour
-cron.schedule('0 * * * *', async () => {
+// Run job every 2 hours
+cron.schedule('0 */2 * * *', async () => {
   await indexVerifications()
 })

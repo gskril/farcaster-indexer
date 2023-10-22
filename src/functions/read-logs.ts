@@ -25,12 +25,12 @@ const getIdRegistryEvents = async ({
   // Fetch Transfer or Register event logs emitted by IdRegistry
   const logs = await provider.getLogs({
     address: contract.address,
-    fromBlock: fromBlock || 7648700,
+    fromBlock: fromBlock || 108869028,
     toBlock: 'latest',
     topics: [
       [
-        '0x3cd6a0ffcc37406d9958e09bba79ff19d8237819eb2e1911f9edbce656499c87', // Register
-        '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef', // Transfer
+        '0xf2e19a901b0748d8b08e428d0468896a039ac751ec4fec49b44b7b9c28097e45', // Register
+        // '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef', // Transfer
       ],
     ],
   })
@@ -53,6 +53,8 @@ const getIdRegistryEvents = async ({
         owner: to,
       })
     }
+
+    // TODO: Handle transfer events
   }
 
   return registerEvents
@@ -70,11 +72,11 @@ export async function upsertRegistrations(
 ) {
   const currentBlock = await provider.getBlockNumber()
 
-  // Get all logs from the ID Registry contract since creation
+  // Get recent logs from the ID Registry
   const allRegistrations = await getIdRegistryEvents({
     provider,
     contract,
-    fromBlock: currentBlock - 100_000, // last ~2 weeks
+    fromBlock: currentBlock - 200_000, // last ~2 weeks
   })
 
   // Insert to Supabase to make sure we have didn't miss data while the indexer was down

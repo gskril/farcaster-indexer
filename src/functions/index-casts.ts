@@ -36,13 +36,6 @@ export async function indexAllCasts(limit?: number) {
       deleted: false,
     }
 
-    // Retain v1 hashes for backwards compatibility (remove after 3/21/2023)
-    if (c._hashV1) {
-      cast.hash_v1 = c._hashV1
-      cast.thread_hash_v1 = c._threadHashV1
-      cast.parent_hash_v1 = c._parentHashV1 || null
-    }
-
     return cast
   })
 

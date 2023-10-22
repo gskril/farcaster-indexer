@@ -6,6 +6,8 @@ import {
   MerkleResponse,
   Verification,
   FlattenedVerification,
+  Profile,
+  FlattenedProfile,
 } from '../types/index'
 
 /**
@@ -13,32 +15,51 @@ import {
  * Takes ~20 minutes to run.
  */
 export async function indexVerifications() {
-  const itemsPerRequest = 1000
+  const itemsPerRequest = 10_000
   const startTime = Date.now()
-  const profiles: { id: number }[] = new Array()
+  const allProfiles: { id: number }[] = new Array()
+  const filteredProfiles: { id: number }[] = new Array()
 
   // Get all profiles from the database, 1000 at a time (default Supabase setting)
   while (true) {
+    console.log('looping over profiles')
+
     const { data, error } = await supabase
       .from('profile')
-      .select('id')
-      .range(profiles.length, profiles.length + itemsPerRequest)
+      .select('*')
+      .range(allProfiles.length, allProfiles.length + itemsPerRequest)
 
     if (error) {
       throw error
     }
 
-    profiles.push(...data)
+    const profiles = data as FlattenedProfile[]
 
-    if (data.length < itemsPerRequest) {
+    // remove profiles that have null for all of the properties: username, display_name, avatar_url, followers, following, bio
+    // this is to avoid wasting resources on spam profiles
+    const profilesWithData = profiles.filter(
+      (p) =>
+        p.username ||
+        p.display_name ||
+        p.avatar_url ||
+        p.followers ||
+        p.following ||
+        p.bio
+    )
+
+    allProfiles.push(...profiles)
+    filteredProfiles.push(...profilesWithData)
+
+    if (profiles.length < itemsPerRequest) {
       break
     }
   }
 
   let verificationCount = 0
   const verifications: Verification[] = new Array()
+  console.log(`Getting verifications for ${filteredProfiles.length} profiles`)
 
-  for (const profile of profiles) {
+  for (const profile of filteredProfiles) {
     const url = `https://api.warpcast.com/v2/verifications?fid=${profile.id}`
     const _res = await got(url, MERKLE_REQUEST_OPTIONS)
       .json()
