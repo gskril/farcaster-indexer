@@ -1,13 +1,16 @@
-export const idRegistryAddr = '0x00000000fcaf86937e41ba038b4fa40baa4b780a'
+export const idRegistryAddr = '0x00000000Fc6c5F01Fc30151999387Bb99A9f489b'
 
 export const idRegistryAbi = [
   {
     inputs: [
+      { internalType: 'address', name: '_migrator', type: 'address' },
       { internalType: 'address', name: '_initialOwner', type: 'address' },
     ],
     stateMutability: 'nonpayable',
     type: 'constructor',
   },
+  { inputs: [], name: 'AlreadyMigrated', type: 'error' },
+  { inputs: [], name: 'GatewayFrozen', type: 'error' },
   { inputs: [], name: 'HasId', type: 'error' },
   { inputs: [], name: 'HasNoId', type: 'error' },
   {
@@ -18,12 +21,11 @@ export const idRegistryAbi = [
     name: 'InvalidAccountNonce',
     type: 'error',
   },
-  { inputs: [], name: 'InvalidAddress', type: 'error' },
   { inputs: [], name: 'InvalidShortString', type: 'error' },
   { inputs: [], name: 'InvalidSignature', type: 'error' },
-  { inputs: [], name: 'OnlyTrustedCaller', type: 'error' },
-  { inputs: [], name: 'Registrable', type: 'error' },
-  { inputs: [], name: 'Seedable', type: 'error' },
+  { inputs: [], name: 'OnlyGuardian', type: 'error' },
+  { inputs: [], name: 'OnlyMigrator', type: 'error' },
+  { inputs: [], name: 'PermissionRevoked', type: 'error' },
   { inputs: [], name: 'SignatureExpired', type: 'error' },
   {
     inputs: [{ internalType: 'string', name: 'str', type: 'string' }],
@@ -31,6 +33,27 @@ export const idRegistryAbi = [
     type: 'error',
   },
   { inputs: [], name: 'Unauthorized', type: 'error' },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: true,
+        internalType: 'address',
+        name: 'guardian',
+        type: 'address',
+      },
+    ],
+    name: 'Add',
+    type: 'event',
+  },
+  {
+    anonymous: false,
+    inputs: [
+      { indexed: true, internalType: 'uint256', name: 'fid', type: 'uint256' },
+    ],
+    name: 'AdminReset',
+    type: 'event',
+  },
   {
     anonymous: false,
     inputs: [
@@ -45,8 +68,33 @@ export const idRegistryAbi = [
     name: 'ChangeRecoveryAddress',
     type: 'event',
   },
-  { anonymous: false, inputs: [], name: 'DisableTrustedOnly', type: 'event' },
   { anonymous: false, inputs: [], name: 'EIP712DomainChanged', type: 'event' },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: false,
+        internalType: 'address',
+        name: 'idGateway',
+        type: 'address',
+      },
+    ],
+    name: 'FreezeIdGateway',
+    type: 'event',
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: true,
+        internalType: 'uint256',
+        name: 'migratedAt',
+        type: 'uint256',
+      },
+    ],
+    name: 'Migrated',
+    type: 'event',
+  },
   {
     anonymous: false,
     inputs: [
@@ -129,23 +177,68 @@ export const idRegistryAbi = [
       {
         indexed: true,
         internalType: 'address',
-        name: 'oldCaller',
+        name: 'guardian',
         type: 'address',
       },
+    ],
+    name: 'Remove',
+    type: 'event',
+  },
+  {
+    anonymous: false,
+    inputs: [
       {
-        indexed: true,
+        indexed: false,
+        internalType: 'uint256',
+        name: 'oldCounter',
+        type: 'uint256',
+      },
+      {
+        indexed: false,
+        internalType: 'uint256',
+        name: 'newCounter',
+        type: 'uint256',
+      },
+    ],
+    name: 'SetIdCounter',
+    type: 'event',
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: false,
         internalType: 'address',
-        name: 'newCaller',
+        name: 'oldIdGateway',
         type: 'address',
       },
       {
         indexed: false,
         internalType: 'address',
-        name: 'owner',
+        name: 'newIdGateway',
         type: 'address',
       },
     ],
-    name: 'SetTrustedCaller',
+    name: 'SetIdGateway',
+    type: 'event',
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: false,
+        internalType: 'address',
+        name: 'oldMigrator',
+        type: 'address',
+      },
+      {
+        indexed: false,
+        internalType: 'address',
+        name: 'newMigrator',
+        type: 'address',
+      },
+    ],
+    name: 'SetMigrator',
     type: 'event',
   },
   {
@@ -180,7 +273,7 @@ export const idRegistryAbi = [
   },
   {
     inputs: [],
-    name: 'REGISTER_TYPEHASH',
+    name: 'TRANSFER_AND_CHANGE_RECOVERY_TYPEHASH',
     outputs: [{ internalType: 'bytes32', name: '', type: 'bytes32' }],
     stateMutability: 'view',
     type: 'function',
@@ -207,6 +300,56 @@ export const idRegistryAbi = [
     type: 'function',
   },
   {
+    inputs: [{ internalType: 'address', name: 'guardian', type: 'address' }],
+    name: 'addGuardian',
+    outputs: [],
+    stateMutability: 'nonpayable',
+    type: 'function',
+  },
+  {
+    inputs: [
+      {
+        components: [
+          { internalType: 'uint24', name: 'fid', type: 'uint24' },
+          { internalType: 'address', name: 'custody', type: 'address' },
+          { internalType: 'address', name: 'recovery', type: 'address' },
+        ],
+        internalType: 'struct IIdRegistry.BulkRegisterData[]',
+        name: 'ids',
+        type: 'tuple[]',
+      },
+    ],
+    name: 'bulkRegisterIds',
+    outputs: [],
+    stateMutability: 'nonpayable',
+    type: 'function',
+  },
+  {
+    inputs: [
+      {
+        components: [
+          { internalType: 'uint24', name: 'fid', type: 'uint24' },
+          { internalType: 'address', name: 'custody', type: 'address' },
+        ],
+        internalType: 'struct IIdRegistry.BulkRegisterDefaultRecoveryData[]',
+        name: 'ids',
+        type: 'tuple[]',
+      },
+      { internalType: 'address', name: 'recovery', type: 'address' },
+    ],
+    name: 'bulkRegisterIdsWithDefaultRecovery',
+    outputs: [],
+    stateMutability: 'nonpayable',
+    type: 'function',
+  },
+  {
+    inputs: [{ internalType: 'uint24[]', name: 'ids', type: 'uint24[]' }],
+    name: 'bulkResetIds',
+    outputs: [],
+    stateMutability: 'nonpayable',
+    type: 'function',
+  },
+  {
     inputs: [{ internalType: 'address', name: 'recovery', type: 'address' }],
     name: 'changeRecoveryAddress',
     outputs: [],
@@ -226,10 +369,10 @@ export const idRegistryAbi = [
     type: 'function',
   },
   {
-    inputs: [],
-    name: 'disableTrustedOnly',
-    outputs: [],
-    stateMutability: 'nonpayable',
+    inputs: [{ internalType: 'uint256', name: 'fid', type: 'uint256' }],
+    name: 'custodyOf',
+    outputs: [{ internalType: 'address', name: 'custody', type: 'address' }],
+    stateMutability: 'view',
     type: 'function',
   },
   {
@@ -255,6 +398,34 @@ export const idRegistryAbi = [
     type: 'function',
   },
   {
+    inputs: [],
+    name: 'freezeIdGateway',
+    outputs: [],
+    stateMutability: 'nonpayable',
+    type: 'function',
+  },
+  {
+    inputs: [],
+    name: 'gatewayFrozen',
+    outputs: [{ internalType: 'bool', name: '', type: 'bool' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [],
+    name: 'gracePeriod',
+    outputs: [{ internalType: 'uint24', name: '', type: 'uint24' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [{ internalType: 'address', name: 'guardian', type: 'address' }],
+    name: 'guardians',
+    outputs: [{ internalType: 'bool', name: 'isGuardian', type: 'bool' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
     inputs: [{ internalType: 'bytes32', name: 'structHash', type: 'bytes32' }],
     name: 'hashTypedDataV4',
     outputs: [{ internalType: 'bytes32', name: '', type: 'bytes32' }],
@@ -269,9 +440,44 @@ export const idRegistryAbi = [
     type: 'function',
   },
   {
+    inputs: [],
+    name: 'idGateway',
+    outputs: [{ internalType: 'address', name: '', type: 'address' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
     inputs: [{ internalType: 'address', name: 'owner', type: 'address' }],
     name: 'idOf',
     outputs: [{ internalType: 'uint256', name: 'fid', type: 'uint256' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [],
+    name: 'isMigrated',
+    outputs: [{ internalType: 'bool', name: '', type: 'bool' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [],
+    name: 'migrate',
+    outputs: [],
+    stateMutability: 'nonpayable',
+    type: 'function',
+  },
+  {
+    inputs: [],
+    name: 'migratedAt',
+    outputs: [{ internalType: 'uint40', name: '', type: 'uint40' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [],
+    name: 'migrator',
+    outputs: [{ internalType: 'address', name: '', type: 'address' }],
     stateMutability: 'view',
     type: 'function',
   },
@@ -351,21 +557,19 @@ export const idRegistryAbi = [
     type: 'function',
   },
   {
-    inputs: [{ internalType: 'address', name: 'recovery', type: 'address' }],
+    inputs: [
+      { internalType: 'address', name: 'to', type: 'address' },
+      { internalType: 'address', name: 'recovery', type: 'address' },
+    ],
     name: 'register',
     outputs: [{ internalType: 'uint256', name: 'fid', type: 'uint256' }],
     stateMutability: 'nonpayable',
     type: 'function',
   },
   {
-    inputs: [
-      { internalType: 'address', name: 'to', type: 'address' },
-      { internalType: 'address', name: 'recovery', type: 'address' },
-      { internalType: 'uint256', name: 'deadline', type: 'uint256' },
-      { internalType: 'bytes', name: 'sig', type: 'bytes' },
-    ],
-    name: 'registerFor',
-    outputs: [{ internalType: 'uint256', name: 'fid', type: 'uint256' }],
+    inputs: [{ internalType: 'address', name: 'guardian', type: 'address' }],
+    name: 'removeGuardian',
+    outputs: [],
     stateMutability: 'nonpayable',
     type: 'function',
   },
@@ -377,10 +581,22 @@ export const idRegistryAbi = [
     type: 'function',
   },
   {
-    inputs: [
-      { internalType: 'address', name: '_trustedCaller', type: 'address' },
-    ],
-    name: 'setTrustedCaller',
+    inputs: [{ internalType: 'uint256', name: '_counter', type: 'uint256' }],
+    name: 'setIdCounter',
+    outputs: [],
+    stateMutability: 'nonpayable',
+    type: 'function',
+  },
+  {
+    inputs: [{ internalType: 'address', name: '_idGateway', type: 'address' }],
+    name: 'setIdGateway',
+    outputs: [],
+    stateMutability: 'nonpayable',
+    type: 'function',
+  },
+  {
+    inputs: [{ internalType: 'address', name: '_migrator', type: 'address' }],
+    name: 'setMigrator',
     outputs: [],
     stateMutability: 'nonpayable',
     type: 'function',
@@ -392,6 +608,33 @@ export const idRegistryAbi = [
       { internalType: 'bytes', name: 'sig', type: 'bytes' },
     ],
     name: 'transfer',
+    outputs: [],
+    stateMutability: 'nonpayable',
+    type: 'function',
+  },
+  {
+    inputs: [
+      { internalType: 'address', name: 'to', type: 'address' },
+      { internalType: 'address', name: 'recovery', type: 'address' },
+      { internalType: 'uint256', name: 'deadline', type: 'uint256' },
+      { internalType: 'bytes', name: 'sig', type: 'bytes' },
+    ],
+    name: 'transferAndChangeRecovery',
+    outputs: [],
+    stateMutability: 'nonpayable',
+    type: 'function',
+  },
+  {
+    inputs: [
+      { internalType: 'address', name: 'from', type: 'address' },
+      { internalType: 'address', name: 'to', type: 'address' },
+      { internalType: 'address', name: 'recovery', type: 'address' },
+      { internalType: 'uint256', name: 'fromDeadline', type: 'uint256' },
+      { internalType: 'bytes', name: 'fromSig', type: 'bytes' },
+      { internalType: 'uint256', name: 'toDeadline', type: 'uint256' },
+      { internalType: 'bytes', name: 'toSig', type: 'bytes' },
+    ],
+    name: 'transferAndChangeRecoveryFor',
     outputs: [],
     stateMutability: 'nonpayable',
     type: 'function',
@@ -419,32 +662,15 @@ export const idRegistryAbi = [
   },
   {
     inputs: [],
-    name: 'trustedCaller',
-    outputs: [{ internalType: 'address', name: '', type: 'address' }],
-    stateMutability: 'view',
-    type: 'function',
-  },
-  {
-    inputs: [],
-    name: 'trustedOnly',
-    outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }],
-    stateMutability: 'view',
-    type: 'function',
-  },
-  {
-    inputs: [
-      { internalType: 'address', name: 'to', type: 'address' },
-      { internalType: 'address', name: 'recovery', type: 'address' },
-    ],
-    name: 'trustedRegister',
-    outputs: [{ internalType: 'uint256', name: 'fid', type: 'uint256' }],
+    name: 'unpause',
+    outputs: [],
     stateMutability: 'nonpayable',
     type: 'function',
   },
   {
     inputs: [],
-    name: 'unpause',
-    outputs: [],
+    name: 'useNonce',
+    outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }],
     stateMutability: 'nonpayable',
     type: 'function',
   },
@@ -464,7 +690,6 @@ export const idRegistryAbi = [
 
 export type IdRegistryEvents =
   | 'ChangeRecoveryAddress'
-  | 'DisableTrustedOnly'
   | 'OwnershipTransferred'
   | 'Register'
   | 'Transfer'
