@@ -49,7 +49,7 @@ cron.schedule('*/10 * * * *', async () => {
   await updateAllProfiles()
 })
 
-// Run job every 2 hours
-cron.schedule('0 */2 * * *', async () => {
+// Run job every 5 hours
+cron.schedule('0 */5 * * *', async () => {
   await indexVerifications()
 })

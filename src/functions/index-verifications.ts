@@ -15,18 +15,22 @@ import {
  * Takes ~20 minutes to run.
  */
 export async function indexVerifications() {
-  const itemsPerRequest = 10_000
+  const itemsPerRequest = 1_000
   const startTime = Date.now()
   const allProfiles: { id: number }[] = new Array()
-  const filteredProfiles: { id: number }[] = new Array()
 
   // Get all profiles from the database, 1000 at a time (default Supabase setting)
   while (true) {
-    console.log('looping over profiles')
-
+    // remove profiles that have null for a bunch of properties to avoid wasting resources on spam profiles
     const { data, error } = await supabase
       .from('profile')
       .select('*')
+      .filter('username', 'not.is', null)
+      .filter('display_name', 'not.is', null)
+      .filter('avatar_url', 'not.is', null)
+      .filter('followers', 'not.is', null)
+      .filter('following', 'not.is', null)
+      .filter('bio', 'not.is', null)
       .range(allProfiles.length, allProfiles.length + itemsPerRequest)
 
     if (error) {
@@ -34,21 +38,7 @@ export async function indexVerifications() {
     }
 
     const profiles = data as FlattenedProfile[]
-
-    // remove profiles that have null for all of the properties: username, display_name, avatar_url, followers, following, bio
-    // this is to avoid wasting resources on spam profiles
-    const profilesWithData = profiles.filter(
-      (p) =>
-        p.username ||
-        p.display_name ||
-        p.avatar_url ||
-        p.followers ||
-        p.following ||
-        p.bio
-    )
-
     allProfiles.push(...profiles)
-    filteredProfiles.push(...profilesWithData)
 
     if (profiles.length < itemsPerRequest) {
       break
@@ -57,9 +47,9 @@ export async function indexVerifications() {
 
   let verificationCount = 0
   const verifications: Verification[] = new Array()
-  console.log(`Getting verifications for ${filteredProfiles.length} profiles`)
+  console.log(`Getting verifications for ${allProfiles.length} profiles`)
 
-  for (const profile of filteredProfiles) {
+  for (const profile of allProfiles) {
     const url = `https://api.warpcast.com/v2/verifications?fid=${profile.id}`
     const _res = await got(url, MERKLE_REQUEST_OPTIONS)
       .json()

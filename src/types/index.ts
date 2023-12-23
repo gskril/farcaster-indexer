@@ -37,6 +37,38 @@ export interface Profile {
   referrerUsername?: string
 }
 
+interface Embeds {
+  images: {
+    type: string
+    url: string
+    sourceUrl: string
+    alt: string
+  }[]
+  urls: {
+    type: string
+    openGraph: {
+      url: string
+      sourceUrl: string
+      title: string
+      description: string
+      domain: string
+      image: string
+      useLargeImage: boolean
+    }
+  }[]
+  videos: any[]
+  unknowns: any[]
+  processedCastText: string
+}
+
+interface Tag {
+  type: string
+  id: string
+  name: string
+  imageUrl: string
+}
+;[]
+
 export interface Cast {
   hash: string
   _hashV1?: string
@@ -75,6 +107,8 @@ export interface Cast {
     count: number
   }
   parentAuthor?: Profile
+  embeds: Embeds | undefined
+  tags: Tag[] | undefined
 }
 
 export interface Verification {
@@ -119,6 +153,8 @@ export interface FlattenedCast {
   watches_count: number
   parent_author_fid: number | null
   parent_author_username: string | null
+  embeds: Embeds | null
+  tags: Tag[] | null
   deleted: boolean
 }
 

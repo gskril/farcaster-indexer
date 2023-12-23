@@ -33,6 +33,8 @@ export async function indexAllCasts(limit?: number) {
       watches_count: c.watches.count,
       parent_author_fid: c.parentAuthor?.fid || null,
       parent_author_username: c.parentAuthor?.username || null,
+      embeds: c.embeds || null,
+      tags: c.tags || null,
       deleted: false,
     }
 

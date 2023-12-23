@@ -8,9 +8,9 @@ import { breakIntoChunks } from '../utils.js'
 /**
  * Reformat and upsert all profiles into the database
  */
-export async function updateAllProfiles() {
+export async function updateAllProfiles(limit?: number) {
   const startTime = Date.now()
-  const allProfiles = await getAllProfiles()
+  const allProfiles = await getAllProfiles(limit)
 
   const formattedProfiles: FlattenedProfile[] = allProfiles.map((p) => {
     return {
@@ -52,7 +52,7 @@ export async function updateAllProfiles() {
  * Get all profiles from the Merkle API
  * @returns An array of all Farcaster profiles
  */
-async function getAllProfiles(): Promise<Profile[]> {
+async function getAllProfiles(limit?: number): Promise<Profile[]> {
   const allProfiles: Profile[] = new Array()
   let endpoint = buildProfileEndpoint()
 
@@ -66,6 +66,10 @@ async function getAllProfiles(): Promise<Profile[]> {
 
     for (const profile of profiles) {
       allProfiles.push(profile)
+    }
+
+    if (limit && allProfiles.length >= limit) {
+      break
     }
 
     // If there are more profiles, get the next page
