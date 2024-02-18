@@ -1,136 +1,37 @@
 import {
   HashScheme,
-  IdRegisterEventType,
   MessageType,
-  OnChainEventType,
   Protocol,
   ReactionType,
   SignatureScheme,
-  SignerEventType,
   UserDataType,
   UserNameType,
 } from '@farcaster/hub-nodejs'
 import { ColumnType, Generated, GeneratedAlways } from 'kysely'
 
-export type Fid = number
-export type Hex = `0x${string}`
+type Fid = number
+type Hex = `0x${string}`
 
 type CastIdJson = {
   fid: Fid
   hash: Hex
 }
 
-// CHAIN EVENTS -----------------------------------------------------------------------------------
-declare const $chainEventDbId: unique symbol
-type ChainEventDbId = string & { [$chainEventDbId]: true }
-
-export type SignerEventBodyJson = {
-  key: Hex
-  keyType: number
-  eventType: SignerEventType
-  metadata: Hex
-  metadataType: number
-}
-
-export type SignerMigratedEventBodyJson = {
-  migratedAt: number
-}
-
-export type IdRegisterEventBodyJson = {
-  to: Hex
-  eventType: IdRegisterEventType
-  from: Hex
-  recoveryAddress: Hex
-}
-
-export type StorageRentEventBodyJson = {
-  payer: Hex
-  units: number
-  expiry: number
-}
-
-export type ChainEventBodyJson =
-  | SignerEventBodyJson
-  | SignerMigratedEventBodyJson
-  | IdRegisterEventBodyJson
-  | StorageRentEventBodyJson
-
-export type ChainEventRow = {
-  id: GeneratedAlways<ChainEventDbId>
-  createdAt: Generated<Date>
-  blockTimestamp: Date
-  fid: Fid
-  chainId: number
-  blockNumber: number
-  transactionIndex: number
-  logIndex: number
-  type: OnChainEventType
-  blockHash: Uint8Array
-  transactionHash: Uint8Array
-  body: ColumnType<ChainEventBodyJson, string, string>
-  raw: Uint8Array
-}
-
 // FIDS -------------------------------------------------------------------------------------------
-export type FidRow = {
+type FidRow = {
   fid: Fid
   createdAt: Generated<Date>
   updatedAt: Generated<Date>
   registeredAt: Date
-  chainEventId: ChainEventDbId
   custodyAddress: Uint8Array
   recoveryAddress: Uint8Array
-}
-
-// SIGNERS -----------------------------------------------------------------------------------------
-declare const $signerDbId: unique symbol
-type SignerDbId = string & { [$signerDbId]: true }
-
-export type SignerAddMetadataJson = {
-  requestFid: number
-  requestSigner: Hex
-  signature: Hex
-  deadline: number
-}
-
-export type SignerRow = {
-  id: GeneratedAlways<SignerDbId>
-  createdAt: Generated<Date>
-  updatedAt: Generated<Date>
-  addedAt: Date
-  removedAt: Date | null
-  fid: Fid
-  requesterFid: Fid
-  addChainEventId: ChainEventDbId
-  removeChainEventId: ChainEventDbId | null
-  key: Uint8Array
-  keyType: number
-  metadata: ColumnType<SignerAddMetadataJson, string, string>
-  metadataType: number
-}
-
-// USERNAME PROOFS ---------------------------------------------------------------------------------
-declare const $usernameProofDbId: unique symbol
-type UsernameProofDbId = string & { [$usernameProofDbId]: true }
-
-export type UsernameProofRow = {
-  id: GeneratedAlways<UsernameProofDbId>
-  createdAt: Generated<Date>
-  updatedAt: Generated<Date>
-  timestamp: Date
-  deletedAt: Date | null
-  fid: Fid
-  type: UserNameType
-  username: string
-  signature: Uint8Array
-  owner: Uint8Array
 }
 
 // FNAMES ------------------------------------------------------------------------------------------
 declare const $fnameDbId: unique symbol
 type FnameDbId = string & { [$fnameDbId]: true }
 
-export type FnameRow = {
+type FnameRow = {
   id: GeneratedAlways<FnameDbId>
   createdAt: Generated<Date>
   updatedAt: Generated<Date>
@@ -145,9 +46,9 @@ export type FnameRow = {
 declare const $messageDbId: unique symbol
 type MessageDbId = string & { [$messageDbId]: true }
 
-export type CastEmbedJson = { url: string } | { castId: CastIdJson }
+type CastEmbedJson = { url: string } | { castId: CastIdJson }
 
-export type CastAddBodyJson =
+type CastAddBodyJson =
   | {
       text: string
       embeds?: CastEmbedJson[]
@@ -157,7 +58,7 @@ export type CastAddBodyJson =
   | { parentUrl: string }
   | { parentCastId: CastIdJson }
 
-export type CastRemoveBodyJson = {
+type CastRemoveBodyJson = {
   targetHash: Hex
 }
 
@@ -171,40 +72,40 @@ type ReactionBodyUrlJson = {
   targetUrl: string
 }
 
-export type ReactionBodyJson = ReactionBodyCastJson | ReactionBodyUrlJson
+type ReactionBodyJson = ReactionBodyCastJson | ReactionBodyUrlJson
 
-export type VerificationAddEthAddressBodyJson = {
+type VerificationAddEthAddressBodyJson = {
   address: Hex
   claimSignature: Hex
   blockHash: Hex
   protocol: Protocol
 }
 
-export type VerificationAddSolAddressBodyJson = {
+type VerificationAddSolAddressBodyJson = {
   address: string
   claimSignature: string
   blockHash: string
   protocol: Protocol
 }
 
-export type VerificationRemoveBodyJson = {
+type VerificationRemoveBodyJson = {
   address: Hex
   protocol: Protocol
 }
 
-export type UserDataBodyJson = {
+type UserDataBodyJson = {
   type: UserDataType
   value: string
 }
 
-export type LinkBodyJson = {
+type LinkBodyJson = {
   type: string
   /** original timestamp in Unix ms */
   displayTimestamp?: number
   targetFid?: Fid
 }
 
-export type UsernameProofBodyJson = {
+type UsernameProofBodyJson = {
   timestamp: number
   name: string
   owner: string
@@ -213,7 +114,7 @@ export type UsernameProofBodyJson = {
   type: UserNameType
 }
 
-export type MessageBodyJson =
+type MessageBodyJson =
   | CastAddBodyJson
   | CastRemoveBodyJson
   | ReactionBodyJson
@@ -247,7 +148,7 @@ type MessageRow = {
 declare const $castDbId: unique symbol
 type CastDbId = string & { [$castDbId]: true }
 
-export type CastRow = {
+type CastRow = {
   id: GeneratedAlways<CastDbId>
   createdAt: Generated<Date>
   updatedAt: Generated<Date>
@@ -270,7 +171,7 @@ export type CastRow = {
 declare const $reactionDbId: unique symbol
 type ReactionDbId = string & { [$reactionDbId]: true }
 
-export type ReactionRow = {
+type ReactionRow = {
   id: GeneratedAlways<ReactionDbId>
   createdAt: Generated<Date>
   updatedAt: Generated<Date>
@@ -288,7 +189,7 @@ export type ReactionRow = {
 declare const $linkDbId: unique symbol
 type LinkDbId = string & { [$linkDbId]: true }
 
-export type LinkRow = {
+type LinkRow = {
   id: GeneratedAlways<LinkDbId>
   createdAt: Generated<Date>
   updatedAt: Generated<Date>
@@ -305,7 +206,7 @@ export type LinkRow = {
 declare const $verificationDbId: unique symbol
 type VerificationDbId = string & { [$verificationDbId]: true }
 
-export type VerificationRow = {
+type VerificationRow = {
   id: GeneratedAlways<VerificationDbId>
   createdAt: Generated<Date>
   updatedAt: Generated<Date>
@@ -322,7 +223,7 @@ export type VerificationRow = {
 declare const $userDataDbId: unique symbol
 type UserDataDbId = string & { [$userDataDbId]: true }
 
-export type UserDataRow = {
+type UserDataRow = {
   id: GeneratedAlways<UserDataDbId>
   createdAt: Generated<Date>
   updatedAt: Generated<Date>
@@ -334,34 +235,14 @@ export type UserDataRow = {
   value: string
 }
 
-// STORAGE ALLOCATIONS -----------------------------------------------------------------------------
-declare const $storageAllocationDbId: unique symbol
-type StorageAllocationDbId = string & { [$storageAllocationDbId]: true }
-
-type StorageAllocationRow = {
-  id: GeneratedAlways<StorageAllocationDbId>
-  createdAt: Generated<Date>
-  updatedAt: Generated<Date>
-  rentedAt: Date
-  expiresAt: Date
-  chainEventId: ChainEventDbId
-  fid: Fid
-  units: number
-  payer: Uint8Array
-}
-
 // ALL TABLES -------------------------------------------------------------------------------------
 export interface Tables {
-  usernameProofs: UsernameProofRow
   fnames: FnameRow
   messages: MessageRow
-  chainEvents: ChainEventRow
   fids: FidRow
-  signers: SignerRow
   casts: CastRow
   reactions: ReactionRow
   links: LinkRow
   verifications: VerificationRow
   userData: UserDataRow
-  storageAllocations: StorageAllocationRow
 }
