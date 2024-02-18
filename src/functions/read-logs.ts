@@ -76,7 +76,7 @@ export async function upsertRegistrations(
   const allRegistrations = await getIdRegistryEvents({
     provider,
     contract,
-    fromBlock: currentBlock - 200_000, // last ~2 weeks
+    fromBlock: currentBlock - 100_000, // last ~2 days
   })
 
   // Insert to Supabase to make sure we have didn't miss data while the indexer was down
