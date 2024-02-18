@@ -1,5 +1,5 @@
 import { Kysely, PostgresDialect } from 'kysely'
-import Pool from 'pg-pool'
+import { Pool } from 'pg'
 
 import { Json } from './types/db'
 
