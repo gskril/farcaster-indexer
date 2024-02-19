@@ -1,7 +1,7 @@
 import { fromFarcasterTime } from '@farcaster/hub-nodejs'
 
-import { formatHash } from './lib.js'
-import { MergeMessageHubEvent } from './types'
+import { formatHash } from '../lib/index.js'
+import { MergeMessageHubEvent } from '../types'
 
 export function formatCasts(events: MergeMessageHubEvent[]) {
   return events.map((cast) => {

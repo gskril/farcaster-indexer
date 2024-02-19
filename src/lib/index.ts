@@ -1,5 +1,11 @@
-import { getSSLHubRpcClient } from '@farcaster/hub-nodejs'
-import * as protobufs from '@farcaster/protobufs'
+import {
+  HubEvent,
+  Message,
+  getSSLHubRpcClient,
+  isMergeMessageHubEvent,
+  isPruneMessageHubEvent,
+  isRevokeMessageHubEvent,
+} from '@farcaster/hub-nodejs'
 
 import {
   deleteMessagesFromSigner,
@@ -20,8 +26,8 @@ import {
   updateReaction,
   updateSigner,
   updateVerification,
-} from './api/index.js'
-import { FormattedHubEvent, MergeMessageHubEvent } from './types'
+} from '../api/index.js'
+import { FormattedHubEvent, MergeMessageHubEvent } from '../types'
 
 const HUB_RPC = process.env.HUB_RPC
 
@@ -29,7 +35,6 @@ if (!HUB_RPC) {
   throw new Error('HUB_RPC env variable is not set')
 }
 
-let latestEventId: number
 export const client = getSSLHubRpcClient(HUB_RPC)
 
 /**
@@ -37,28 +42,29 @@ export const client = getSSLHubRpcClient(HUB_RPC)
  * @param e HubEvent
  * @returns Hub event in JSON format
  */
-export function protobufToJson(e: protobufs.HubEvent) {
+export function protobufToJson(e: HubEvent) {
   let event: FormattedHubEvent = {
     id: e.id,
     type: e.type,
     message: {},
   }
 
-  if (protobufs.isMergeMessageHubEvent(e)) {
-    event.message = protobufs.Message.toJSON(e.mergeMessageBody.message!)
-  } else if (protobufs.isPruneMessageHubEvent(e)) {
-    event.message = protobufs.Message.toJSON(e.pruneMessageBody.message!)
-  } else if (protobufs.isRevokeMessageHubEvent(e)) {
-    event.message = protobufs.Message.toJSON(e.revokeMessageBody.message!)
-  } else if (protobufs.isMergeIdRegistryEventHubEvent(e)) {
-    event.message = protobufs.IdRegistryEvent.toJSON(
-      e.mergeIdRegistryEventBody.idRegistryEvent!
-    )
-  } else if (protobufs.isMergeNameRegistryEventHubEvent(e)) {
-    event.message = protobufs.NameRegistryEvent.toJSON(
-      e.mergeNameRegistryEventBody.nameRegistryEvent!
-    )
+  if (isMergeMessageHubEvent(e)) {
+    event.message = Message.toJSON(e.mergeMessageBody.message!)
+  } else if (isPruneMessageHubEvent(e)) {
+    event.message = Message.toJSON(e.pruneMessageBody.message!)
+  } else if (isRevokeMessageHubEvent(e)) {
+    event.message = Message.toJSON(e.revokeMessageBody.message!)
   }
+  // else if (isMergeIdRegistryEventHubEvent(e)) {
+  //   event.message = IdRegistryEvent.toJSON(
+  //     e.mergeIdRegistryEventBody.idRegistryEvent!
+  //   )
+  // } else if (isMergeNameRegistryEventHubEvent(e)) {
+  //   event.message = NameRegistryEvent.toJSON(
+  //     e.mergeNameRegistryEventBody.nameRegistryEvent!
+  //   )
+  // }
 
   return event
 }
@@ -149,67 +155,3 @@ export function formatHash(hash: string | Uint8Array) {
     return '0x' + Buffer.from(hash).toString('hex')
   }
 }
-
-/**
- * Listen for new events from a Hub
- */
-export async function watch() {
-  // Check the latest hub event we processed, if any
-  const latestEventIdFromDb = await getLatestEvent()
-
-  const result = await client.subscribe({
-    eventTypes: [0, 1, 2, 3, 4, 5],
-    fromId: latestEventIdFromDb,
-  })
-
-  if (result.isErr()) {
-    console.error('Error starting stream', result.error)
-    return
-  }
-
-  result.match(
-    (stream) => {
-      console.log(
-        `Subscribed to stream ${
-          latestEventIdFromDb ? `from event ${latestEventIdFromDb}` : ''
-        }`
-      )
-      stream.on('data', async (e: protobufs.HubEvent) => {
-        // Keep track of latest event so we can pick up where we left off if the stream is interrupted
-        latestEventId = e.id
-
-        const event = protobufToJson(e)
-        await handleEvent(event)
-      })
-    },
-    (e) => {
-      console.error('Error streaming data.', e)
-    }
-  )
-}
-
-// Handle graceful shutdown and log the latest event ID
-async function handleShutdownSignal(signalName: string) {
-  console.log(`${signalName} received`)
-
-  if (latestEventId) {
-    console.log('Latest event ID:', latestEventId)
-    await insertEvent(latestEventId)
-  } else {
-    console.log('No hub event in cache')
-  }
-
-  process.exit(0)
-}
-
-process.on('SIGINT', async () => {
-  await handleShutdownSignal('SIGINT')
-})
-
-process.on('SIGTERM', async () => {
-  await handleShutdownSignal('SIGTERM')
-})
-
-process.on('SIGQUIT', async () => {
-  await handleShutdownSignal('SIGQUIT')
-})

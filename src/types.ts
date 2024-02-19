@@ -1,4 +1,9 @@
-import * as protobufs from '@farcaster/protobufs'
+import {
+  HashScheme,
+  HubEventType,
+  ReactionType,
+  SignatureScheme,
+} from '@farcaster/hub-nodejs'
 
 type FarcasterNetwork = 'NONE' | 'MAINNET' | 'TESTNET' | 'DEVNET'
 
@@ -34,7 +39,7 @@ export type MergeMessageHubEvent = {
       targetHash: string
     }
     reactionBody?: {
-      type: protobufs.ReactionType
+      type: ReactionType
       targetCastId: {
         fid: number
         hash: string
@@ -61,9 +66,9 @@ export type MergeMessageHubEvent = {
     }
   }
   hash: string
-  hashScheme: protobufs.HashScheme
+  hashScheme: HashScheme
   signature: string
-  signatureScheme: protobufs.SignatureScheme
+  signatureScheme: SignatureScheme
   signer: string
 }
 
@@ -72,6 +77,6 @@ export type RevokeMessageHubEvent = MergeMessageHubEvent
 
 export type FormattedHubEvent = {
   id: number
-  type: protobufs.HubEventType
+  type: HubEventType
   message: unknown
 }

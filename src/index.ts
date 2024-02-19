@@ -1,5 +1,5 @@
 import 'dotenv/config'
 
-import { watch } from './lib.js'
+import { subscribe } from './lib/subscriber.js'
 
-await watch()
+await subscribe()
