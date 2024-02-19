@@ -1,6 +1,15 @@
 import { Message } from '@farcaster/hub-nodejs'
 import Bottleneck from 'bottleneck'
 
+import { deleteCasts, insertCasts } from '../api/cast.js'
+import { deleteLinks, insertLinks } from '../api/link.js'
+import { deleteReactions, insertReactions } from '../api/reaction.js'
+import { insertUserDatas } from '../api/user-data.js'
+import {
+  deleteVerifications,
+  insertVerifications,
+} from '../api/verification.js'
+
 export function createBatcher(
   callback: (msgs: Message[]) => Promise<void>,
   options?: Bottleneck.BatcherOptions
@@ -8,7 +17,7 @@ export function createBatcher(
   const batcher = new Bottleneck.Batcher(
     options || {
       maxTime: 10_000,
-      maxSize: 100,
+      maxSize: 500,
     }
   )
 
@@ -16,3 +25,13 @@ export function createBatcher(
 
   return batcher
 }
+
+export const castAddBatcher = createBatcher(insertCasts)
+export const castRemoveBatcher = createBatcher(deleteCasts)
+export const verificationAddBatcher = createBatcher(insertVerifications)
+export const verificationRemoveBatcher = createBatcher(deleteVerifications)
+export const userDataAddBatcher = createBatcher(insertUserDatas)
+export const reactionAddBatcher = createBatcher(insertReactions)
+export const reactionRemoveBatcher = createBatcher(deleteReactions)
+export const linkAddBatcher = createBatcher(insertLinks)
+export const linkRemoveBatcher = createBatcher(deleteLinks)

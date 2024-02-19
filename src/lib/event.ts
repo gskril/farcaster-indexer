@@ -1,24 +1,16 @@
 import { HubEvent, HubEventType, MessageType } from '@farcaster/hub-nodejs'
 
-import { deleteCasts, insertCasts } from '../api/cast.js'
-import { deleteLinks, insertLinks } from '../api/link.js'
-import { deleteReactions, insertReactions } from '../api/reaction.js'
-import { insertUserDatas } from '../api/user-data.js'
 import {
-  deleteVerifications,
-  insertVerifications,
-} from '../api/verification.js'
-import { createBatcher } from './batch.js'
-
-const castAddBatcher = createBatcher(insertCasts)
-const castRemoveBatcher = createBatcher(deleteCasts)
-const verificationAddBatcher = createBatcher(insertVerifications)
-const verificationRemoveBatcher = createBatcher(deleteVerifications)
-const userDataAddBatcher = createBatcher(insertUserDatas)
-const reactionAddBatcher = createBatcher(insertReactions)
-const reactionRemoveBatcher = createBatcher(deleteReactions)
-const linkAddBatcher = createBatcher(insertLinks)
-const linkRemoveBatcher = createBatcher(deleteLinks)
+  castAddBatcher,
+  castRemoveBatcher,
+  linkAddBatcher,
+  linkRemoveBatcher,
+  reactionAddBatcher,
+  reactionRemoveBatcher,
+  userDataAddBatcher,
+  verificationAddBatcher,
+  verificationRemoveBatcher,
+} from './batch'
 
 /**
  * Update the database based on the event type
