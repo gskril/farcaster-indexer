@@ -1,4 +1,4 @@
-import { HubEvent } from '@farcaster/hub-nodejs'
+import { HubEvent, HubEventType } from '@farcaster/hub-nodejs'
 
 import { getLatestEvent, insertEvent } from '../api/event.js'
 import { client } from './client.js'
@@ -14,14 +14,13 @@ export async function subscribe() {
   const latestEventIdFromDb = await getLatestEvent()
 
   const result = await client.subscribe({
-    /* 
-      MERGE_MESSAGE = 1
-      PRUNE_MESSAGE = 2
-      REVOKE_MESSAGE = 3
-      MERGE_USERNAME_PROOF = 6
-      MERGE_ON_CHAIN_EVENT = 9
-    */
-    eventTypes: [1, 2, 3, 6, 9],
+    eventTypes: [
+      HubEventType.MERGE_MESSAGE,
+      HubEventType.PRUNE_MESSAGE,
+      HubEventType.REVOKE_MESSAGE,
+      // HubEventType.MERGE_USERNAME_PROOF,
+      // HubEventType.MERGE_ON_CHAIN_EVENT,
+    ],
     fromId: latestEventIdFromDb,
   })
 

@@ -75,6 +75,25 @@ export function formatVerifications(msgs: Message[]) {
   })
 }
 
+export function formatLinks(msgs: Message[]) {
+  return msgs.map((msg) => {
+    const data = msg.data!
+    const link = data.linkBody!
+    const timestamp = fromFarcasterTime(data.timestamp)._unsafeUnwrap()
+
+    return {
+      timestamp: new Date(timestamp),
+      fid: data.fid,
+      targetFid: link.targetFid,
+      displayTimestamp: link.displayTimestamp
+        ? new Date(fromFarcasterTime(link.displayTimestamp)._unsafeUnwrap())
+        : null,
+      type: link.type,
+      hash: msg.hash,
+    } satisfies Insertable<Tables['links']>
+  })
+}
+
 // export function formatSigners(events: MergeMessageHubEvent[]) {
 //   return events.map((signer) => {
 //     const timestamp = fromFarcasterTime(signer.data.timestamp)._unsafeUnwrap()

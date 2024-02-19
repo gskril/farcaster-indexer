@@ -1,7 +1,8 @@
 import { HubEvent, HubEventType, MessageType } from '@farcaster/hub-nodejs'
 
 import { deleteCast, insertCasts } from '../api/cast.js'
-import { insertReactions } from '../api/reaction.js'
+import { deleteLink, insertLinks } from '../api/link.js'
+import { deleteReaction, insertReactions } from '../api/reaction.js'
 import { insertUserDatas } from '../api/user-data.js'
 import { deleteVerification, insertVerifications } from '../api/verification.js'
 
@@ -30,8 +31,11 @@ export async function handleEvent(event: HubEvent) {
     } else if (msgType === MessageType.REACTION_ADD) {
       await insertReactions([msg])
     } else if (msgType === MessageType.REACTION_REMOVE) {
-      // TODO: figure out how to track reaction deletes. There is nothing like msg.data.reactionRemoveBody
-      // await deleteReaction(msg)
+      await deleteReaction(msg)
+    } else if (msgType === MessageType.LINK_ADD) {
+      await insertLinks([msg])
+    } else if (msgType === MessageType.LINK_REMOVE) {
+      await deleteLink(msg)
     }
   } else if (event.type === HubEventType.PRUNE_MESSAGE) {
     // TODO: Mark the relevant row as `pruned` in the db but don't delete it
