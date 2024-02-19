@@ -37,8 +37,10 @@ export async function deleteCast(msg: Message) {
           fromFarcasterTime(msg.data!.timestamp)._unsafeUnwrap()
         ),
       })
-      .where('hash', '=', msg.hash)
+      .where('hash', '=', msg.data?.castRemoveBody?.targetHash!)
       .execute()
+
+    console.log(`CAST DELETED`, msg.data?.fid)
   } catch (error) {
     console.error('ERROR DELETING CAST', error)
   }
