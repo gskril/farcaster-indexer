@@ -1,7 +1,8 @@
-import { HubEvent, Message } from '@farcaster/hub-nodejs'
+import { HubEvent } from '@farcaster/hub-nodejs'
 
-import { client } from '.'
-import { getLatestEvent, insertEvent } from '../api'
+import { getLatestEvent, insertEvent } from '../api/event.js'
+import { client } from './client.js'
+import { handleEvent } from './event.js'
 
 let latestEventId: number | undefined
 
@@ -39,12 +40,7 @@ export async function subscribe() {
       stream.on('data', async (e: HubEvent) => {
         // Keep track of latest event so we can pick up where we left off if the stream is interrupted
         latestEventId = e.id
-
-        const json = Message.toJSON(e.mergeMessageBody?.message!)
-        console.log(e, json)
-
-        // const event = protobufToJson(e)
-        // await handleEvent(event)
+        await handleEvent(e)
       })
     },
     (e) => {
@@ -55,6 +51,7 @@ export async function subscribe() {
 
 // Handle graceful shutdown and log the latest event ID
 async function handleShutdownSignal(signalName: string) {
+  client.close()
   console.log(`${signalName} received`)
 
   if (latestEventId) {

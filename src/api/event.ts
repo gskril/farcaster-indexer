@@ -1,4 +1,4 @@
-import { db } from '../db.js'
+import { db } from '../db/kysely.js'
 
 /**
  * Insert an event ID in the database
@@ -7,10 +7,11 @@ import { db } from '../db.js'
 export async function insertEvent(eventId: number) {
   try {
     await db
-      .insertInto('event')
+      .insertInto('events')
       .values({ id: eventId })
       .onConflict((oc) => oc.column('id').doNothing())
-      .executeTakeFirstOrThrow()
+      .execute()
+
     console.log(`EVENT INSERTED -- ${eventId}`)
   } catch (error) {
     console.error('ERROR INSERTING EVENT', error)
@@ -24,7 +25,7 @@ export async function insertEvent(eventId: number) {
 export async function getLatestEvent(): Promise<number | undefined> {
   try {
     const event = await db
-      .selectFrom('event')
+      .selectFrom('events')
       .selectAll()
       .orderBy('id', 'desc')
       .limit(1)

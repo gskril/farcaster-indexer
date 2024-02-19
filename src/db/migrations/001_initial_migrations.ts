@@ -39,7 +39,7 @@ export const up = async (db: Kysely<any>) => {
 
   // ULID generation function for creating unique IDs without centralized coordination.
   // Avoids limitations of a monotonic (auto-incrementing) ID.
-  await sql`CREATE FUNCTION generate_ulid() RETURNS uuid
+  await sql`CREATE OR REPLACE FUNCTION generate_ulid() RETURNS uuid
     LANGUAGE sql STRICT PARALLEL SAFE
     RETURN ((lpad(to_hex((floor((EXTRACT(epoch FROM clock_timestamp()) * (1000)::numeric)))::bigint), 12, '0'::text) || encode(public.gen_random_bytes(10), 'hex'::text)))::uuid;
   `.execute(db)
@@ -212,7 +212,7 @@ export const up = async (db: Kysely<any>) => {
     .addColumn('fid', 'bigint', (col) => col.notNull())
     .addColumn('targetCastFid', 'bigint')
     .addColumn('type', 'int2', (col) => col.notNull())
-    .addColumn('hash', 'bytea', (col) => col.notNull())
+    .addColumn('hash', 'bytea', (col) => col.notNull().unique())
     .addColumn('targetCastHash', 'bytea')
     .addColumn('targetUrl', 'text')
     .execute()
@@ -309,13 +309,12 @@ export const up = async (db: Kysely<any>) => {
     .addColumn('hash', 'bytea', (col) => col.notNull().unique())
     .addColumn('value', 'text', (col) => col.notNull())
     .addUniqueConstraint('user_data_fid_type_unique', ['fid', 'type'])
-    .addForeignKeyConstraint(
-      'user_data_fid_foreign',
-      ['fid'],
-      'fids',
-      ['fid'],
-      (cb) => cb.onDelete('cascade')
-    )
+    .execute()
+
+  // Events
+  await db.schema
+    .createTable('events')
+    .addColumn('id', 'int8', (col) => col.primaryKey())
     .execute()
 }
 

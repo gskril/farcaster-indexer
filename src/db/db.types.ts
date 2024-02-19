@@ -219,7 +219,7 @@ type VerificationRow = {
   signature: Uint8Array
 }
 
-// USER DATA --------------------------------------------------------------------------------------
+// USER DATA ---------------------------------------------------------------------------------------
 declare const $userDataDbId: unique symbol
 type UserDataDbId = string & { [$userDataDbId]: true }
 
@@ -235,7 +235,12 @@ type UserDataRow = {
   value: string
 }
 
-// ALL TABLES -------------------------------------------------------------------------------------
+// EVENTS ------------------------------------------------------------------------------------------
+type EventRow = {
+  id: number
+}
+
+// ALL TABLES --------------------------------------------------------------------------------------
 export interface Tables {
   fnames: FnameRow
   messages: MessageRow
@@ -245,4 +250,5 @@ export interface Tables {
   links: LinkRow
   verifications: VerificationRow
   userData: UserDataRow
+  events: EventRow
 }
