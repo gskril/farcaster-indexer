@@ -28,19 +28,25 @@ export async function insertCasts(msgs: Message[]) {
  * @param hash Hash of the cast
  * @param change Object with the fields to update
  */
-export async function deleteCast(msg: Message) {
+export async function deleteCasts(msgs: Message[]) {
   try {
-    await db
-      .updateTable('casts')
-      .set({
-        deletedAt: new Date(
-          fromFarcasterTime(msg.data!.timestamp)._unsafeUnwrap()
-        ),
-      })
-      .where('hash', '=', msg.data?.castRemoveBody?.targetHash!)
-      .execute()
+    await db.transaction().execute(async (trx) => {
+      for (const msg of msgs) {
+        const data = msg.data!
 
-    console.log(`CAST DELETED`, msg.data?.fid)
+        await trx
+          .updateTable('casts')
+          .set({
+            deletedAt: new Date(
+              fromFarcasterTime(data.timestamp)._unsafeUnwrap()
+            ),
+          })
+          .where('hash', '=', data.castRemoveBody?.targetHash!)
+          .execute()
+      }
+    })
+
+    console.log(`CASTS DELETED`)
   } catch (error) {
     console.error('ERROR DELETING CAST', error)
   }

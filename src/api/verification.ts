@@ -27,21 +27,27 @@ export async function insertVerifications(msgs: Message[]) {
  * Delete a verification from the database
  * @param msg Hub event in JSON format
  */
-export async function deleteVerification(msg: Message) {
-  const data = msg.data!
-  const address = data.verificationRemoveBody!.address
-
+export async function deleteVerifications(msgs: Message[]) {
   try {
-    await db
-      .updateTable('verifications')
-      .set({
-        deletedAt: new Date(fromFarcasterTime(data.timestamp)._unsafeUnwrap()),
-      })
-      .where('signerAddress', '=', address)
-      .where('fid', '=', data.fid)
-      .execute()
+    await db.transaction().execute(async (trx) => {
+      for (const msg of msgs) {
+        const data = msg.data!
+        const address = data.verificationRemoveBody!.address
 
-    console.log('VERIFICATION DELETED', data.fid)
+        await trx
+          .updateTable('verifications')
+          .set({
+            deletedAt: new Date(
+              fromFarcasterTime(data.timestamp)._unsafeUnwrap()
+            ),
+          })
+          .where('signerAddress', '=', address)
+          .where('fid', '=', data.fid)
+          .execute()
+      }
+    })
+
+    console.log('VERIFICATIONS DELETED')
   } catch (error) {
     console.error('ERROR DELETING VERIFICATION', error)
   }

@@ -1,23 +1,24 @@
 import { HubEvent, HubEventType, MessageType } from '@farcaster/hub-nodejs'
 
-import { deleteCast, insertCasts } from '../api/cast.js'
-import { deleteLink, insertLinks } from '../api/link.js'
-import { deleteReaction, insertReactions } from '../api/reaction.js'
+import { deleteCasts, insertCasts } from '../api/cast.js'
+import { deleteLinks, insertLinks } from '../api/link.js'
+import { deleteReactions, insertReactions } from '../api/reaction.js'
 import { insertUserDatas } from '../api/user-data.js'
-import { deleteVerification, insertVerifications } from '../api/verification.js'
+import {
+  deleteVerifications,
+  insertVerifications,
+} from '../api/verification.js'
 import { createBatcher } from './batch.js'
 
-// TODO: use batcher for all event types to reduce the likelihood of mis-ordering events
-
 const castAddBatcher = createBatcher(insertCasts)
-// const castRemoveBatcher = createBatcher(deleteCast)
+const castRemoveBatcher = createBatcher(deleteCasts)
 const verificationAddBatcher = createBatcher(insertVerifications)
-// const verificationRemoveBatcher = createBatcher(deleteVerification)
+const verificationRemoveBatcher = createBatcher(deleteVerifications)
 const userDataAddBatcher = createBatcher(insertUserDatas)
 const reactionAddBatcher = createBatcher(insertReactions)
-// const reactionRemoveBatcher = createBatcher(deleteReaction)
+const reactionRemoveBatcher = createBatcher(deleteReactions)
 const linkAddBatcher = createBatcher(insertLinks)
-// const linkRemoveBatcher = createBatcher(deleteLink)
+const linkRemoveBatcher = createBatcher(deleteLinks)
 
 /**
  * Update the database based on the event type
@@ -34,21 +35,21 @@ export async function handleEvent(event: HubEvent) {
     if (msgType === MessageType.CAST_ADD) {
       castAddBatcher.add(msg)
     } else if (msgType === MessageType.CAST_REMOVE) {
-      await deleteCast(msg)
+      castRemoveBatcher.add(msg)
     } else if (msgType === MessageType.VERIFICATION_ADD_ETH_ADDRESS) {
       verificationAddBatcher.add(msg)
     } else if (msgType === MessageType.VERIFICATION_REMOVE) {
-      await deleteVerification(msg)
+      verificationRemoveBatcher.add(msg)
     } else if (msgType === MessageType.USER_DATA_ADD) {
       userDataAddBatcher.add(msg)
     } else if (msgType === MessageType.REACTION_ADD) {
       reactionAddBatcher.add(msg)
     } else if (msgType === MessageType.REACTION_REMOVE) {
-      await deleteReaction(msg)
+      reactionRemoveBatcher.add(msg)
     } else if (msgType === MessageType.LINK_ADD) {
       linkAddBatcher.add(msg)
     } else if (msgType === MessageType.LINK_REMOVE) {
-      await deleteLink(msg)
+      linkRemoveBatcher.add(msg)
     }
   } else if (event.type === HubEventType.PRUNE_MESSAGE) {
     // TODO: Mark the relevant row as `pruned` in the db but don't delete it

@@ -23,42 +23,42 @@ export async function insertReactions(msgs: Message[]) {
   }
 }
 
-export async function deleteReaction(msg: Message) {
-  const data = msg.data!
-  const reaction = data.reactionBody!
-
+export async function deleteReactions(msgs: Message[]) {
   try {
-    if (reaction.targetCastId) {
-      await db
-        .updateTable('reactions')
-        .set({
-          deletedAt: new Date(
-            fromFarcasterTime(data.timestamp)._unsafeUnwrap()
-          ),
-        })
-        .where('fid', '=', data.fid)
-        .where('type', '=', reaction.type)
-        .where('targetCastHash', '=', reaction.targetCastId.hash)
-        .execute()
-    } else if (reaction.targetUrl) {
-      await db
-        .updateTable('reactions')
-        .set({
-          deletedAt: new Date(
-            fromFarcasterTime(data.timestamp)._unsafeUnwrap()
-          ),
-        })
-        .where('fid', '=', data.fid)
-        .where('type', '=', reaction.type)
-        .where('targetUrl', '=', reaction.targetUrl)
-        .execute()
-    }
+    await db.transaction().execute(async (trx) => {
+      for (const msg of msgs) {
+        const data = msg.data!
+        const reaction = data.reactionBody!
 
-    console.log(
-      `REACTION DELETED`,
-      data.fid,
-      reaction.targetCastId?.fid || reaction.targetUrl
-    )
+        if (reaction.targetCastId) {
+          await trx
+            .updateTable('reactions')
+            .set({
+              deletedAt: new Date(
+                fromFarcasterTime(data.timestamp)._unsafeUnwrap()
+              ),
+            })
+            .where('fid', '=', data.fid)
+            .where('type', '=', reaction.type)
+            .where('targetCastHash', '=', reaction.targetCastId.hash)
+            .execute()
+        } else if (reaction.targetUrl) {
+          await trx
+            .updateTable('reactions')
+            .set({
+              deletedAt: new Date(
+                fromFarcasterTime(data.timestamp)._unsafeUnwrap()
+              ),
+            })
+            .where('fid', '=', data.fid)
+            .where('type', '=', reaction.type)
+            .where('targetUrl', '=', reaction.targetUrl)
+            .execute()
+        }
+      }
+    })
+
+    console.log(`REACTIONS DELETED`)
   } catch (error) {
     console.error('ERROR DELETING REACTION', error)
   }

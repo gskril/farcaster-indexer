@@ -13,26 +13,32 @@ export async function insertLinks(msgs: Message[]) {
       .onConflict((oc) => oc.column('hash').doNothing())
       .execute()
 
-    console.log(`LINK INSERTED`)
+    console.log(`LINKS INSERTED`)
   } catch (error) {
     console.error('ERROR INSERTING LINK', error)
   }
 }
 
-export async function deleteLink(msg: Message) {
-  const data = msg.data!
-
+export async function deleteLinks(msgs: Message[]) {
   try {
-    await db
-      .updateTable('links')
-      .set({
-        deletedAt: new Date(fromFarcasterTime(data.timestamp)._unsafeUnwrap()),
-      })
-      .where('fid', '=', data.fid)
-      .where('targetFid', '=', data.linkBody!.targetFid!)
-      .execute()
+    await db.transaction().execute(async (trx) => {
+      for (const msg of msgs) {
+        const data = msg.data!
 
-    console.log(`LINK DELETED`, data.fid, data.linkBody!.targetFid)
+        await trx
+          .updateTable('links')
+          .set({
+            deletedAt: new Date(
+              fromFarcasterTime(data.timestamp)._unsafeUnwrap()
+            ),
+          })
+          .where('fid', '=', data.fid)
+          .where('targetFid', '=', data.linkBody!.targetFid!)
+          .execute()
+      }
+    })
+
+    console.log(`LINKS DELETED`)
   } catch (error) {
     console.error('ERROR DELETING LINK', error)
   }
