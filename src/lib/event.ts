@@ -5,6 +5,19 @@ import { deleteLink, insertLinks } from '../api/link.js'
 import { deleteReaction, insertReactions } from '../api/reaction.js'
 import { insertUserDatas } from '../api/user-data.js'
 import { deleteVerification, insertVerifications } from '../api/verification.js'
+import { createBatcher } from './batch.js'
+
+// TODO: use batcher for all event types to reduce the likelihood of mis-ordering events
+
+const castAddBatcher = createBatcher(insertCasts)
+// const castRemoveBatcher = createBatcher(deleteCast)
+const verificationAddBatcher = createBatcher(insertVerifications)
+// const verificationRemoveBatcher = createBatcher(deleteVerification)
+const userDataAddBatcher = createBatcher(insertUserDatas)
+const reactionAddBatcher = createBatcher(insertReactions)
+// const reactionRemoveBatcher = createBatcher(deleteReaction)
+const linkAddBatcher = createBatcher(insertLinks)
+// const linkRemoveBatcher = createBatcher(deleteLink)
 
 /**
  * Update the database based on the event type
@@ -19,21 +32,21 @@ export async function handleEvent(event: HubEvent) {
     const msgType = event.mergeMessageBody!.message!.data!.type
 
     if (msgType === MessageType.CAST_ADD) {
-      await insertCasts([msg])
+      castAddBatcher.add(msg)
     } else if (msgType === MessageType.CAST_REMOVE) {
       await deleteCast(msg)
     } else if (msgType === MessageType.VERIFICATION_ADD_ETH_ADDRESS) {
-      await insertVerifications([msg])
+      verificationAddBatcher.add(msg)
     } else if (msgType === MessageType.VERIFICATION_REMOVE) {
       await deleteVerification(msg)
     } else if (msgType === MessageType.USER_DATA_ADD) {
-      await insertUserDatas([msg])
+      userDataAddBatcher.add(msg)
     } else if (msgType === MessageType.REACTION_ADD) {
-      await insertReactions([msg])
+      reactionAddBatcher.add(msg)
     } else if (msgType === MessageType.REACTION_REMOVE) {
       await deleteReaction(msg)
     } else if (msgType === MessageType.LINK_ADD) {
-      await insertLinks([msg])
+      linkAddBatcher.add(msg)
     } else if (msgType === MessageType.LINK_REMOVE) {
       await deleteLink(msg)
     }
@@ -47,18 +60,5 @@ export async function handleEvent(event: HubEvent) {
     // TODO: handle onchain events
   } else {
     console.log('UNHANDLED_HUB_EVENT', event.id)
-  }
-}
-
-/**
- * Convert a Base64 or Uint8Array hash to a hex string
- * @param hash Base64 or Uint8Array hash
- * @returns Hex string
- */
-export function formatHash(hash: string | Uint8Array) {
-  if (typeof hash === 'string') {
-    return '0x' + Buffer.from(hash, 'base64').toString('hex')
-  } else {
-    return '0x' + Buffer.from(hash).toString('hex')
   }
 }

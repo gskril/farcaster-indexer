@@ -94,18 +94,6 @@ export function formatLinks(msgs: Message[]) {
   })
 }
 
-// export function formatSigners(events: MergeMessageHubEvent[]) {
-//   return events.map((signer) => {
-//     const timestamp = fromFarcasterTime(signer.data.timestamp)._unsafeUnwrap()
-//     return {
-//       fid: signer.data.fid,
-//       signer: formatHash(signer.data.signerAddBody!.signer),
-//       name: signer.data.signerAddBody!.name || null,
-//       created_at: new Date(timestamp),
-//     }
-//   })
-// }
-
 export function breakIntoChunks(array: any[], size: number) {
   const chunks = []
   for (let i = 0; i < array.length; i += size) {
