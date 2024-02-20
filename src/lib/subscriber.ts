@@ -53,6 +53,9 @@ async function handleShutdownSignal(signalName: string) {
   client.close()
   console.log(`${signalName} received`)
 
+  // TODO: figure out how to handle this in a more robust way.
+  // As-is, the latest event ID will be logged but we don't know if
+  // it was successfully processed due to the Bottleneck.Batcher logic
   if (latestEventId) {
     console.log('Latest event ID:', latestEventId)
     await insertEvent(latestEventId)
