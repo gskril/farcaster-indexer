@@ -10,6 +10,7 @@ import {
   verificationAddBatcher,
 } from './lib/batch.js'
 import { client } from './lib/client.js'
+import { saveCurrentEventId } from './lib/event.js'
 import { log } from './lib/logger.js'
 import { idRegistry, opClient } from './lib/op.js'
 
@@ -19,6 +20,9 @@ const progressBar = new SingleBar({}, Presets.shades_classic)
  * Backfill the database with data from a hub. This may take a while.
  */
 export async function backfill({ maxFid }: { maxFid: number | undefined }) {
+  // Save the current event ID so we can start from there after backfilling
+  await saveCurrentEventId()
+
   log.info('Backfilling...')
   const startTime = new Date().getTime()
   const allFids = await getAllFids()

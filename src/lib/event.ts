@@ -1,5 +1,6 @@
 import { HubEvent, HubEventType, MessageType } from '@farcaster/hub-nodejs'
 
+import { insertEvent } from '../api/event.js'
 import {
   castAddBatcher,
   castRemoveBatcher,
@@ -11,6 +12,7 @@ import {
   verificationAddBatcher,
   verificationRemoveBatcher,
 } from './batch.js'
+import { client } from './client.js'
 import { log } from './logger.js'
 
 /**
@@ -55,4 +57,34 @@ export async function handleEvent(event: HubEvent) {
   } else {
     log.debug('UNHANDLED_HUB_EVENT', event.id)
   }
+}
+
+export async function saveCurrentEventId() {
+  let triggered = false
+
+  const result = await client.subscribe({
+    eventTypes: [0, 1, 2, 3, 6, 9],
+  })
+
+  if (result.isErr()) {
+    log.error(result.error, 'Error starting stream')
+    return
+  }
+
+  result.match(
+    (stream) => {
+      stream.on('data', async (e: HubEvent) => {
+        if (triggered) return
+
+        triggered = true
+
+        // Save the latest event ID to the database so we can resume from here
+        await insertEvent(e.id)
+        stream.cancel()
+      })
+    },
+    (e) => {
+      log.error(e, 'Error streaming data.')
+    }
+  )
 }
