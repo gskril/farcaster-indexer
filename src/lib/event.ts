@@ -11,6 +11,7 @@ import {
   verificationAddBatcher,
   verificationRemoveBatcher,
 } from './batch.js'
+import { log } from './logger.js'
 
 /**
  * Update the database based on the event type
@@ -52,6 +53,6 @@ export async function handleEvent(event: HubEvent) {
   } else if (event.type === HubEventType.MERGE_ON_CHAIN_EVENT) {
     // TODO: handle onchain events
   } else {
-    console.log('UNHANDLED_HUB_EVENT', event.id)
+    log.debug('UNHANDLED_HUB_EVENT', event.id)
   }
 }

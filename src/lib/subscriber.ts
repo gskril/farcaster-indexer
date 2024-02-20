@@ -3,6 +3,7 @@ import { HubEvent, HubEventType } from '@farcaster/hub-nodejs'
 import { insertEvent } from '../api/event.js'
 import { client } from './client.js'
 import { handleEvent } from './event.js'
+import { log } from './logger.js'
 
 let latestEventId: number | undefined
 
@@ -22,15 +23,13 @@ export async function subscribe(fromId: number | undefined) {
   })
 
   if (result.isErr()) {
-    console.error('Error starting stream', result.error)
+    log.error(result.error, 'Error starting stream')
     return
   }
 
   result.match(
     (stream) => {
-      console.log(
-        `Subscribed to stream ${fromId ? `from event ${fromId}` : ''}`
-      )
+      log.info(`Subscribed to stream ${fromId ? `from event ${fromId}` : ''}`)
       stream.on('data', async (e: HubEvent) => {
         // Keep track of latest event so we can pick up where we left off if the stream is interrupted
         latestEventId = e.id
@@ -38,7 +37,7 @@ export async function subscribe(fromId: number | undefined) {
       })
     },
     (e) => {
-      console.error('Error streaming data.', e)
+      log.error(e, 'Error streaming data.')
     }
   )
 }
@@ -46,16 +45,16 @@ export async function subscribe(fromId: number | undefined) {
 // Handle graceful shutdown and log the latest event ID
 async function handleShutdownSignal(signalName: string) {
   client.close()
-  console.log(`${signalName} received`)
+  log.info(`${signalName} received`)
 
   // TODO: figure out how to handle this in a more robust way.
   // As-is, the latest event ID will be logged but we don't know if
   // it was successfully processed due to the Bottleneck.Batcher logic
   if (latestEventId) {
-    console.log('Latest event ID:', latestEventId)
+    log.info(`Latest event ID: ${latestEventId}`)
     await insertEvent(latestEventId)
   } else {
-    console.log('No hub event in cache')
+    log.warn('No hub event in cache')
   }
 
   process.exit(0)

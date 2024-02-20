@@ -1,4 +1,5 @@
 import { db } from '../db/kysely.js'
+import { log } from '../lib/logger.js'
 
 /**
  * Insert an event ID in the database
@@ -12,9 +13,9 @@ export async function insertEvent(eventId: number) {
       .onConflict((oc) => oc.column('id').doNothing())
       .execute()
 
-    console.log(`EVENT INSERTED -- ${eventId}`)
+    log.debug(`EVENT INSERTED -- ${eventId}`)
   } catch (error) {
-    console.error('ERROR INSERTING EVENT', error)
+    log.error(error, 'ERROR INSERTING EVENT')
   }
 }
 
@@ -33,6 +34,6 @@ export async function getLatestEvent(): Promise<number | undefined> {
 
     return event?.id
   } catch (error) {
-    console.error('ERROR GETTING LATEST EVENT', error)
+    log.error(error, 'ERROR GETTING LATEST EVENT')
   }
 }

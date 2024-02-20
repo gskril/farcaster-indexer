@@ -19,6 +19,8 @@
     "kysely": "^0.27.2",
     "pg": "^8.11.3",
     "pg-pool": "^3.6.1",
+    "pino": "^8.19.0",
+    "pino-pretty": "^10.3.1",
     "viem": "^2.7.11"
   },
   "devDependencies": {

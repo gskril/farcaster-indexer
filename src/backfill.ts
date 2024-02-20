@@ -10,6 +10,7 @@ import {
   verificationAddBatcher,
 } from './lib/batch.js'
 import { client } from './lib/client.js'
+import { log } from './lib/logger.js'
 import { idRegistry, opClient } from './lib/op.js'
 
 const progressBar = new SingleBar({}, Presets.shades_classic)
@@ -18,20 +19,19 @@ const progressBar = new SingleBar({}, Presets.shades_classic)
  * Backfill the database with data from a hub. This may take a while.
  */
 export async function backfill({ maxFid }: { maxFid: number | undefined }) {
-  console.log('Backfilling...')
+  log.info('Backfilling...')
   const startTime = new Date().getTime()
   const allFids = await getAllFids()
-  console.log(allFids.length, 'accounts to backfill')
   progressBar.start(maxFid || allFids.length, allFids[0])
 
   for (const fid of allFids) {
     if (maxFid && fid > maxFid) {
-      console.log(`Reached max FID ${maxFid}, stopping backfill`)
+      log.warn(`Reached max FID ${maxFid}, stopping backfill`)
       break
     }
 
     const p = await getFullProfileFromHub(fid).catch((err) => {
-      console.error(`Error getting profile for FID ${fid}`, err)
+      log.error(err, `Error getting profile for FID ${fid}`)
       return null
     })
 
@@ -49,7 +49,7 @@ export async function backfill({ maxFid }: { maxFid: number | undefined }) {
   const endTime = new Date().getTime()
   const elapsedMilliseconds = endTime - startTime
   const elapsedMinutes = elapsedMilliseconds / 60000
-  console.log(`Done backfilling in ${elapsedMinutes} minutes`)
+  log.info(`Done backfilling in ${elapsedMinutes} minutes`)
   progressBar.stop()
 }
 

@@ -1,6 +1,7 @@
 import { Message, fromFarcasterTime } from '@farcaster/hub-nodejs'
 
 import { db } from '../db/kysely.js'
+import { log } from '../lib/logger.js'
 import { formatReactions } from '../lib/utils.js'
 
 /**
@@ -17,9 +18,9 @@ export async function insertReactions(msgs: Message[]) {
       .onConflict((oc) => oc.column('hash').doNothing())
       .execute()
 
-    console.log(`REACTIONS INSERTED`)
+    log.debug(`REACTIONS INSERTED`)
   } catch (error) {
-    console.error('ERROR INSERTING REACTIONS', error)
+    log.error(error, 'ERROR INSERTING REACTIONS')
   }
 }
 
@@ -58,8 +59,8 @@ export async function deleteReactions(msgs: Message[]) {
       }
     })
 
-    console.log(`REACTIONS DELETED`)
+    log.debug(`REACTIONS DELETED`)
   } catch (error) {
-    console.error('ERROR DELETING REACTION', error)
+    log.error(error, 'ERROR DELETING REACTION')
   }
 }

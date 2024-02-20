@@ -1,6 +1,7 @@
 import { Message, fromFarcasterTime } from '@farcaster/hub-nodejs'
 
 import { db } from '../db/kysely.js'
+import { log } from '../lib/logger.js'
 import { formatLinks } from '../lib/utils.js'
 
 export async function insertLinks(msgs: Message[]) {
@@ -13,9 +14,9 @@ export async function insertLinks(msgs: Message[]) {
       .onConflict((oc) => oc.column('hash').doNothing())
       .execute()
 
-    console.log(`LINKS INSERTED`)
+    log.debug(`LINKS INSERTED`)
   } catch (error) {
-    console.error('ERROR INSERTING LINK', error)
+    log.error(error, 'ERROR INSERTING LINK')
   }
 }
 
@@ -38,8 +39,8 @@ export async function deleteLinks(msgs: Message[]) {
       }
     })
 
-    console.log(`LINKS DELETED`)
+    log.debug(`LINKS DELETED`)
   } catch (error) {
-    console.error('ERROR DELETING LINK', error)
+    log.error(error, 'ERROR DELETING LINK')
   }
 }

@@ -1,6 +1,7 @@
 import { Message, fromFarcasterTime } from '@farcaster/hub-nodejs'
 
 import { db } from '../db/kysely.js'
+import { log } from '../lib/logger.js'
 import { formatCasts } from '../lib/utils.js'
 
 /**
@@ -17,9 +18,9 @@ export async function insertCasts(msgs: Message[]) {
       .onConflict((oc) => oc.column('hash').doNothing())
       .execute()
 
-    console.log(`CASTS INSERTED`)
+    log.debug(`CASTS INSERTED`)
   } catch (error) {
-    console.error('ERROR INSERTING CAST', error)
+    log.error(error, 'ERROR INSERTING CAST')
   }
 }
 
@@ -46,8 +47,8 @@ export async function deleteCasts(msgs: Message[]) {
       }
     })
 
-    console.log(`CASTS DELETED`)
+    log.debug(`CASTS DELETED`)
   } catch (error) {
-    console.error('ERROR DELETING CAST', error)
+    log.error(error, 'ERROR DELETING CAST')
   }
 }

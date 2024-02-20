@@ -1,6 +1,7 @@
 import { Message, fromFarcasterTime } from '@farcaster/hub-nodejs'
 
 import { db } from '../db/kysely.js'
+import { log } from '../lib/logger.js'
 import { formatVerifications } from '../lib/utils.js'
 
 /**
@@ -17,9 +18,9 @@ export async function insertVerifications(msgs: Message[]) {
       .onConflict((oc) => oc.columns(['fid', 'signerAddress']).doNothing())
       .execute()
 
-    console.log(`VERIFICATIONS INSERTED`)
+    log.debug(`VERIFICATIONS INSERTED`)
   } catch (error) {
-    console.error('ERROR INSERTING VERIFICATION', error)
+    log.error(error, 'ERROR INSERTING VERIFICATION')
   }
 }
 
@@ -47,8 +48,8 @@ export async function deleteVerifications(msgs: Message[]) {
       }
     })
 
-    console.log('VERIFICATIONS DELETED')
+    log.debug('VERIFICATIONS DELETED')
   } catch (error) {
-    console.error('ERROR DELETING VERIFICATION', error)
+    log.error(error, 'ERROR DELETING VERIFICATION')
   }
 }

@@ -4,6 +4,7 @@ import { FileMigrationProvider, Migrator } from 'kysely'
 import * as path from 'path'
 import { fileURLToPath } from 'url'
 
+import { log } from '../lib/logger.js'
 import { db } from './kysely.js'
 
 async function migrateToLatest() {
@@ -23,15 +24,14 @@ async function migrateToLatest() {
 
   results?.forEach((it) => {
     if (it.status === 'Success') {
-      console.log(`migration "${it.migrationName}" was executed successfully`)
+      log.info(`Migration "${it.migrationName}" was executed successfully`)
     } else if (it.status === 'Error') {
-      console.error(`failed to execute migration "${it.migrationName}"`)
+      log.error(`Failed to execute migration "${it.migrationName}"`)
     }
   })
 
   if (error) {
-    console.error('failed to migrate')
-    console.error(error)
+    log.error(error, 'Failed to migrate')
     process.exit(1)
   }
 
