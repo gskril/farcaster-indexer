@@ -3,7 +3,6 @@ import {
   FidsRequest,
   FidsResponse,
   HubResult,
-  Message,
 } from '@farcaster/hub-nodejs'
 import 'dotenv/config'
 
@@ -13,7 +12,7 @@ import {
   reactionAddBatcher,
   userDataAddBatcher,
   verificationAddBatcher,
-} from './lib/batch'
+} from './lib/batch.js'
 import { client } from './lib/client.js'
 
 await backfill()
@@ -25,8 +24,13 @@ async function backfill() {
   console.log('Backfilling...')
   const startTime = new Date().getTime()
   const allFids = await getAllFids()
+  console.log(allFids.length, 'accounts to backfill')
 
   for (const fid of allFids) {
+    // Only index the first 10 accounts for testing
+    // TODO: Remove this
+    if (fid > 10) break
+
     const profile = await getFullProfileFromHub(fid).catch((err) => {
       console.error(`Error getting profile for FID ${fid}`, err)
       return null
@@ -75,6 +79,8 @@ async function getFullProfileFromHub(_fid: number) {
  * @returns array of fids
  */
 async function getAllFids() {
+  // TODO: Get the number of fids by calling `idCounter` on the ID Registry instead of paginating via a hub
+  // https://optimistic.etherscan.io/address/0x00000000Fc6c5F01Fc30151999387Bb99A9f489b
   const fids = new Array<number>()
   let nextPageToken: Uint8Array | undefined = undefined
   let isNextPage = true

@@ -8,7 +8,7 @@
     "clean": "rm -rf ./dist",
     "start": "tsc && node ./dist/index.js",
     "dev": "tsc && node ./dist/index.js",
-    "backfill": "tsc && node ./dist/helpers/backfill.js",
+    "backfill": "tsc && node ./dist/backfill.js",
     "kysely:migrate": "tsc && node ./dist/db/migrator.js"
   },
   "dependencies": {
