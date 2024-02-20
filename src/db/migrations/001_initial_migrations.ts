@@ -80,51 +80,6 @@ export const up = async (db: Kysely<any>) => {
     .addUniqueConstraint('fnames_username_unique', ['username'])
     .execute()
 
-  // MESSAGES
-  await db.schema
-    .createTable('messages')
-    .addColumn('id', 'uuid', (col) =>
-      col.defaultTo(sql`generate_ulid()`).primaryKey()
-    )
-    .addColumn('createdAt', 'timestamptz', (col) =>
-      col.notNull().defaultTo(sql`current_timestamp`)
-    )
-    .addColumn('updatedAt', 'timestamptz', (col) =>
-      col.notNull().defaultTo(sql`current_timestamp`)
-    )
-    .addColumn('timestamp', 'timestamptz', (col) => col.notNull())
-    .addColumn('deletedAt', 'timestamptz')
-    .addColumn('prunedAt', 'timestamptz')
-    .addColumn('revokedAt', 'timestamptz')
-    .addColumn('fid', 'bigint', (col) => col.notNull())
-    .addColumn('type', 'int2', (col) => col.notNull())
-    .addColumn('hashScheme', 'int2', (col) => col.notNull())
-    .addColumn('signatureScheme', 'int2', (col) => col.notNull())
-    .addColumn('hash', 'bytea', (col) => col.notNull().unique())
-    .addColumn('signature', 'bytea', (col) => col.notNull())
-    .addColumn('signer', 'bytea', (col) => col.notNull())
-    .addColumn('body', 'json', (col) => col.notNull())
-    .addColumn('raw', 'bytea', (col) => col.notNull())
-    .execute()
-
-  await db.schema
-    .createIndex('messages_timestamp_index')
-    .on('messages')
-    .columns(['timestamp'])
-    .execute()
-
-  await db.schema
-    .createIndex('messages_fid_index')
-    .on('messages')
-    .columns(['fid'])
-    .execute()
-
-  await db.schema
-    .createIndex('messages_signer_index')
-    .on('messages')
-    .columns(['signer'])
-    .execute()
-
   // CASTS
   await db.schema
     .createTable('casts')
@@ -325,7 +280,6 @@ export const down = async (db: Kysely<any>) => {
   await db.schema.dropTable('links').ifExists().execute()
   await db.schema.dropTable('reactions').ifExists().execute()
   await db.schema.dropTable('casts').ifExists().execute()
-  await db.schema.dropTable('messages').ifExists().execute()
   await db.schema.dropTable('fnames').ifExists().execute()
   await db.schema.dropTable('fids').ifExists().execute()
 }

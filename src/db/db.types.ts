@@ -42,111 +42,11 @@ type FnameRow = {
   username: string
 }
 
-// MESSAGES ---------------------------------------------------------------------------------------
-declare const $messageDbId: unique symbol
-type MessageDbId = string & { [$messageDbId]: true }
-
-type CastEmbedJson = { url: string } | { castId: CastIdJson }
-
-type CastAddBodyJson =
-  | {
-      text: string
-      embeds?: CastEmbedJson[]
-      mentions?: Fid[]
-      mentionsPositions?: number[]
-    }
-  | { parentUrl: string }
-  | { parentCastId: CastIdJson }
-
-type CastRemoveBodyJson = {
-  targetHash: Hex
-}
-
-type ReactionBodyCastJson = {
-  type: ReactionType
-  targetCastId: CastIdJson
-}
-
-type ReactionBodyUrlJson = {
-  type: ReactionType
-  targetUrl: string
-}
-
-type ReactionBodyJson = ReactionBodyCastJson | ReactionBodyUrlJson
-
-type VerificationAddEthAddressBodyJson = {
-  address: Hex
-  claimSignature: Hex
-  blockHash: Hex
-  protocol: Protocol
-}
-
-type VerificationAddSolAddressBodyJson = {
-  address: string
-  claimSignature: string
-  blockHash: string
-  protocol: Protocol
-}
-
-type VerificationRemoveBodyJson = {
-  address: Hex
-  protocol: Protocol
-}
-
-type UserDataBodyJson = {
-  type: UserDataType
-  value: string
-}
-
-type LinkBodyJson = {
-  type: string
-  /** original timestamp in Unix ms */
-  displayTimestamp?: number
-  targetFid?: Fid
-}
-
-type UsernameProofBodyJson = {
-  timestamp: number
-  name: string
-  owner: string
-  signature: Hex
-  fid: Fid
-  type: UserNameType
-}
-
-type MessageBodyJson =
-  | CastAddBodyJson
-  | CastRemoveBodyJson
-  | ReactionBodyJson
-  | LinkBodyJson
-  | VerificationAddEthAddressBodyJson
-  | VerificationAddSolAddressBodyJson
-  | VerificationRemoveBodyJson
-  | UserDataBodyJson
-  | UsernameProofBodyJson
-
-type MessageRow = {
-  id: GeneratedAlways<MessageDbId>
-  createdAt: Generated<Date>
-  updatedAt: Generated<Date>
-  deletedAt: Date | null
-  revokedAt: Date | null
-  prunedAt: Date | null
-  fid: Fid
-  type: MessageType
-  timestamp: Date
-  hash: Uint8Array
-  hashScheme: HashScheme
-  signature: Uint8Array
-  signatureScheme: SignatureScheme
-  signer: Uint8Array
-  raw: Uint8Array
-  body: ColumnType<MessageBodyJson, string, string>
-}
-
 // CASTS -------------------------------------------------------------------------------------------
 declare const $castDbId: unique symbol
 type CastDbId = string & { [$castDbId]: true }
+
+type CastEmbedJson = { url: string } | { castId: CastIdJson }
 
 type CastRow = {
   id: GeneratedAlways<CastDbId>
@@ -243,7 +143,6 @@ type EventRow = {
 // ALL TABLES --------------------------------------------------------------------------------------
 export interface Tables {
   fnames: FnameRow
-  messages: MessageRow
   fids: FidRow
   casts: CastRow
   reactions: ReactionRow
