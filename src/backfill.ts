@@ -1,4 +1,5 @@
 import { FidRequest } from '@farcaster/hub-nodejs'
+import { Presets, SingleBar } from 'cli-progress'
 import 'dotenv/config'
 
 import {
@@ -11,22 +12,22 @@ import {
 import { client } from './lib/client.js'
 import { idRegistry, opClient } from './lib/op.js'
 
+const progressBar = new SingleBar({}, Presets.shades_classic)
+
 /**
  * Backfill the database with data from a hub. This may take a while.
  */
-export async function backfill() {
+export async function backfill({ maxFid }: { maxFid: number | undefined }) {
   console.log('Backfilling...')
   const startTime = new Date().getTime()
   const allFids = await getAllFids()
   console.log(allFids.length, 'accounts to backfill')
+  progressBar.start(maxFid || allFids.length, allFids[0])
 
   for (const fid of allFids) {
-    // Only index the first 10 accounts for testing
-    // TODO: Remove this
-    if (fid > 10) {
+    if (maxFid && fid > maxFid) {
+      console.log(`Reached max FID ${maxFid}, stopping backfill`)
       break
-    } else {
-      console.log(fid)
     }
 
     const p = await getFullProfileFromHub(fid).catch((err) => {
@@ -41,12 +42,15 @@ export async function backfill() {
     p.reactions.forEach((msg) => reactionAddBatcher.add(msg))
     p.userData.forEach((msg) => userDataAddBatcher.add(msg))
     p.verifications.forEach((msg) => verificationAddBatcher.add(msg))
+
+    progressBar.increment()
   }
 
   const endTime = new Date().getTime()
   const elapsedMilliseconds = endTime - startTime
   const elapsedMinutes = elapsedMilliseconds / 60000
   console.log(`Done backfilling in ${elapsedMinutes} minutes`)
+  progressBar.stop()
 }
 
 /**

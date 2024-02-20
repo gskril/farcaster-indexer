@@ -14,7 +14,7 @@ const latestEventId = await getLatestEvent()
 
 // If the first argument is "--backfill", run the backfill function
 if (process.argv[2] === '--backfill') {
-  await backfill()
+  await backfill({ maxFid: 10 })
 }
 
 await subscribe(latestEventId)
