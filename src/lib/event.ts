@@ -10,7 +10,7 @@ import {
   userDataAddBatcher,
   verificationAddBatcher,
   verificationRemoveBatcher,
-} from './batch'
+} from './batch.js'
 
 /**
  * Update the database based on the event type

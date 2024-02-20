@@ -17,7 +17,7 @@ export function createBatcher(
   const batcher = new Bottleneck.Batcher(
     options || {
       maxTime: 10_000,
-      maxSize: 500,
+      maxSize: 1_000,
     }
   )
 

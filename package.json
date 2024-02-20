@@ -8,7 +8,7 @@
     "clean": "rm -rf ./dist",
     "start": "tsc && node ./dist/index.js",
     "dev": "tsc && node ./dist/index.js",
-    "backfill": "tsc && node ./dist/backfill.js",
+    "backfill": "tsc && node ./dist/index.js --backfill",
     "kysely:migrate": "tsc && node ./dist/db/migrator.js"
   },
   "dependencies": {
@@ -17,7 +17,8 @@
     "dotenv": "^16.4.4",
     "kysely": "^0.27.2",
     "pg": "^8.11.3",
-    "pg-pool": "^3.6.1"
+    "pg-pool": "^3.6.1",
+    "viem": "^2.7.11"
   },
   "devDependencies": {
     "@trivago/prettier-plugin-sort-imports": "^4.3.0",

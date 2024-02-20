@@ -1,9 +1,4 @@
-import {
-  FidRequest,
-  FidsRequest,
-  FidsResponse,
-  HubResult,
-} from '@farcaster/hub-nodejs'
+import { FidRequest } from '@farcaster/hub-nodejs'
 import 'dotenv/config'
 
 import {
@@ -14,13 +9,12 @@ import {
   verificationAddBatcher,
 } from './lib/batch.js'
 import { client } from './lib/client.js'
-
-await backfill()
+import { idRegistry, opClient } from './lib/op.js'
 
 /**
  * Backfill the database with data from a hub. This may take a while.
  */
-async function backfill() {
+export async function backfill() {
   console.log('Backfilling...')
   const startTime = new Date().getTime()
   const allFids = await getAllFids()
@@ -29,20 +23,24 @@ async function backfill() {
   for (const fid of allFids) {
     // Only index the first 10 accounts for testing
     // TODO: Remove this
-    if (fid > 10) break
+    if (fid > 10) {
+      break
+    } else {
+      console.log(fid)
+    }
 
-    const profile = await getFullProfileFromHub(fid).catch((err) => {
+    const p = await getFullProfileFromHub(fid).catch((err) => {
       console.error(`Error getting profile for FID ${fid}`, err)
       return null
     })
 
-    if (!profile) continue
+    if (!p) continue
 
-    castAddBatcher.add(profile.casts)
-    linkAddBatcher.add(profile.links)
-    reactionAddBatcher.add(profile.reactions)
-    userDataAddBatcher.add(profile.userData)
-    verificationAddBatcher.add(profile.verifications)
+    p.casts.forEach((msg) => castAddBatcher.add(msg))
+    p.links.forEach((msg) => linkAddBatcher.add(msg))
+    p.reactions.forEach((msg) => reactionAddBatcher.add(msg))
+    p.userData.forEach((msg) => userDataAddBatcher.add(msg))
+    p.verifications.forEach((msg) => verificationAddBatcher.add(msg))
   }
 
   const endTime = new Date().getTime()
@@ -75,31 +73,14 @@ async function getFullProfileFromHub(_fid: number) {
 }
 
 /**
- * Get all fids from a hub
+ * Get all fids
  * @returns array of fids
  */
 async function getAllFids() {
-  // TODO: Get the number of fids by calling `idCounter` on the ID Registry instead of paginating via a hub
-  // https://optimistic.etherscan.io/address/0x00000000Fc6c5F01Fc30151999387Bb99A9f489b
-  const fids = new Array<number>()
-  let nextPageToken: Uint8Array | undefined = undefined
-  let isNextPage = true
+  const fidCount = await opClient.readContract({
+    ...idRegistry,
+    functionName: 'idCounter',
+  })
 
-  while (isNextPage) {
-    const fidsResult: HubResult<FidsResponse> = await client.getFids(
-      FidsRequest.create({ pageToken: nextPageToken })
-    )
-
-    if (fidsResult.isErr()) {
-      console.error(fidsResult.error)
-      break
-    }
-
-    const response: FidsResponse = fidsResult.value
-    fids.push(...response.fids)
-    nextPageToken = response.nextPageToken
-    isNextPage = !!nextPageToken && nextPageToken.length > 0
-  }
-
-  return fids
+  return Array.from({ length: Number(fidCount) }, (_, i) => i + 1)
 }

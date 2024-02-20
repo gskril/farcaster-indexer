@@ -1,6 +1,6 @@
 import { HubEvent, HubEventType } from '@farcaster/hub-nodejs'
 
-import { getLatestEvent, insertEvent } from '../api/event.js'
+import { insertEvent } from '../api/event.js'
 import { client } from './client.js'
 import { handleEvent } from './event.js'
 
@@ -9,10 +9,7 @@ let latestEventId: number | undefined
 /**
  * Listen for new events from a Hub
  */
-export async function subscribe() {
-  // Check the latest hub event we processed, if any
-  const latestEventIdFromDb = await getLatestEvent()
-
+export async function subscribe(fromId: number | undefined) {
   const result = await client.subscribe({
     eventTypes: [
       HubEventType.MERGE_MESSAGE,
@@ -21,7 +18,7 @@ export async function subscribe() {
       // HubEventType.MERGE_USERNAME_PROOF,
       // HubEventType.MERGE_ON_CHAIN_EVENT,
     ],
-    fromId: latestEventIdFromDb,
+    fromId,
   })
 
   if (result.isErr()) {
@@ -32,9 +29,7 @@ export async function subscribe() {
   result.match(
     (stream) => {
       console.log(
-        `Subscribed to stream ${
-          latestEventIdFromDb ? `from event ${latestEventIdFromDb}` : ''
-        }`
+        `Subscribed to stream ${fromId ? `from event ${fromId}` : ''}`
       )
       stream.on('data', async (e: HubEvent) => {
         // Keep track of latest event so we can pick up where we left off if the stream is interrupted
