@@ -1,16 +1,23 @@
+import { EventRequest } from '@farcaster/hub-nodejs'
 import 'dotenv/config'
 
 import { getLatestEvent } from './api/event.js'
 import { backfill } from './backfill.js'
+import { client } from './lib/client.js'
+import { log } from './lib/logger.js'
 import { subscribe } from './lib/subscriber.js'
 
 // Check the latest hub event we processed, if any
 let latestEventId = await getLatestEvent()
 
 // Hubs are expected to prune messages after 3 days
-// TODO: Check if `latestEvent` is pruned and backfill if so
-// const latestEventRequest = EventRequest.create({ id: latestEventId })
-// const latestEvent = await client.getEvent(latestEventRequest)
+const latestEventRequest = EventRequest.create({ id: latestEventId })
+const latestEvent = await client.getEvent(latestEventRequest)
+
+if (!latestEvent.isOk()) {
+  log.warn('Latest recorded event is no longer available')
+  latestEventId = undefined
+}
 
 // If the first argument is "--backfill" or `latestEventId` is undefined, run the backfill function
 if (process.argv[2] === '--backfill' || !latestEventId) {
