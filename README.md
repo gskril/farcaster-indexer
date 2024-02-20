@@ -2,10 +2,35 @@
 
 This is an indexer that listens for messages from a [Farcaster Hub](https://docs.farcaster.xyz/learn/architecture/hubs) and inserts relevant data into a postgres database.
 
+## How to run
+
+Clone this repo
+
+```bash
+git clone -b hubs https://github.com/gskril/farcaster-indexer.git
+```
+
+Install dependencies
+
+```bash
+yarn install
+```
+
+Create a `.env` file with hub and database connection details
+
+```bash
+cp .env.example .env
+```
+
+Run the indexer
+
+```bash
+yarn start
+```
+
 ## Notes
 
-- Initial sync will take a long time (benchmarks to come)
-- After initial sync, the indexer can be offline for 3 days and still catch up in a reasonable amount of time
+- Initial sync will take a long time (benchmarks to come). Use a local hub and postgres instance for the fastest results
 - If you start reading from a different hub or the indexer is offline for more than 3 days, it will need to do a full sync again
 
 ## Todo
