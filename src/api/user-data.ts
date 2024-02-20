@@ -4,7 +4,6 @@ import { db } from '../db/kysely.js'
 import { log } from '../lib/logger.js'
 import { formatUserDatas } from '../lib/utils.js'
 
-// TODO: Fix error 'Ensure that no rows proposed for insertion within the same command have duplicate constrained values.'
 export async function insertUserDatas(msgs: Message[]) {
   const userDatas = formatUserDatas(msgs)
 

@@ -43,7 +43,17 @@ export function formatReactions(msgs: Message[]) {
 }
 
 export function formatUserDatas(msgs: Message[]) {
-  return msgs.map((msg) => {
+  // Users can submit multiple messages with the same `userDataAddBody.type` within the batch period
+  // We reconcile this by using the value of the last message with the same type from that fid
+  const userDataMap = new Map<string, Message>()
+
+  for (const msg of msgs) {
+    const data = msg.data!
+    const userDataAddBody = data.userDataBody!
+    userDataMap.set(`fid:${data.fid}-type:${userDataAddBody.type}`, msg)
+  }
+
+  return Array.from(userDataMap.values()).map((msg) => {
     const data = msg.data!
     const userDataAddBody = data.userDataBody!
     const timestamp = fromFarcasterTime(data.timestamp)._unsafeUnwrap()
