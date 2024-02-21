@@ -14,12 +14,13 @@ let latestEventId = await getLatestEvent()
 const latestEventRequest = EventRequest.create({ id: latestEventId })
 const latestEvent = await client.getEvent(latestEventRequest)
 
+// If the last saved event is no longer available, we need to backfill from the beginning
 if (!latestEvent.isOk()) {
   log.warn('Latest recorded event is no longer available')
   latestEventId = undefined
 }
 
-// If the first argument is "--backfill" or `latestEventId` is undefined, run the backfill function
+// If the first argument is "--backfill" or `latestEventId` is undefined, run backfill()
 if (process.argv[2] === '--backfill' || !latestEventId) {
   await backfill({ maxFid: 10 })
 

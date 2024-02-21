@@ -12,14 +12,13 @@ import {
 import { client } from './lib/client.js'
 import { saveCurrentEventId } from './lib/event.js'
 import { log } from './lib/logger.js'
-import { idRegistry, opClient } from './lib/op.js'
 
-const progressBar = new SingleBar({}, Presets.shades_classic)
+const progressBar = new SingleBar({ fps: 1 }, Presets.shades_classic)
 
 /**
  * Backfill the database with data from a hub. This may take a while.
  */
-export async function backfill({ maxFid }: { maxFid: number | undefined }) {
+export async function backfill({ maxFid }: { maxFid?: number | undefined }) {
   // Save the current event ID so we can start from there after backfilling
   await saveCurrentEventId()
 
@@ -85,10 +84,15 @@ async function getFullProfileFromHub(_fid: number) {
  * @returns array of fids
  */
 async function getAllFids() {
-  const fidCount = await opClient.readContract({
-    ...idRegistry,
-    functionName: 'idCounter',
+  const maxFidResult = await client.getFids({
+    pageSize: 1,
+    reverse: true,
   })
 
-  return Array.from({ length: Number(fidCount) }, (_, i) => i + 1)
+  if (maxFidResult.isErr()) {
+    throw new Error('Unable to backfill', { cause: maxFidResult.error })
+  }
+
+  const maxFid = maxFidResult.value.fids[0]
+  return Array.from({ length: Number(maxFid) }, (_, i) => i + 1)
 }
