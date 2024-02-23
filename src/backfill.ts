@@ -1,4 +1,4 @@
-import { FidRequest } from '@farcaster/hub-nodejs'
+import { FidRequest, HubResult, MessagesResponse } from '@farcaster/hub-nodejs'
 import { Presets, SingleBar } from 'cli-progress'
 import 'dotenv/config'
 
@@ -71,12 +71,20 @@ async function getFullProfileFromHub(_fid: number) {
   const verifications = await client.getVerificationsByFid(fid)
 
   return {
-    casts: casts._unsafeUnwrap().messages,
-    links: links._unsafeUnwrap().messages,
-    reactions: reactions._unsafeUnwrap().messages,
-    userData: userData._unsafeUnwrap().messages,
-    verifications: verifications._unsafeUnwrap().messages,
+    casts: checkMessages(casts, _fid),
+    links: checkMessages(links, _fid),
+    reactions: checkMessages(reactions, _fid),
+    userData: checkMessages(userData, _fid),
+    verifications: checkMessages(verifications, _fid),
   }
+}
+
+function checkMessages(messages: HubResult<MessagesResponse>, fid: number) {
+  if (messages.isErr()) {
+    log.warn(messages.error, `Error fetching messages for FID ${fid}`)
+  }
+
+  return messages.isOk() ? messages.value.messages : []
 }
 
 /**
