@@ -9,7 +9,6 @@ import { insertEvent } from '../api/event.js'
 import {
   castAddBatcher,
   castRemoveBatcher,
-  fidAddBatcher,
   linkAddBatcher,
   linkRemoveBatcher,
   reactionAddBatcher,
@@ -77,14 +76,7 @@ export async function handleEvent(event: HubEvent) {
       // TODO: handle revoking messages
       break
     case HubEventType.MERGE_ON_CHAIN_EVENT:
-      const onchainEvent = event.mergeOnChainEventBody?.onChainEvent
-
-      switch (onchainEvent?.type) {
-        case OnChainEventType.EVENT_TYPE_ID_REGISTER:
-          fidAddBatcher.add(onchainEvent)
-          break
-      }
-
+      // TODO: index signers (storage and fids are less relevant for now)
       break
     default:
       log.debug('UNHANDLED HUB EVENT', event.id)

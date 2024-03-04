@@ -1,8 +1,7 @@
-import { Message, OnChainEvent } from '@farcaster/hub-nodejs'
+import { Message } from '@farcaster/hub-nodejs'
 import Bottleneck from 'bottleneck'
 
 import { deleteCasts, insertCasts } from '../api/cast.js'
-import { insertFid } from '../api/fid.js'
 import { deleteLinks, insertLinks } from '../api/link.js'
 import { deleteReactions, insertReactions } from '../api/reaction.js'
 import { insertUserDatas } from '../api/user-data.js'
@@ -38,4 +37,3 @@ export const reactionAddBatcher = createBatcher<Message>(insertReactions)
 export const reactionRemoveBatcher = createBatcher<Message>(deleteReactions)
 export const linkAddBatcher = createBatcher<Message>(insertLinks)
 export const linkRemoveBatcher = createBatcher<Message>(deleteLinks)
-export const fidAddBatcher = createBatcher<OnChainEvent>(insertFid)

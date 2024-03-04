@@ -44,21 +44,6 @@ export const up = async (db: Kysely<any>) => {
     RETURN ((lpad(to_hex((floor((EXTRACT(epoch FROM clock_timestamp()) * (1000)::numeric)))::bigint), 12, '0'::text) || encode(public.gen_random_bytes(10), 'hex'::text)))::uuid;
   `.execute(db)
 
-  // FIDS
-  await db.schema
-    .createTable('fids')
-    .addColumn('fid', 'bigint', (col) => col.primaryKey())
-    .addColumn('createdAt', 'timestamptz', (col) =>
-      col.notNull().defaultTo(sql`current_timestamp`)
-    )
-    .addColumn('updatedAt', 'timestamptz', (col) =>
-      col.notNull().defaultTo(sql`current_timestamp`)
-    )
-    .addColumn('registeredAt', 'timestamptz', (col) => col.notNull())
-    .addColumn('custodyAddress', 'bytea', (col) => col.notNull())
-    .addColumn('recoveryAddress', 'bytea', (col) => col.notNull())
-    .execute()
-
   // FNAMES
   await db.schema
     .createTable('fnames')
@@ -281,5 +266,4 @@ export const down = async (db: Kysely<any>) => {
   await db.schema.dropTable('reactions').ifExists().execute()
   await db.schema.dropTable('casts').ifExists().execute()
   await db.schema.dropTable('fnames').ifExists().execute()
-  await db.schema.dropTable('fids').ifExists().execute()
 }

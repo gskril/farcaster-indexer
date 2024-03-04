@@ -9,7 +9,6 @@ import 'dotenv/config'
 
 import {
   castAddBatcher,
-  fidAddBatcher,
   linkAddBatcher,
   reactionAddBatcher,
   userDataAddBatcher,
@@ -51,7 +50,6 @@ export async function backfill({ maxFid }: { maxFid?: number | undefined }) {
     p.reactions.forEach((msg) => reactionAddBatcher.add(msg))
     p.userData.forEach((msg) => userDataAddBatcher.add(msg))
     p.verifications.forEach((msg) => verificationAddBatcher.add(msg))
-    fidAddBatcher.add(p.idRegistryEvent)
 
     progressBar.increment()
   }
@@ -76,8 +74,6 @@ async function getFullProfileFromHub(_fid: number) {
   const reactions = await client.getReactionsByFid({ ...fid, reverse: true })
   const userData = await client.getUserDataByFid(fid)
   const verifications = await client.getVerificationsByFid(fid)
-  // TODO: figure out how to make this the live custody/recovery address, not just at account creation
-  const idRegistryEvent = await client.getIdRegistryOnChainEvent(fid)
 
   return {
     casts: checkMessages(casts, _fid),
@@ -85,7 +81,6 @@ async function getFullProfileFromHub(_fid: number) {
     reactions: checkMessages(reactions, _fid),
     userData: checkMessages(userData, _fid),
     verifications: checkMessages(verifications, _fid),
-    idRegistryEvent: checkOnchainEvent(idRegistryEvent, _fid),
   }
 }
 
