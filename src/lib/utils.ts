@@ -1,7 +1,14 @@
-import { Message, OnChainEvent, fromFarcasterTime } from '@farcaster/hub-nodejs'
+import {
+  HubResult,
+  Message,
+  MessagesResponse,
+  OnChainEvent,
+  fromFarcasterTime,
+} from '@farcaster/hub-nodejs'
 import { Insertable } from 'kysely'
 
 import { Tables } from '../db/db.types.js'
+import { log } from './logger.js'
 
 export function formatCasts(msgs: Message[]) {
   return msgs.map((msg) => {
@@ -110,4 +117,23 @@ export function breakIntoChunks(array: any[], size: number) {
     chunks.push(array.slice(i, i + size))
   }
   return chunks
+}
+
+export function checkMessages(
+  messages: HubResult<MessagesResponse>,
+  fid: number
+) {
+  if (messages.isErr()) {
+    log.warn(messages.error, `Error fetching messages for FID ${fid}`)
+  }
+
+  return messages.isOk() ? messages.value.messages : []
+}
+
+export function checkOnchainEvent(event: HubResult<OnChainEvent>, fid: number) {
+  if (event.isErr()) {
+    log.warn(event.error, `Error fetching onchain event for FID ${fid}`)
+  }
+
+  return event.isOk() ? event.value : null
 }

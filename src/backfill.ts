@@ -1,9 +1,4 @@
-import {
-  FidRequest,
-  HubResult,
-  MessagesResponse,
-  OnChainEvent,
-} from '@farcaster/hub-nodejs'
+import { FidRequest } from '@farcaster/hub-nodejs'
 import { Presets, SingleBar } from 'cli-progress'
 import 'dotenv/config'
 
@@ -17,6 +12,8 @@ import {
 import { client } from './lib/client.js'
 import { saveCurrentEventId } from './lib/event.js'
 import { log } from './lib/logger.js'
+import { getAllCastsByFid, getAllReactionsByFid } from './lib/paginate.js'
+import { checkMessages } from './lib/utils.js'
 
 const progressBar = new SingleBar({ fps: 1 }, Presets.shades_classic)
 
@@ -68,36 +65,19 @@ export async function backfill({ maxFid }: { maxFid?: number | undefined }) {
 async function getFullProfileFromHub(_fid: number) {
   const fid = FidRequest.create({ fid: _fid })
 
-  // TODO: add pagination for all of these
-  const casts = await client.getCastsByFid({ ...fid, reverse: true })
+  const casts = await getAllCastsByFid(fid)
+  const reactions = await getAllReactionsByFid(fid)
   const links = await client.getLinksByFid({ ...fid, reverse: true })
-  const reactions = await client.getReactionsByFid({ ...fid, reverse: true })
   const userData = await client.getUserDataByFid(fid)
   const verifications = await client.getVerificationsByFid(fid)
 
   return {
-    casts: checkMessages(casts, _fid),
+    casts,
+    reactions,
     links: checkMessages(links, _fid),
-    reactions: checkMessages(reactions, _fid),
     userData: checkMessages(userData, _fid),
     verifications: checkMessages(verifications, _fid),
   }
-}
-
-function checkMessages(messages: HubResult<MessagesResponse>, fid: number) {
-  if (messages.isErr()) {
-    log.warn(messages.error, `Error fetching messages for FID ${fid}`)
-  }
-
-  return messages.isOk() ? messages.value.messages : []
-}
-
-function checkOnchainEvent(event: HubResult<OnChainEvent>, fid: number) {
-  if (event.isErr()) {
-    log.warn(event.error, `Error fetching onchain event for FID ${fid}`)
-  }
-
-  return event.isOk() ? event.value : null
 }
 
 /**

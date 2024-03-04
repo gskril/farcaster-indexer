@@ -28,4 +28,4 @@ if (process.argv[2] === '--backfill' || !latestEventId) {
   latestEventId = await getLatestEvent()
 }
 
-await subscribe(latestEventId)
+// await subscribe(latestEventId)
