@@ -21,41 +21,61 @@ import { log } from './logger.js'
  */
 export async function handleEvent(event: HubEvent) {
   // Handle each event type: MERGE_MESSAGE, PRUNE_MESSAGE, REVOKE_MESSAGE (3), MERGE_ID_REGISTRY_EVENT (4), MERGE_NAME_REGISTRY_EVENT (5)
-  if (event.type === HubEventType.MERGE_MESSAGE) {
-    event.mergeMessageBody?.message?.data?.type
-    event.mergeMessageBody!
-    const msg = event.mergeMessageBody!.message!
-    const msgType = event.mergeMessageBody!.message!.data!.type
+  switch (event.type) {
+    case HubEventType.MERGE_MESSAGE:
+      event.mergeMessageBody?.message?.data?.type
+      event.mergeMessageBody!
+      const msg = event.mergeMessageBody!.message!
+      const msgType = event.mergeMessageBody!.message!.data!.type
 
-    if (msgType === MessageType.CAST_ADD) {
-      castAddBatcher.add(msg)
-    } else if (msgType === MessageType.CAST_REMOVE) {
-      castRemoveBatcher.add(msg)
-    } else if (msgType === MessageType.VERIFICATION_ADD_ETH_ADDRESS) {
-      verificationAddBatcher.add(msg)
-    } else if (msgType === MessageType.VERIFICATION_REMOVE) {
-      verificationRemoveBatcher.add(msg)
-    } else if (msgType === MessageType.USER_DATA_ADD) {
-      userDataAddBatcher.add(msg)
-    } else if (msgType === MessageType.REACTION_ADD) {
-      reactionAddBatcher.add(msg)
-    } else if (msgType === MessageType.REACTION_REMOVE) {
-      reactionRemoveBatcher.add(msg)
-    } else if (msgType === MessageType.LINK_ADD) {
-      linkAddBatcher.add(msg)
-    } else if (msgType === MessageType.LINK_REMOVE) {
-      linkRemoveBatcher.add(msg)
-    }
-  } else if (event.type === HubEventType.PRUNE_MESSAGE) {
-    // TODO: Mark the relevant row as `pruned` in the db but don't delete it
-    // Not important right now because I don't want to prune data for my applications
-  } else if (event.type === HubEventType.REVOKE_MESSAGE) {
-    // Events are emitted when a signer that was used to create a message is removed
-    // TODO: handle revoking messages
-  } else if (event.type === HubEventType.MERGE_ON_CHAIN_EVENT) {
-    // TODO: handle onchain events
-  } else {
-    log.debug('UNHANDLED_HUB_EVENT', event.id)
+      switch (msgType) {
+        case MessageType.CAST_ADD:
+          castAddBatcher.add(msg)
+          break
+        case MessageType.CAST_REMOVE:
+          castRemoveBatcher.add(msg)
+          break
+        case MessageType.VERIFICATION_ADD_ETH_ADDRESS:
+          verificationAddBatcher.add(msg)
+          break
+        case MessageType.VERIFICATION_REMOVE:
+          verificationRemoveBatcher.add(msg)
+          break
+        case MessageType.USER_DATA_ADD:
+          userDataAddBatcher.add(msg)
+          break
+        case MessageType.REACTION_ADD:
+          reactionAddBatcher.add(msg)
+          break
+        case MessageType.REACTION_REMOVE:
+          reactionRemoveBatcher.add(msg)
+          break
+        case MessageType.LINK_ADD:
+          linkAddBatcher.add(msg)
+          break
+        case MessageType.LINK_REMOVE:
+          linkRemoveBatcher.add(msg)
+          break
+        default:
+          log.debug('UNHANDLED_HUB_EVENT', event.id)
+          break
+      }
+
+      break
+    case HubEventType.PRUNE_MESSAGE:
+      // TODO: Mark the relevant row as `pruned` in the db but don't delete it
+      // Not important right now because I don't want to prune data for my applications
+      break
+    case HubEventType.REVOKE_MESSAGE:
+      // Events are emitted when a signer that was used to create a message is removed
+      // TODO: handle revoking messages
+      break
+    case HubEventType.MERGE_ON_CHAIN_EVENT:
+      // TODO: handle onchain events
+      break
+    default:
+      log.debug('UNHANDLED_HUB_EVENT', event.id)
+      break
   }
 }
 
