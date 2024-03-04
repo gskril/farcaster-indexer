@@ -1,4 +1,4 @@
-import { Message, fromFarcasterTime } from '@farcaster/hub-nodejs'
+import { Message, OnChainEvent, fromFarcasterTime } from '@farcaster/hub-nodejs'
 import { Insertable } from 'kysely'
 
 import { Tables } from '../db/db.types.js'
@@ -101,6 +101,19 @@ export function formatLinks(msgs: Message[]) {
       type: link.type,
       hash: msg.hash,
     } satisfies Insertable<Tables['links']>
+  })
+}
+
+export function formatFids(events: OnChainEvent[]) {
+  return events.map((event) => {
+    const body = event.idRegisterEventBody!
+
+    return {
+      fid: event.fid,
+      registeredAt: new Date(event.blockTimestamp * 1000),
+      custodyAddress: body.to,
+      recoveryAddress: body.recoveryAddress,
+    } satisfies Insertable<Tables['fids']>
   })
 }
 

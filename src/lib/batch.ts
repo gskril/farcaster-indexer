@@ -1,4 +1,4 @@
-import { Message } from '@farcaster/hub-nodejs'
+import { Message, OnChainEvent } from '@farcaster/hub-nodejs'
 import Bottleneck from 'bottleneck'
 
 import { deleteCasts, insertCasts } from '../api/cast.js'
@@ -11,8 +11,8 @@ import {
   insertVerifications,
 } from '../api/verification.js'
 
-export function createBatcher(
-  callback: (msgs: Message[]) => Promise<void>,
+export function createBatcher<T>(
+  callback: (msgs: T[]) => Promise<void>,
   options?: Bottleneck.BatcherOptions
 ) {
   const batcher = new Bottleneck.Batcher(
@@ -27,13 +27,15 @@ export function createBatcher(
   return batcher
 }
 
-export const castAddBatcher = createBatcher(insertCasts)
-export const castRemoveBatcher = createBatcher(deleteCasts)
-export const verificationAddBatcher = createBatcher(insertVerifications)
-export const verificationRemoveBatcher = createBatcher(deleteVerifications)
-export const userDataAddBatcher = createBatcher(insertUserDatas)
-export const reactionAddBatcher = createBatcher(insertReactions)
-export const reactionRemoveBatcher = createBatcher(deleteReactions)
-export const linkAddBatcher = createBatcher(insertLinks)
-export const linkRemoveBatcher = createBatcher(deleteLinks)
-export const fidAddBatcher = createBatcher(insertFid)
+export const castAddBatcher = createBatcher<Message>(insertCasts)
+export const castRemoveBatcher = createBatcher<Message>(deleteCasts)
+// prettier-ignore
+export const verificationAddBatcher = createBatcher<Message>(insertVerifications)
+// prettier-ignore
+export const verificationRemoveBatcher = createBatcher<Message>(deleteVerifications)
+export const userDataAddBatcher = createBatcher<Message>(insertUserDatas)
+export const reactionAddBatcher = createBatcher<Message>(insertReactions)
+export const reactionRemoveBatcher = createBatcher<Message>(deleteReactions)
+export const linkAddBatcher = createBatcher<Message>(insertLinks)
+export const linkRemoveBatcher = createBatcher<Message>(deleteLinks)
+export const fidAddBatcher = createBatcher<OnChainEvent>(insertFid)
