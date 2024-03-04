@@ -64,9 +64,9 @@ async function getFullProfileFromHub(_fid: number) {
   const fid = FidRequest.create({ fid: _fid })
 
   // TODO: add pagination for all of these
-  const casts = await client.getCastsByFid(fid)
-  const links = await client.getLinksByFid(fid)
-  const reactions = await client.getReactionsByFid(fid)
+  const casts = await client.getCastsByFid({ ...fid, reverse: true })
+  const links = await client.getLinksByFid({ ...fid, reverse: true })
+  const reactions = await client.getReactionsByFid({ ...fid, reverse: true })
   const userData = await client.getUserDataByFid(fid)
   const verifications = await client.getVerificationsByFid(fid)
 
