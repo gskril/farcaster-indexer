@@ -1,9 +1,15 @@
-import { HubEvent, HubEventType, MessageType } from '@farcaster/hub-nodejs'
+import {
+  HubEvent,
+  HubEventType,
+  MessageType,
+  OnChainEventType,
+} from '@farcaster/hub-nodejs'
 
 import { insertEvent } from '../api/event.js'
 import {
   castAddBatcher,
   castRemoveBatcher,
+  fidAddBatcher,
   linkAddBatcher,
   linkRemoveBatcher,
   reactionAddBatcher,
@@ -57,7 +63,7 @@ export async function handleEvent(event: HubEvent) {
           linkRemoveBatcher.add(msg)
           break
         default:
-          log.debug('UNHANDLED_HUB_EVENT', event.id)
+          log.debug('UNHANDLED MERGE_MESSAGE EVENT', event.id)
           break
       }
 
@@ -71,10 +77,17 @@ export async function handleEvent(event: HubEvent) {
       // TODO: handle revoking messages
       break
     case HubEventType.MERGE_ON_CHAIN_EVENT:
-      // TODO: handle onchain events
+      const onchainEvent = event.mergeOnChainEventBody?.onChainEvent
+
+      switch (onchainEvent?.type) {
+        case OnChainEventType.EVENT_TYPE_ID_REGISTER:
+          fidAddBatcher.add(onchainEvent)
+          break
+      }
+
       break
     default:
-      log.debug('UNHANDLED_HUB_EVENT', event.id)
+      log.debug('UNHANDLED HUB EVENT', event.id)
       break
   }
 }

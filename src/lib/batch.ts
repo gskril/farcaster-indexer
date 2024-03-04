@@ -2,6 +2,7 @@ import { Message } from '@farcaster/hub-nodejs'
 import Bottleneck from 'bottleneck'
 
 import { deleteCasts, insertCasts } from '../api/cast.js'
+import { insertFid } from '../api/fid.js'
 import { deleteLinks, insertLinks } from '../api/link.js'
 import { deleteReactions, insertReactions } from '../api/reaction.js'
 import { insertUserDatas } from '../api/user-data.js'
@@ -35,3 +36,4 @@ export const reactionAddBatcher = createBatcher(insertReactions)
 export const reactionRemoveBatcher = createBatcher(deleteReactions)
 export const linkAddBatcher = createBatcher(insertLinks)
 export const linkRemoveBatcher = createBatcher(deleteLinks)
+export const fidAddBatcher = createBatcher(insertFid)
