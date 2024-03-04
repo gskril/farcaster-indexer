@@ -17,21 +17,6 @@ type CastIdJson = {
   hash: Hex
 }
 
-// FNAMES ------------------------------------------------------------------------------------------
-declare const $fnameDbId: unique symbol
-type FnameDbId = string & { [$fnameDbId]: true }
-
-type FnameRow = {
-  id: GeneratedAlways<FnameDbId>
-  createdAt: Generated<Date>
-  updatedAt: Generated<Date>
-  registeredAt: Date
-  deletedAt: Date | null
-  fid: Fid
-  type: UserNameType
-  username: string
-}
-
 // CASTS -------------------------------------------------------------------------------------------
 declare const $castDbId: unique symbol
 type CastDbId = string & { [$castDbId]: true }
@@ -132,7 +117,6 @@ type EventRow = {
 
 // ALL TABLES --------------------------------------------------------------------------------------
 export interface Tables {
-  fnames: FnameRow
   casts: CastRow
   reactions: ReactionRow
   links: LinkRow

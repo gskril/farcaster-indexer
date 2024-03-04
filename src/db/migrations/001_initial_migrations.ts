@@ -44,27 +44,6 @@ export const up = async (db: Kysely<any>) => {
     RETURN ((lpad(to_hex((floor((EXTRACT(epoch FROM clock_timestamp()) * (1000)::numeric)))::bigint), 12, '0'::text) || encode(public.gen_random_bytes(10), 'hex'::text)))::uuid;
   `.execute(db)
 
-  // FNAMES
-  await db.schema
-    .createTable('fnames')
-    .addColumn('id', 'uuid', (col) =>
-      col.defaultTo(sql`generate_ulid()`).primaryKey()
-    )
-    .addColumn('createdAt', 'timestamptz', (col) =>
-      col.notNull().defaultTo(sql`current_timestamp`)
-    )
-    .addColumn('updatedAt', 'timestamptz', (col) =>
-      col.notNull().defaultTo(sql`current_timestamp`)
-    )
-    .addColumn('registeredAt', 'timestamptz', (col) => col.notNull())
-    .addColumn('deletedAt', 'timestamptz')
-    .addColumn('fid', 'bigint', (col) => col.notNull())
-    .addColumn('type', sql`smallint`, (col) => col.notNull())
-    .addColumn('username', 'text', (col) => col.notNull())
-    .addUniqueConstraint('fnames_fid_unique', ['fid'])
-    .addUniqueConstraint('fnames_username_unique', ['username'])
-    .execute()
-
   // CASTS
   await db.schema
     .createTable('casts')
@@ -265,5 +244,4 @@ export const down = async (db: Kysely<any>) => {
   await db.schema.dropTable('links').ifExists().execute()
   await db.schema.dropTable('reactions').ifExists().execute()
   await db.schema.dropTable('casts').ifExists().execute()
-  await db.schema.dropTable('fnames').ifExists().execute()
 }

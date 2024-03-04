@@ -1,9 +1,4 @@
-import {
-  HubEvent,
-  HubEventType,
-  MessageType,
-  OnChainEventType,
-} from '@farcaster/hub-nodejs'
+import { HubEvent, HubEventType, MessageType } from '@farcaster/hub-nodejs'
 
 import { insertEvent } from '../api/event.js'
 import {
